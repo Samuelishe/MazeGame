@@ -178,3 +178,35 @@ Behavior notes:
 - No gameplay behavior changes.
 - No runtime code changes.
 - No file moves or import changes.
+
+## 2026-05-29 - governance and documentation rules pass
+
+Scope:
+
+- formalize project governance rules for future agents
+- tighten communication, documentation, dependency, and refactoring policies
+- keep this pass documentation-only
+
+Documentation changes:
+
+- Updated `AGENTS.md`
+- Updated `docs/DEVELOPMENT_RULES.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/SESSION_LOG.md`
+
+Rules added or clarified:
+
+- all user-facing responses must be in Russian
+- commit messages must remain in English
+- final agent responses must follow a fixed reporting structure
+- serious refactoring requires documentation-first review
+- every production module must remain documented
+- dependency additions are allowed, but only with clear justification and required documentation updates
+- file moves require prior import/dependency/test review plus doc updates
+
+Behavior notes:
+
+- No gameplay behavior changes.
+- No runtime code changes.
+- No import changes.
+- No test changes.

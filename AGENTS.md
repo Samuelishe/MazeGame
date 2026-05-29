@@ -17,6 +17,13 @@ Primary onboarding file for future AI-agent work in this project.
 - All user-facing responses must be written in Russian.
 - Commit messages at the end of each task must remain in English.
 - Treat both rules as mandatory for all future agents working in this project.
+- Every final agent response must include:
+  - changed files list;
+  - brief description of changes;
+  - behavior changes: yes/no;
+  - checks and tests;
+  - risks;
+  - commit message.
 
 ## Fast start
 
@@ -26,6 +33,18 @@ Primary onboarding file for future AI-agent work in this project.
 4. Read [docs/TECH_DEBT.md](docs/TECH_DEBT.md) before proposing refactors.
 5. Read [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) before moving or grouping files.
 6. Append important work notes to [docs/SESSION_LOG.md](docs/SESSION_LOG.md).
+
+## Documentation-first policy
+
+Before any serious refactoring, an agent must:
+
+- read the existing project documentation;
+- read existing module docstrings in the relevant code;
+- check [docs/MODULES.md](docs/MODULES.md);
+- check [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md);
+- check [docs/REFACTORING_PLAN.md](docs/REFACTORING_PLAN.md).
+
+If an architectural decision changes, the corresponding documentation must be updated in the same task.
 
 ## Current runtime entrypoint
 
@@ -64,8 +83,46 @@ Primary onboarding file for future AI-agent work in this project.
 - Keep changes local and reversible.
 - Prefer documentation, tests, and narrow bug fixes over restructuring.
 - Extract helpers only when behavior is preserved and ownership becomes clearer.
+- Prefer extract before rewrite.
+- Prefer small safe steps.
+- Prefer package boundaries before file moves.
+- Prefer documentation before restructuring.
 - If changing gameplay flow, document old and new flow in `docs/SESSION_LOG.md`.
 - If changing save behavior, document whether SQLite, JSON, or both are touched.
+- Avoid mass file moves without a plan.
+- Avoid large rewrites.
+- Do not change gameplay behavior without an explicit user request.
+
+## Module visibility policy
+
+- Every production module must be represented in project documentation.
+- Keep these files aligned with the real module set:
+  - [docs/MODULES.md](docs/MODULES.md)
+  - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+  - [docs/INDEX.md](docs/INDEX.md)
+- If a new production module is added, document it in the same task.
+
+## Dependency policy
+
+- Agents may add new libraries to `requirements.txt` when they clearly improve the project.
+- New dependencies are allowed when they reduce complexity, improve readability, improve testability, improve maintainability, improve user experience, or improve reliability.
+- Do not add dependencies "just in case".
+- Do not add heavy dependencies without clear project value.
+- Do not duplicate capabilities the project already has.
+- When adding a dependency, also:
+  - update `requirements.txt`;
+  - update `README.md` if usage or setup changes;
+  - explain the reason in the final report.
+
+## Architecture inspection policy
+
+Before moving files between packages, an agent must:
+
+- inspect imports;
+- inspect module dependencies;
+- check test impact;
+- update [docs/MODULES.md](docs/MODULES.md);
+- update [docs/REFACTORING_PLAN.md](docs/REFACTORING_PLAN.md).
 
 ## Verification baseline
 

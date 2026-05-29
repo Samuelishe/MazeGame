@@ -17,6 +17,14 @@ This project is a working pygame maze game with:
 - legacy JSON highscore compatibility
 - Python 3.14-compatible `.venv` runtime with `pygame-ce`
 
+The project also now has an explicit governance baseline for future agents:
+
+- Russian-only user-facing communication
+- English-only commit messages
+- documentation-first architecture work
+- mandatory module visibility in docs
+- staged refactoring instead of large rewrites
+
 ## Current entrypoints
 
 - Main entrypoint in use: `game_app.py`
@@ -136,3 +144,13 @@ The architecture inspection pass added:
 - explicit target package direction for future work
 
 No runtime code, imports, gameplay behavior, or tests were changed during this pass.
+
+## Governance notes
+
+Current governance rules now require:
+
+- documentation review before serious refactoring;
+- documentation updates in the same step when architecture decisions change;
+- documentation coverage for every production module;
+- explicit dependency justification when new libraries are added;
+- import/dependency/test review before file moves between packages.
