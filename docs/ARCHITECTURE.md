@@ -341,6 +341,7 @@ The next clean future cut is:
 ### Testing
 
 - `tests/`: focused unit tests for pure logic extracted from runtime-heavy modules
+- `tests/test_player_repository.py`: focused disposable-DB smoke coverage for the isolated player repository boundary
 
 ## Coupling map
 

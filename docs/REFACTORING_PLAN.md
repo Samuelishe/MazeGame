@@ -197,6 +197,7 @@ Stage 4 Step 1 status:
 
 - completed: Step 1A model split into `domain/player_models.py`
 - completed: Step 1B repository split into `persistence/player_repository.py`
+- completed: minimal disposable-DB smoke tests for `persistence.player_repository.py`
 - next sensitive candidate: Step 1C `SessionStats` relocation
 
 ## Stage 5

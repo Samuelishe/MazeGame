@@ -531,3 +531,41 @@ Documentation changes:
 - Updated `docs/REFACTORING_PLAN.md`
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
+
+## 2026-05-29 - Stage 4 repository safety tests
+
+Scope:
+
+- add minimal disposable-DB smoke tests for `persistence.player_repository.py`
+- keep runtime code, schema, and gameplay behavior unchanged
+
+Code changes:
+
+- Added `tests/test_player_repository.py`.
+- Covered:
+  - `load_players(...)` on a freshly initialized empty DB;
+  - `create_player(...)` success path and duplicate-name behavior;
+  - `get_player_by_name(...)` found/missing behavior;
+  - `get_or_create_player(...)` existing/missing behavior;
+  - `delete_player(...)` plus schema-level cascade effect on `player_stats` and `runs`.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No production persistence behavior changes.
+- No schema changes.
+
+Database notes:
+
+- The working `maze_stats.db` was not deleted or recreated.
+- Tests use isolated temporary SQLite files under `pytest` `tmp_path`.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`

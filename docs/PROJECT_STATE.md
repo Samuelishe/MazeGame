@@ -135,6 +135,7 @@ Everything else currently imported by the codebase is from the Python standard l
 - Static repository inspection
 - Import/dependency review
 - Syntax validation with the project interpreter via `py_compile`
+- focused disposable-DB repository smoke tests via `pytest` and `tmp_path`
 
 Not performed in this audit:
 
@@ -166,6 +167,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - Border-to-inner-cell translation for maze entry/exit now also lives in `gameplay/maze_positions.py` as pure helper logic.
 - End-screen result summary text now also lives in `gameplay/` as pure helper logic.
 - The first unit tests cover formatting and scoring behavior without touching pygame runtime.
+- `persistence/player_repository.py` now has minimal disposable-DB smoke coverage that uses temporary SQLite files and does not touch the working `maze_stats.db`.
 - Documentation and environment assumptions now point to `.venv`, `pygame-ce`, and the current pytest workflow.
 
 ## Inspection notes

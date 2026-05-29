@@ -37,6 +37,7 @@ Supporting file:
 - Result summary text helpers: `gameplay/result_text.py`
 - End-summary value preparation: `gameplay/result_text.py`
 - Shared mixed text renderer: `ui.py::render_mixed_text`
+- Repository smoke tests: `tests/test_player_repository.py`
 - Module map: `docs/MODULES.md`
 - Staged restructure plan: `docs/REFACTORING_PLAN.md`
 - State screens: `state_machine/`

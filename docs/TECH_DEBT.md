@@ -215,13 +215,14 @@ The project now has initial tests, but they still cover only a small pure-logic 
 Not yet covered:
 
 - session progression
-- DB write paths
+- most DB write paths beyond player repository smoke coverage
 - migration behavior
 - runtime/FSM integration
 
 Why it matters:
 
 - regression safety is improving, but still limited
+- Stage 4 now has a minimal isolated safety net for `persistence.player_repository.py`, which lowers risk for further repository-boundary work but does not yet cover `session_controller.record_run(...)` or migration paths.
 
 ## Persistence Architecture
 

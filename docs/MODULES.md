@@ -70,6 +70,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `tests/test_scoring_preparation.py`
 - `tests/test_result_text.py`
 - `tests/test_hud_text.py`
+- `tests/test_player_repository.py`
 
 ## Module catalogue
 
@@ -105,7 +106,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - Future fit:
   keep in `persistence/`.
 - Notes:
-  owns player CRUD/profile-loading after Stage 4 Step 1B; bootstrap-sensitive behavior stays unchanged.
+  owns player CRUD/profile-loading after Stage 4 Step 1B; bootstrap-sensitive behavior stays unchanged and now has minimal disposable-DB smoke coverage.
 
 ### `game_app.py`
 
@@ -1091,6 +1092,19 @@ Priority C: high risk
   pytest only.
 - Future fit:
   keep under `tests/`.
+
+### `tests/test_player_repository.py`
+
+- Role:
+  disposable-DB smoke tests for player repository behavior.
+- Used by:
+  pytest only.
+- Depends on:
+  `db_manager.init_db`, `db_manager.get_connection`, `persistence.player_repository`.
+- Future fit:
+  keep under `tests/`.
+- Notes:
+  uses `pytest` `tmp_path` and isolated temporary SQLite files; does not touch the working `maze_stats.db`.
 
 ### `tests/__init__.py`
 
