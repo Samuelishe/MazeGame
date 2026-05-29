@@ -31,6 +31,7 @@ Supporting file:
 - Pure gameplay helpers: `gameplay/`
 - Player domain models: `domain/player_models.py`
 - Player repository boundary: `persistence/player_repository.py`
+- Runtime session aggregate: `runtime/session_stats.py`
 - Maze position helper: `gameplay/maze_positions.py`
 - Score preparation helper: `gameplay/scoring.py`
 - HUD text helpers: `gameplay/hud_text.py`
@@ -38,6 +39,7 @@ Supporting file:
 - End-summary value preparation: `gameplay/result_text.py`
 - Shared mixed text renderer: `ui.py::render_mixed_text`
 - Repository smoke tests: `tests/test_player_repository.py`
+- SessionStats tests: `tests/test_session_stats.py`
 - Module map: `docs/MODULES.md`
 - Staged restructure plan: `docs/REFACTORING_PLAN.md`
 - State screens: `state_machine/`

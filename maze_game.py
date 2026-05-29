@@ -36,7 +36,7 @@ from highscores import (
 from sounds import SoundBank
 from sprites import SpriteSheet, AnimatedSprite
 
-from players import SessionStats
+from runtime.session_stats import SessionStats
 
 from grid_utils import DIRS4, in_bounds
 from enemies import (

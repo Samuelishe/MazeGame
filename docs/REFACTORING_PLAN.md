@@ -191,14 +191,15 @@ Stage 4 Step 1 status:
    - expected result:
      session-only memory state leaves `players.py` last, after repository and model boundaries are already stable.
    - files:
-     future: `players.py`, `maze_game.py`, `session_controller.py`
+     completed: `players.py`, `maze_game.py`, `session_controller.py`, `runtime/session_stats.py`
 
 Stage 4 Step 1 status:
 
 - completed: Step 1A model split into `domain/player_models.py`
 - completed: Step 1B repository split into `persistence/player_repository.py`
+- completed: Step 1C SessionStats split into `runtime/session_stats.py`
 - completed: minimal disposable-DB smoke tests for `persistence.player_repository.py`
-- next sensitive candidate: Step 1C `SessionStats` relocation
+- next sensible candidate: remove compatibility re-export from `players.py` or continue with run-recording boundary analysis in `session_controller.py`
 
 SessionStats recommendation after analysis:
 
@@ -209,7 +210,7 @@ SessionStats recommendation after analysis:
 Runtime boundary recommendation after analysis:
 
 - do not introduce `runtime/` by a broad file-move pass right now;
-- prefer one narrow runtime-state move first, most likely `SessionStats`;
+- completed: one narrow runtime-state move for `SessionStats`;
 - only after that introduce `runtime/` as a visible package boundary for orchestration modules if import pressure is already reduced.
 
 ## Stage 5

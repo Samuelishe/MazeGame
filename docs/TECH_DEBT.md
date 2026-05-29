@@ -184,9 +184,9 @@ Why it matters:
 - application flow and repository logic are too tightly coupled;
 - future Stage 4 refactors need to separate responsibilities without changing save behavior.
 
-### 12. `SessionStats` still lives in the wrong ownership boundary
+### 12. `SessionStats` ownership was corrected, but compatibility cleanup remains
 
-`SessionStats` is now the main leftover inside `players.py`.
+`SessionStats` now lives in `runtime/session_stats.py`, which matches its actual role better.
 
 What the code shows:
 
@@ -197,25 +197,23 @@ What the code shows:
 
 Why it matters:
 
-- its current home in `players.py` suggests persistence ownership, which is misleading;
-- moving it to `domain/` would also be imprecise, because it is not durable domain data or a pure rule object;
-- the cleanest eventual home is a runtime/application boundary, but the project does not yet have that package boundary in place.
+- the main ownership problem is solved;
+- `players.py` still exists as a compatibility shim and should not remain permanent.
 
-### 13. Runtime boundary exists conceptually, but not physically
+### 13. Runtime boundary exists partially, but broader migration is not in place
 
 Current runtime concerns are spread across:
 
 - `game_app.py`
 - `maze_game.py`
 - `session_controller.py`
-- `players.py`
+- `runtime/session_stats.py`
 - `state_machine/*`
 
 Why it matters:
 
 - ownership is understandable only after reading several files together;
-- small runtime-state objects like `SessionStats` have no natural package home yet;
-- introducing a `runtime/` package too early would risk combining multiple medium-coupling moves into one step.
+- broader `runtime/` adoption would still risk combining multiple medium-coupling moves into one step.
 
 ## Low-risk cleanup
 
@@ -282,9 +280,9 @@ Why it matters:
 
 - runtime save behavior is split across SQLite and JSON in the same gameplay path;
 - `persistence/player_repository.py` is now the dedicated player CRUD/profile-loading slice;
-- `players.py` still combines:
-  - session-only in-memory stats;
-  - transitional compatibility re-exports;
+- `players.py` still acts as a compatibility shim for:
+  - `SessionStats`;
+  - transitional persistence re-exports;
 - `session_controller.py` combines:
   - round mode and active-player policy;
   - session lifecycle and player list management;
@@ -311,14 +309,13 @@ Target outcome:
 
 Actual responsibility groups inside `players.py`:
 
-- runtime/session state:
-  `SessionStats`
 - transitional compatibility layer:
-  re-export of `load_players(...)`, `create_player(...)`, `delete_player(...)`, `get_player_by_name(...)`, `get_or_create_player(...)` from `persistence.player_repository.py`
+  re-export of `SessionStats` from `runtime.session_stats.py`
+  and `load_players(...)`, `create_player(...)`, `delete_player(...)`, `get_player_by_name(...)`, `get_or_create_player(...)` from `persistence.player_repository.py`
 
 Why this matters:
 
-- `SessionStats` is not persistence logic at all, but it still shares the same import surface with persistence APIs;
+- `SessionStats` no longer shares a file with persistence logic, but compatibility imports still keep `players.py` alive;
 - `GameSessionController` currently imports both runtime session state and repository functions from the same place, which makes later splits harder to stage safely.
 
 Safe separation candidates:
@@ -337,7 +334,7 @@ Recommended order:
 
 1. completed: separate player models;
 2. completed: separate repository functions into `persistence.player_repository.py`;
-3. only then move `SessionStats`;
+3. completed: move `SessionStats` into `runtime/session_stats.py`;
 4. leave behavior of `get_or_create_player(...)` untouched until bootstrap paths are clearer.
 
 ### `SessionStats` analysis
@@ -368,9 +365,8 @@ Classification:
 
 Recommended direction:
 
-- do not leave it in `players.py` forever;
-- do not move it to `domain/` unless package constraints force that compromise;
-- prefer a later runtime/application-oriented module once one more package boundary step is acceptable.
+- completed: move to `runtime/session_stats.py`;
+- next: remove compatibility imports from `players.py` when safe.
 
 ### 2. Extract run-recording repository boundary
 

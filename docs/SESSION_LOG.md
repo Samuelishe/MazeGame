@@ -632,3 +632,46 @@ Behavior notes:
 - No runtime code changes.
 - No import changes.
 - No DB changes.
+
+## 2026-05-29 - Stage 4 Step 1C: move SessionStats into runtime boundary
+
+Scope:
+
+- move only `SessionStats` out of `players.py`
+- keep repository compatibility re-exports intact
+- avoid broader runtime-module moves
+
+Code changes:
+
+- Added `runtime/__init__.py`.
+- Added `runtime/session_stats.py` with `SessionStats`.
+- Updated `session_controller.py` to import `SessionStats` from `runtime.session_stats`.
+- Updated `maze_game.py` to import `SessionStats` from `runtime.session_stats`.
+- Updated `players.py` to become a legacy compatibility shim that re-exports `SessionStats` and repository functions.
+- Added `tests/test_session_stats.py`.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No persistence behavior changes.
+- No schema changes.
+- No DB changes.
+
+Database notes:
+
+- The working `maze_stats.db` was not deleted or recreated.
+
+Testing notes:
+
+- Added pure tests for `SessionStats.add_result(...)` and `summary_line(...)`.
+- `SessionStats` has no `best_time_ms` behavior in the current API, so no such assertion was added.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`

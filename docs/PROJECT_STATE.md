@@ -77,9 +77,9 @@ There is no single `GameState` or `RunState` object today.
 Runtime boundary reality:
 
 - a real runtime slice already exists conceptually;
-- it is currently spread across `game_app.py`, `maze_game.py`, `session_controller.py`, `players.py`, and `state_machine/*`;
-- the strongest runtime-only object identified so far is `SessionStats`;
-- a physical `runtime/` package is not in place yet.
+- it is currently spread across `game_app.py`, `maze_game.py`, `session_controller.py`, `runtime/session_stats.py`, and `state_machine/*`;
+- the strongest runtime-only object identified so far is `SessionStats`, and it now has a dedicated `runtime/` home;
+- a broader runtime package migration is not in place yet.
 
 ## Data stores in use
 
@@ -102,7 +102,7 @@ Current persistence boundary reality:
 
 - `db_manager.py` and `leaderboard.py` are comparatively clean;
 - `persistence/player_repository.py` now owns player CRUD/profile loading;
-- `players.py` now mainly contains `SessionStats` plus a temporary compatibility re-export of repository functions;
+- `players.py` is now a compatibility shim for `SessionStats` and repository functions;
 - `session_controller.py` still mixes session orchestration and direct SQL writes;
 - runtime save behavior is still split between SQLite and legacy JSON.
 
@@ -111,7 +111,8 @@ SessionStats reality:
 - `SessionStats` is in-memory mutable session state, not a persistence model;
 - it is currently owned operationally by `GameSessionController`;
 - `maze_game.py` can also instantiate it directly in controller-free mode;
-- its current location in `players.py` is a staging compromise, not the intended long-term boundary.
+- it now lives in `runtime/session_stats.py`;
+- `players.py` remains only as a staging compatibility shim.
 
 Database governance baseline:
 
@@ -136,7 +137,7 @@ Current structure reality is still root-heavy:
 - `gameplay/` exists, but currently covers only a small pure-logic slice
 - `domain/` now exists and currently hosts pure player domain models
 - `persistence/` now exists and currently hosts the player repository boundary
-- no dedicated `runtime/` package exists yet, even though runtime concerns are already identifiable
+- `runtime/` now exists, but currently contains only `SessionStats`
 
 ## External dependencies actually used
 
@@ -166,7 +167,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - `maze_game.py` is still the main concentration point
 - too many modules remain in the root directory
 - some modules still mix domain and rendering concerns
-- `players.py` no longer owns player models or repository code, but still carries compatibility re-exports beside `SessionStats`
+- `players.py` no longer owns player models, repository code, or `SessionStats`; it still carries compatibility re-exports
 - repeated state-screen UI patterns are present but not yet centralized
 - persistence boundaries are clearer on paper than in code, especially around `players.py` and `session_controller.py`
 

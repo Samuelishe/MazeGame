@@ -20,6 +20,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 
 - `game_app.py`
 - `maze_game.py`
+- `runtime/session_stats.py`
 
 ### State machine / screen flow
 
@@ -71,6 +72,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `tests/test_result_text.py`
 - `tests/test_hud_text.py`
 - `tests/test_player_repository.py`
+- `tests/test_session_stats.py`
 
 ## Module catalogue
 
@@ -107,6 +109,23 @@ This is an inspection document only. It does not imply any immediate file moves.
   keep in `persistence/`.
 - Notes:
   owns player CRUD/profile-loading after Stage 4 Step 1B; bootstrap-sensitive behavior stays unchanged and now has minimal disposable-DB smoke coverage.
+
+### `runtime/session_stats.py`
+
+- Role:
+  runtime-only in-memory per-session aggregate state.
+- Main classes:
+  `SessionStats`.
+- Main functions:
+  none beyond methods on `SessionStats`.
+- Used by:
+  `maze_game.py`, `session_controller.py`, transitional compatibility re-export in `players.py`, tests.
+- Depends on:
+  stdlib only.
+- Future fit:
+  keep in `runtime/`.
+- Notes:
+  Stage 4 Step 1C moved `SessionStats` here as the first explicit runtime-oriented boundary step; no broader runtime package migration has started.
 
 ### `game_app.py`
 
@@ -461,27 +480,26 @@ Priority C: high risk
 ### `players.py`
 
 - Role:
-  in-memory `SessionStats` plus transitional repository re-export.
+  legacy compatibility shim for `SessionStats` and player repository re-exports.
 - Main classes:
-  `SessionStats`.
+  none locally; re-exports `SessionStats`.
 - Main functions:
   transitional re-export of `load_players`, `create_player`, `delete_player`, `get_player_by_name`, `get_or_create_player`.
 - Used by:
-  `maze_game.py`, `session_controller.py`.
+  compatibility imports only.
 - Depends on:
-  `persistence.player_repository`.
+  `persistence.player_repository`, `runtime.session_stats`.
 - Future fit:
-  keep only `SessionStats` until a later runtime-state home is chosen.
+  remove compatibility re-exports after call sites are narrowed.
 - Notes:
-  player models and repository functions have already moved out; the remaining re-export is a deliberate compatibility shim for Stage 4.
+  player models, repository functions, and `SessionStats` have already moved out; this file now exists only as a deliberate Stage 4 compatibility shim.
 
 #### `players.py` decomposition analysis
 
 - Approximate internal groups:
-  - runtime/session state:
-    `SessionStats`
   - transitional compatibility layer:
-    re-export of repository API from `persistence.player_repository`
+    re-export of `SessionStats` from `runtime.session_stats`
+    and repository API from `persistence.player_repository`
 
 - Entity classification:
   - `PlayerAggregateStats`
@@ -502,17 +520,9 @@ Priority C: high risk
       `PlayerAggregateStats`
     - location:
       `domain.player_models`
-  - `SessionStats`
-    - type:
-      runtime session state, not a persistence model
-    - used by:
-      `maze_game.py`, `session_controller.py`
-    - dependencies:
-      stdlib only
-
 - Highest-risk dependencies:
-  - `GameSessionController` still depends on both repository functions and `SessionStats`, though repository ownership now lives in different modules.
-  - `maze_game.py` imports `SessionStats` directly for no-controller runtime mode.
+  - `GameSessionController` still depends on both repository functions and `SessionStats`, though they now live in dedicated modules.
+  - `maze_game.py` imports `SessionStats` directly from `runtime.session_stats` for no-controller runtime mode.
   - `get_or_create_player(...)` still sits on both controller bootstrap and migration bootstrap paths.
 
 - Safe future split candidates:
@@ -527,10 +537,8 @@ Priority C: high risk
 
 - Current direct usage map:
   - `players.py`
-    - `SessionStats.add_result(...)`:
-      local mutation API for one completed run
-    - `SessionStats.summary_line(...)`:
-      local summary formatting for HUD/end overlay
+    - no local implementation remains
+    - compatibility re-export only
   - `session_controller.py`
     - `GameSessionController.session_stats_by_player`:
       in-memory storage keyed by `player_id`
@@ -1201,6 +1209,19 @@ Priority C: high risk
 - Notes:
   uses `pytest` `tmp_path` and isolated temporary SQLite files; does not touch the working `maze_stats.db`.
 
+### `tests/test_session_stats.py`
+
+- Role:
+  pure tests for runtime session aggregate behavior.
+- Used by:
+  pytest only.
+- Depends on:
+  `runtime.session_stats`.
+- Future fit:
+  keep under `tests/`.
+- Notes:
+  covers `add_result(...)` and `summary_line(...)` without pygame, SQLite, or repository dependencies.
+
 ### `tests/__init__.py`
 
 - Role:
@@ -1233,13 +1254,21 @@ Priority C: high risk
 - `session_controller.py` -> `domain.player_models`
 - `session_controller.py` -> `db_manager.py`
 - `session_controller.py` -> `persistence.player_repository.py`
-- `session_controller.py` -> `players.py`
+- `session_controller.py` -> `runtime/session_stats.py`
 - `persistence/player_repository.py` -> `db_manager.py`
 - `persistence/player_repository.py` -> `domain.player_models`
 - `leaderboard.py` -> `db_manager.py`
 - `highscore_adapter.py` -> `db_manager.py`
 - `highscore_adapter.py` -> `highscores.py`
 - `highscore_adapter.py` -> `persistence.player_repository.py`
+
+### Runtime spine
+
+- `game_app.py` -> `maze_game.py`
+- `game_app.py` -> `session_controller.py`
+- `maze_game.py` -> `runtime/session_stats.py`
+- `session_controller.py` -> `runtime/session_stats.py`
+- `players.py` -> `runtime/session_stats.py`
 
 ### UI / screen spine
 
@@ -1261,7 +1290,7 @@ Priority C: high risk
 
 - `coins.py`: spawn/domain + rendering.
 - `blocks.py`: spawn/domain + rendering.
-- `players.py`: session aggregate object + transitional repository re-export.
+- `players.py`: legacy compatibility shim for runtime/persistence re-exports.
 - `ui.py`: text/font helpers + overlay rendering + blocking choice loops.
 
 ### State modules with repeated patterns
@@ -1289,7 +1318,7 @@ Priority C: high risk
   - `session_controller.GameSessionController`
   - `session_controller.RoundMode`
 - per-process session aggregates
-  - `players.SessionStats`
+  - `runtime.session_stats.SessionStats`
 - current-run mutable state
   - local variables and closures inside `maze_game.play_maze()` / `run_once()`
 - run result handoff between gameplay and persistence
@@ -1315,16 +1344,23 @@ Priority C: high risk
   - responsibility:
     active-player state, session rotation, session-level caches, run-result recording
   - dependencies:
-    `domain.player_models`, `persistence.player_repository`, `db_manager`, `players.SessionStats`
+    `domain.player_models`, `persistence.player_repository`, `db_manager`, `runtime.session_stats`
   - coupling:
     high
+- `runtime/session_stats.py`
+  - responsibility:
+    isolated runtime-only per-session aggregate state
+  - dependencies:
+    stdlib only
+  - coupling:
+    low
 - `players.py`
   - responsibility:
-    `SessionStats` plus transitional compatibility re-export
+    compatibility-only shim
   - dependencies:
-    `persistence.player_repository`
+    `persistence.player_repository`, `runtime.session_stats`
   - coupling:
-    medium as code, high as ownership ambiguity
+    low as code, medium as compatibility debt
 - `state_machine/*`
   - responsibility:
     menu and setup screen runtime flow under the outer app loop
@@ -1347,7 +1383,7 @@ Files and classes that could logically belong to a future runtime-oriented layer
   - `GameSessionController`
   - `RoundMode`
   - `RunResult` if it remains an application/runtime handoff type
-- `players.SessionStats`
+- `runtime.session_stats.SessionStats`
 
 Files that should not belong to runtime:
 

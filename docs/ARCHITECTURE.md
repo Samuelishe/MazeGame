@@ -136,7 +136,8 @@ Main modules:
 
 - `db_manager.py`: schema creation and connections
 - `persistence/player_repository.py`: player CRUD and profile loading
-- `players.py`: in-memory `SessionStats` plus transitional repository re-export
+- `runtime/session_stats.py`: in-memory `SessionStats`
+- `players.py`: legacy compatibility shim for `SessionStats` and repository re-exports
 - `session_controller.py`: in-memory session plus run recording
 - `leaderboard.py`: read queries for leaderboard screens
 
@@ -170,8 +171,10 @@ Result: runtime persistence is split between SQLite and legacy JSON.
   - SQLite infrastructure only: connection setup, PRAGMA, schema bootstrap, `meta` flags.
 - `persistence/player_repository.py`
   - dedicated player CRUD/profile-loading repository over SQLite.
+- `runtime/session_stats.py`
+  - isolated runtime-only `SessionStats`.
 - `players.py`
-  - `SessionStats` plus transitional compatibility re-export for repository imports.
+  - compatibility re-export for `SessionStats` and repository imports.
 - `session_controller.py`
   - mixed module: session orchestration plus SQLite write path for completed runs.
 - `leaderboard.py`
@@ -212,7 +215,7 @@ Result: runtime persistence is split between SQLite and legacy JSON.
 - `highscores.py` is internally coherent, but it keeps a second active persistence path alive.
 - `highscore_adapter.py` is coherent as a migration module, but it encodes transitional persistence policy.
 - `players.py` and `session_controller.py` are the main persistence-boundary problems:
-  - `players.py` now mostly holds `SessionStats`, but still exposes temporary repository re-exports for compatibility;
+  - `players.py` is now only a compatibility shim, but it still remains on the boundary;
   - `session_controller.py` mixes application/session orchestration with direct SQL write logic.
 
 ### Target persistence shape
@@ -244,21 +247,17 @@ This is a target ownership map only. No file moves are implied yet.
 
 `players.py` currently contains two direct responsibility slices:
 
-1. runtime-only session state
+1. transitional compatibility re-export
    - `SessionStats`
-2. transitional compatibility re-export
    - `load_players(...)`
    - `create_player(...)`
    - `delete_player(...)`
    - `get_player_by_name(...)`
    - `get_or_create_player(...)`
 
-The pure player models now live separately in `domain/player_models.py`, and the repository implementation now lives in `persistence/player_repository.py`.
+The pure player models now live separately in `domain/player_models.py`, the repository implementation now lives in `persistence/player_repository.py`, and `SessionStats` now lives in `runtime/session_stats.py`.
 
-This means the file is still mixed, but the cleanest domain-model slice has already been removed. What remains is:
-
-- runtime in-memory state
-- compatibility imports for old call sites
+This means the file is no longer an ownership module. What remains is compatibility imports for old call sites.
 
 Dependency pressure inside the project:
 
@@ -275,8 +274,7 @@ Dependency pressure inside the project:
 
 The next clean future cut is:
 
-- remove the temporary re-export from `players.py` after imports are fully narrowed;
-- move `SessionStats` separately only after call sites are narrowed, because it currently bridges standalone gameplay and `GameSessionController`.
+- remove the temporary re-export from `players.py` after imports are fully narrowed.
 
 ### `SessionStats` analysis
 
@@ -326,8 +324,8 @@ Placement options:
 
 Recommended direction:
 
-- long-term target should be a runtime/application-oriented home, not `domain/`;
-- near-term staging is still acceptable in `players.py` until the next boundary step is ready.
+- completed: `SessionStats` now lives in `runtime/session_stats.py`;
+- broader runtime package migration is still deferred.
 
 ## Module responsibilities
 
@@ -383,7 +381,8 @@ Recommended direction:
 
 - `db_manager.py`: SQLite schema and connection setup
 - `persistence/player_repository.py`: player repository CRUD/profile loading
-- `players.py`: in-memory `SessionStats` plus transitional repository re-export
+- `runtime/session_stats.py`: in-memory session aggregate
+- `players.py`: compatibility shim for `SessionStats` and repository re-exports
 - `session_controller.py`: current session coordination plus SQLite run recording
 - `leaderboard.py`: leaderboard queries
 - `highscores.py`: legacy JSON highscore read/write
@@ -403,7 +402,7 @@ Main dependency spine:
 - `game_app.py` -> `maze_game.py`
 - `maze_game.py` -> gameplay helpers (`coins`, `enemies`, `blocks`, `ui`, `sounds`, `sprites`, `maze_gen`)
 - `maze_game.py` -> `session_controller.py`
-- `session_controller.py` -> `persistence/player_repository.py`, `players.py`, `db_manager.py`
+- `session_controller.py` -> `persistence/player_repository.py`, `runtime/session_stats.py`, `db_manager.py`
 - `persistence/player_repository.py` -> `db_manager.py`
 - `leaderboard.py` -> `db_manager.py`
 - `state_machine/leaderboard_state.py` -> `leaderboard.py`
@@ -412,7 +411,7 @@ Notable dependency smell:
 
 - `maze_game.py` still remains the main gameplay concentration point, but pure formatting/scoring logic has been extracted into `gameplay/` to reduce incidental coupling.
 - `ui.py` is shared by both gameplay runtime and state-machine screens, so presentation concerns are still centralized in one broad helper module.
-- `players.py` now mainly holds `SessionStats`, but still temporarily re-exports repository APIs while imports are being narrowed.
+- `players.py` is now only a compatibility shim and should not stay as a long-term ownership module.
 - `coins.py` and `blocks.py` mix gameplay-domain spawning with pygame rendering helpers.
 
 ## Cyclic imports
@@ -493,8 +492,10 @@ Concrete runtime entities:
   - owns current-run state, nested event loop, pause/end flow, and runtime save branching
 - `session_controller.py`
   - session-level runtime/application coordination with persistence write behavior mixed in
+- `runtime/session_stats.py`
+  - isolated runtime-only session aggregate object
 - `players.py`
-  - currently only `SessionStats` plus a temporary compatibility layer
+  - compatibility-only shim, no longer a true runtime owner
 - `state_machine/*`
   - user-facing runtime screens running under the outer loop
 
@@ -515,17 +516,15 @@ Concrete runtime entities:
 
 ### Should `runtime/` be introduced now
 
-Current recommendation: later.
+Current recommendation: partially completed.
 
 Reasoning:
 
-- the runtime boundary is already conceptually strong enough to describe;
-- but it is not yet operationally narrow enough to move safely in one pass;
-- the most likely first useful move is not `game_app.py` or `maze_game.py`, but `SessionStats`, because it is small and already classified as runtime state;
-- after that, a `runtime/` package becomes easier to introduce without bundling too many unrelated moves together.
+- the first narrow runtime-oriented move is done: `SessionStats` now has a dedicated home;
+- but broader runtime file moves are still too coupled for one safe pass.
 
 ### Safe staged path
 
 1. keep documenting runtime concerns explicitly
-2. move `SessionStats` into a runtime/application-oriented module in a narrow pass
-3. only then consider introducing a visible `runtime/` package for orchestration classes and modules
+2. completed: move `SessionStats` into a runtime-oriented module in a narrow pass
+3. only then consider broader runtime package moves for orchestration classes and modules

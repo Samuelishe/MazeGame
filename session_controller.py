@@ -27,7 +27,7 @@ from persistence.player_repository import (
     create_player,
     delete_player,
 )
-from players import SessionStats
+from runtime.session_stats import SessionStats
 
 
 class RoundMode(str, Enum):
