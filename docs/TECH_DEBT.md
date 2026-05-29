@@ -435,6 +435,32 @@ Target outcome:
 
 - explicit decision whether JSON remains compatibility output, archival output, or removable legacy path.
 
+### Legacy Highscore Ownership Analysis
+
+Current code shows:
+
+- `highscore.json` is read by `highscore_adapter.py` during startup migration;
+- `highscore.json` is written during gameplay through `runtime.run_persistence.py`;
+- no runtime read path besides startup migration depends on JSON after gameplay begins;
+- SQLite already owns players, runs, and leaderboard data.
+
+What this means:
+
+- JSON is not the authoritative application store;
+- JSON is not purely archival either;
+- JSON is best described as an active compatibility output and transitional persistence artifact.
+
+Main risk if runtime writes are removed too early:
+
+- the file becomes stale for any user or external workflow that still expects live updates;
+- migration for future fresh DBs would only see the last exported JSON snapshot, not newer SQLite-only progress;
+- the product would silently change its compatibility behavior.
+
+Recommended direction:
+
+- prefer compatibility-export semantics over permanent dual-write ownership;
+- do not remove runtime writes until the compatibility contract is explicitly documented.
+
 ## Safe extraction candidates
 
 These are realistic next targets for extract-only refactors.

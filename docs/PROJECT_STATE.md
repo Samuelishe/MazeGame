@@ -86,6 +86,13 @@ Runtime boundary reality:
 - `maze_stats.db`: authoritative structured store for players and runs
 - `highscore.json`: still updated during gameplay for legacy highscore tracking
 
+Legacy highscore reality:
+
+- `highscore.json` is no longer the only source of persistence data;
+- it is still read during startup migration;
+- it is still written after completed runs;
+- it currently behaves as an active compatibility output and transitional persistence artifact.
+
 ### Persistence Architecture
 
 Current persistence flow is:

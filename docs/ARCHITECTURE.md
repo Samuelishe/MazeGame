@@ -674,3 +674,150 @@ The next useful Stage 4 decision is narrower:
 - keep end-screen UI flow in `maze_game.py`;
 - do not widen the helper into a broad end-of-run coordinator yet;
 - focus next on policy clarification around `highscore.json` ownership or on any smaller remaining persistence-knowledge slice that can be moved without touching UI flow.
+
+## Legacy Highscore Ownership Analysis
+
+### Current `highscore.json` flow
+
+Actual code paths today:
+
+1. startup migration path
+   - `game_app.init_environment()`
+   - `highscore_adapter.migrate_highscore_if_needed(...)`
+   - `highscore_adapter` loads `highscore.json` through `highscores.load_highscore(...)`
+   - if non-empty and not yet migrated, data is copied into SQLite and a `meta` flag is written
+2. runtime gameplay path
+   - `maze_game.py` loads `Highscore` once at gameplay start
+   - end-of-run persistence handoff in `runtime.run_persistence.handle_run_persistence(...)`:
+     - calls `update_highscore_if_better(...)`
+     - calls `save_highscore(...)` on change
+3. after migration
+   - migration does not disable runtime JSON writes
+   - gameplay continues updating `highscore.json`
+   - leaderboard and player/session reads come from SQLite, not from JSON
+
+### What is unique to JSON today
+
+Only the file itself is unique, not the record categories:
+
+- `best_score`
+- `max_coins_value`
+- `best_time_ms`
+- `bronze_max`
+- `silver_max`
+- `gold_max`
+- `diamond_max`
+
+These categories also exist in SQLite, but not with identical ownership semantics:
+
+- JSON is one global record snapshot
+- SQLite is player-scoped and run-scoped
+
+So the unique part is:
+
+- one global legacy-format snapshot file
+- still maintained during runtime for compatibility reasons
+
+### Actual status of `highscore.json`
+
+By code, it is not:
+
+- the authoritative source of truth for the app overall
+- the only runtime store
+- a purely archival format
+
+By code, it is:
+
+- an active runtime store for one legacy global highscore snapshot
+- a compatibility output
+- a transitional persistence artifact
+- a startup migration source until the migration flag is set
+
+### Risk of removing runtime writes
+
+What would likely not break immediately:
+
+- SQLite-backed player loading
+- SQLite-backed run recording
+- leaderboard reads
+- `GameSessionController`
+- `SessionStats`
+
+What would change:
+
+- `highscore.json` would stop reflecting new runs after gameplay
+- any external/manual workflow relying on that file would become stale
+- startup migration for future fresh DBs would only see old JSON state unless export behavior remains
+
+Current runtime consumers besides the gameplay update path:
+
+- no in-app runtime reader uses `highscore.json` after gameplay starts
+- `highscore_adapter.py` reads it only during startup migration
+
+### Policy options
+
+- Option A: keep JSON permanently as a second persistence path
+  - pluses:
+    minimal product risk
+    preserves backward-compatible file behavior
+  - minuses:
+    permanent dual-write complexity
+    persistence ownership stays conceptually split
+  - risk:
+    low short-term, medium long-term
+  - future change size:
+    small now, ongoing maintenance cost later
+
+- Option B: keep JSON as compatibility export only
+  - pluses:
+    moves the project toward SQLite ownership while preserving optional legacy file output
+    can decouple gameplay runtime from direct JSON policy over time
+  - minuses:
+    requires deciding when export happens and what contract it serves
+    still keeps format compatibility obligations
+  - risk:
+    medium
+  - future change size:
+    medium, several narrow steps
+
+- Option C: make SQLite the only source of truth and remove runtime JSON writes entirely
+  - pluses:
+    cleanest persistence model
+    removes dual-write behavior
+  - minuses:
+    highest compatibility risk
+    breaks any workflow expecting a live `highscore.json`
+    requires explicit migration/export story first
+  - risk:
+    medium to high
+  - future change size:
+    medium
+
+### Recommended direction
+
+Recommend Option B.
+
+Reason:
+
+- SQLite is already the structured store the app really uses for players, runs, and leaderboard data;
+- `highscore.json` still behaves like a compatibility side-path, not like the main source of truth;
+- Option B keeps the project honest about that role without forcing a sudden compatibility break.
+
+### Safe staged plan
+
+- Step 4B
+  - document the exact compatibility contract for `highscore.json`
+  - decide whether export is required on every completed run or can move to a narrower boundary
+  - risk:
+    low
+
+- Step 4C
+  - introduce a narrow export-oriented boundary for legacy highscore writes without changing file format
+  - keep behavior the same first
+  - risk:
+    medium
+
+- Step 4D
+  - only after the contract is explicit, decide whether runtime writes stay as compatibility export or can be removed in favor of SQLite-only ownership
+  - risk:
+    medium to high, because this is the first user-visible policy step

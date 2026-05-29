@@ -126,6 +126,27 @@ Concrete future Stage 4 steps:
    - files:
      `highscores.py`, `highscore_adapter.py`, `maze_game.py`, docs only at first
 
+Legacy highscore ownership recommendation after analysis:
+
+- prefer Option B:
+  keep `highscore.json` as a compatibility export path rather than as a co-equal persistence authority;
+- do not remove runtime writes before the compatibility contract is explicit.
+
+Suggested safe sequence:
+
+1. Step 4B
+   - document the exact compatibility contract for `highscore.json`
+   - risk:
+     low
+2. Step 4C
+   - introduce a narrower export-oriented boundary for legacy highscore writes while preserving behavior
+   - risk:
+     medium
+3. Step 4D
+   - decide whether runtime JSON writes remain as compatibility export or are removed after the contract is formally changed
+   - risk:
+     medium to high
+
 3. Preserve read-only leaderboard boundary while documenting it as the stable query slice
   - goal:
     keep `leaderboard.py` coherent and separate it conceptually from write-side refactors.

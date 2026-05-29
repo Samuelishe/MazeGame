@@ -532,6 +532,45 @@ Documentation changes:
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
 
+## 2026-05-29 - Stage 4 Step 4A: legacy highscore ownership analysis
+
+Scope:
+
+- inspect the real role of `highscore.json`
+- determine whether it is still authoritative, merely archival, or a compatibility side-path
+- prepare a safe staged policy decision without changing behavior
+
+Observed:
+
+- `highscore_adapter.py` still reads `highscore.json` during startup migration;
+- `runtime.run_persistence.py` still writes `highscore.json` after improved runs;
+- SQLite already owns player, run, and leaderboard data;
+- no in-app runtime consumer besides startup migration reads JSON after gameplay starts.
+
+Conclusions:
+
+- `highscore.json` is not the authoritative application store;
+- it is not purely archival either;
+- its best current classification is:
+  - active compatibility output
+  - transitional persistence artifact
+- the safest policy direction is to move toward compatibility-export semantics before considering SQLite-only ownership.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+
+Behavior notes:
+
+- No code changes.
+- No gameplay behavior changes.
+- No persistence behavior changes.
+
 ## 2026-05-29 - Documentation consistency cleanup after players.py removal
 
 Scope:

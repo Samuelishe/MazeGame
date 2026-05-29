@@ -1653,6 +1653,46 @@ Reason:
 - keep score preparation and blocking end-screen UI in `maze_game.py`;
 - remaining Stage 4 question is ownership and lifecycle policy of `highscore.json`, not the basic branch mechanics.
 
+## Legacy Highscore Ownership Analysis
+
+### Current `highscore.json` flow
+
+1. `highscore_adapter.py`
+   - reads `highscore.json` through `highscores.load_highscore(...)` during startup migration
+2. `runtime.run_persistence.handle_run_persistence(...)`
+   - updates in-memory `Highscore`
+   - writes `highscore.json` through `save_highscore(...)` on improvement
+3. after migration
+   - SQLite remains the main structured store
+   - JSON still continues to receive runtime updates
+
+### Current status
+
+By actual code, `highscore.json` is:
+
+- not the authoritative store for players/runs/leaderboard data
+- not merely an archive
+- an active compatibility output
+- a transitional persistence artifact
+- a startup migration source until the migration flag is present
+
+### Policy options
+
+- Option A: keep JSON permanently as a second persistence path
+  - risk:
+    low now, medium later
+- Option B: keep JSON as compatibility export only
+  - risk:
+    medium
+- Option C: remove runtime JSON writes and make SQLite the sole active store
+  - risk:
+    medium to high
+
+### Recommended direction
+
+- prefer Option B
+- do not remove runtime JSON writes before the compatibility contract is made explicit
+
 ### Cycles
 
 No direct Python import cycle was found in the current module graph.
