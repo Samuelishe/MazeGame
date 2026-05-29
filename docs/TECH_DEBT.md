@@ -173,7 +173,7 @@ The persistence layer is present, but ownership inside it is still uneven:
 
 - `db_manager.py` is infrastructure-only and clean;
 - `leaderboard.py` is a coherent read-only query module;
-- `players.py` no longer owns the player repository implementation, but still carries transitional re-exports alongside session-only in-memory stats;
+- `players.py` no longer participates in the production import graph;
 - `session_controller.py` still owns session/application orchestration, but raw SQL write logic has been moved out;
 - `highscores.py` keeps a second active persistence path alive during normal gameplay;
 - `highscore_adapter.py` is clean as a migration bridge, but it encodes transitional policy.
@@ -184,7 +184,7 @@ Why it matters:
 - application flow and repository logic are too tightly coupled;
 - future Stage 4 refactors need to separate responsibilities without changing save behavior.
 
-### 12. `SessionStats` ownership was corrected, but compatibility cleanup remains
+### 12. `SessionStats` ownership was corrected
 
 `SessionStats` now lives in `runtime/session_stats.py`, which matches its actual role better.
 
@@ -198,7 +198,7 @@ What the code shows:
 Why it matters:
 
 - the main ownership problem is solved;
-- `players.py` still exists as a compatibility shim and should not remain permanent.
+- the runtime-state ownership is now explicit in the import graph.
 
 ### 13. Runtime boundary exists partially, but broader migration is not in place
 
@@ -280,9 +280,6 @@ Why it matters:
 
 - runtime save behavior is split across SQLite and JSON in the same gameplay path;
 - `persistence/player_repository.py` is now the dedicated player CRUD/profile-loading slice;
-- `players.py` still acts as a compatibility shim for:
-  - `SessionStats`;
-  - transitional persistence re-exports;
 - `session_controller.py` combines:
   - round mode and active-player policy;
   - session lifecycle and player list management;
@@ -293,50 +290,25 @@ Why it matters:
 
 ## Persistence Refactoring Candidates
 
-### 1. Extract player repository boundary
+### 1. Compatibility cleanup after player boundary extraction
 
 Risk level: medium
 
 Why:
 
-- the repository boundary is now isolated, but `players.py` still needs a final cleanup pass to stop exporting persistence APIs.
+- the repository and runtime boundaries are now isolated, and the remaining cleanup is to keep docs and ownership maps aligned with the fact that `players.py` is no longer needed.
 
 Target outcome:
 
-- player models become separable from SQLite CRUD code;
-- `SessionStats` stops sharing a file with repository functions.
+- completed: player models are separable from SQLite CRUD code;
+- completed: `SessionStats` no longer shares a file with repository functions.
 
-### `players.py` decomposition analysis
+Compatibility cleanup status:
 
-Actual responsibility groups inside `players.py`:
-
-- transitional compatibility layer:
-  re-export of `SessionStats` from `runtime.session_stats.py`
-  and `load_players(...)`, `create_player(...)`, `delete_player(...)`, `get_player_by_name(...)`, `get_or_create_player(...)` from `persistence.player_repository.py`
-
-Why this matters:
-
-- `SessionStats` no longer shares a file with persistence logic, but compatibility imports still keep `players.py` alive;
-- `GameSessionController` currently imports both runtime session state and repository functions from the same place, which makes later splits harder to stage safely.
-
-Safe separation candidates:
-
-- completed: `PlayerAggregateStats`
-- completed: `PlayerProfile`
-- completed: `_row_to_aggregate_stats(...)`
-- completed: repository CRUD functions as one cohesive extraction unit
-
-More dangerous separation candidates:
-
-- `SessionStats`, because it is used both by `maze_game.py` standalone mode and by `session_controller.py`
-- `get_or_create_player(...)`, because it sits on the bootstrap path for both controller initialization and legacy highscore migration
-
-Recommended order:
-
-1. completed: separate player models;
-2. completed: separate repository functions into `persistence.player_repository.py`;
-3. completed: move `SessionStats` into `runtime/session_stats.py`;
-4. leave behavior of `get_or_create_player(...)` untouched until bootstrap paths are clearer.
+- completed: `PlayerAggregateStats` and `PlayerProfile` moved to `domain.player_models.py`;
+- completed: repository CRUD functions moved to `persistence.player_repository.py`;
+- completed: `SessionStats` moved to `runtime.session_stats.py`;
+- completed: production imports no longer depend on `players.py`.
 
 ### `SessionStats` analysis
 

@@ -155,7 +155,7 @@ Suggested safe sequence:
    - expected result:
      gameplay runtime prepares run-result values, while persistence orchestration becomes less embedded in end-of-run flow.
    - files:
-     `maze_game.py`, `session_controller.py`, `players.py`
+     `maze_game.py`, `session_controller.py`
 
 4. Clarify legacy JSON highscore policy
    - goal:
@@ -222,7 +222,8 @@ Stage 4 Step 1 status:
 - completed: minimal disposable-DB smoke tests for `persistence.player_repository.py`
 - completed: disposable-DB safety tests for current `GameSessionController.record_run(...)`
 - completed: Stage 4 Step 2B run-write extraction into `persistence/run_repository.py`
-- next sensible candidate: remove compatibility re-export from `players.py` or narrow gameplay persistence knowledge around `RunResult` construction and save-path branching
+- completed: remove the now-unused `players.py` compatibility shim from the production import graph
+- next sensible candidate: narrow gameplay persistence knowledge around `RunResult` construction and save-path branching
 
 SessionStats recommendation after analysis:
 

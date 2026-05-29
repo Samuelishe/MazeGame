@@ -792,3 +792,44 @@ Documentation changes:
 - Updated `docs/REFACTORING_PLAN.md`
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
+
+## 2026-05-29 - Stage 4 cleanup: remove players.py compatibility shim
+
+Scope:
+
+- inspect the full import graph for `players.py`
+- remove the legacy compatibility shim if no real imports remain
+
+Observed:
+
+- no direct production imports from `players.py` remained;
+- no test imports from `players.py` remained;
+- real owners were already in use:
+  - `domain.player_models.py`
+  - `runtime.session_stats.py`
+  - `persistence.player_repository.py`
+
+Code changes:
+
+- Removed `players.py`.
+- Kept production imports unchanged because they were already pointed at the real owning modules.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No persistence behavior changes.
+- No schema changes.
+
+Database notes:
+
+- The working `maze_stats.db` was not deleted or recreated.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`

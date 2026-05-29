@@ -103,7 +103,7 @@ Current persistence boundary reality:
 - `db_manager.py` and `leaderboard.py` are comparatively clean;
 - `persistence/player_repository.py` now owns player CRUD/profile loading;
 - `persistence/run_repository.py` now owns the SQLite run-write path and aggregate update logic;
-- `players.py` is now a compatibility shim for `SessionStats` and repository functions;
+- the production import graph no longer depends on `players.py`;
 - `session_controller.py` is now closer to runtime/application orchestration and no longer owns raw SQL for run writes;
 - runtime save behavior is still split between SQLite and legacy JSON.
 
@@ -120,7 +120,7 @@ SessionStats reality:
 - it is currently owned operationally by `GameSessionController`;
 - `maze_game.py` can also instantiate it directly in controller-free mode;
 - it now lives in `runtime/session_stats.py`;
-- `players.py` remains only as a staging compatibility shim.
+- the old `players.py` compatibility shim is no longer needed by production code.
 
 Database governance baseline:
 
@@ -175,7 +175,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - `maze_game.py` is still the main concentration point
 - too many modules remain in the root directory
 - some modules still mix domain and rendering concerns
-- `players.py` no longer owns player models, repository code, or `SessionStats`; it still carries compatibility re-exports
+- `players.py` has been removed from the active production import graph after the compatibility cleanup
 - repeated state-screen UI patterns are present but not yet centralized
 - persistence boundaries are clearer on paper than in code, especially around `players.py` and `session_controller.py`
 
