@@ -124,25 +124,28 @@ Why it matters:
 - gameplay and presentation concerns are still entangled
 - extraction beyond pure text helpers remains medium risk
 
-### 6A. Mixed support modules still combine domain/runtime rules with pygame drawing
+### 6A. Mixed support modules still need broader presentation cleanup
 
-The two clearest remaining support-module hotspots are:
+The first narrow Stage 3 cleanup is now completed:
 
 - `coins.py`
-  - coin data, rarity configuration, and spawn logic live next to `draw_coin(...)`
+  - coin data, rarity configuration, spawn logic, and rarity text helper remain in place
+  - pygame coin drawing moved out
 - `blocks.py`
-  - block spawn/respawn logic lives next to `draw_block_cell(...)`
+  - block spawn/respawn logic remains in place
+  - pygame block drawing moved out
 
 Why it matters:
 
-- these modules are smaller than `maze_game.py`, so they are good Stage 3 targets;
-- they still keep domain/runtime concerns and presentation concerns in the same files;
-- they are risky enough to deserve narrow extraction passes, but not broad enough to justify a package rewrite.
+- this confirms that narrow presentation boundaries can be introduced safely;
+- broader renderer cleanup still remains for `maze_game.py` and `ui.py`;
+- the project now has a real `presentation/` package without broad restructuring.
 
 Current Stage 3 conclusion:
 
-- safest next move is to extract draw-path helpers only;
-- `effects.py` and `palette.py` do not currently show the same mixed-responsibility problem.
+- completed:
+  extract draw-path helpers only;
+- `effects.py` and `palette.py` still do not show the same mixed-responsibility problem.
 
 ### 7. Partial package migration
 
@@ -493,10 +496,14 @@ Stage 4 has reduced the persistence hotspot enough that the next best low-risk a
 
 Current recommended Stage 3 target:
 
-- `coins.py`
-  - extract pygame draw helpers only
-- `blocks.py`
-  - extract pygame draw helpers only
+- completed:
+  - `presentation/coin_rendering.py`
+  - `presentation/block_rendering.py`
+
+Next recommended Stage 3 target:
+
+- do not widen the change surface immediately;
+- keep world-render extraction as a separate future pass.
 
 What should wait:
 

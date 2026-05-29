@@ -1038,3 +1038,50 @@ Documentation changes:
 - Updated `docs/ROADMAP.md`
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
+
+## 2026-05-29 - Stage 3 Step 2: Extract coin and block rendering helpers
+
+Scope:
+
+- create the first narrow `presentation/` package boundary
+- move only coin/block pygame draw-path helpers
+- keep spawn/data/runtime support logic in `coins.py` and `blocks.py`
+
+Code changes:
+
+- Added `presentation/__init__.py`.
+- Added `presentation/coin_rendering.py`.
+- Added `presentation/block_rendering.py`.
+- Moved from `coins.py`:
+  - `_draw_diamond(...)`
+  - `draw_coin(...)`
+- Moved from `blocks.py`:
+  - `_pulse_color(...)`
+  - `draw_block_cell(...)`
+- Updated `maze_game.py` imports to use:
+  - `presentation.coin_rendering.draw_coin`
+  - `presentation.block_rendering.draw_block_cell`
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No persistence changes.
+- No UI/UX changes.
+- World-render extraction did not start in this pass.
+
+Testing notes:
+
+- No dedicated rendering tests were added.
+- This is a pygame draw-path extraction with existing behavior preserved.
+- Validation relies on `py_compile`, the existing `pytest` suite, and future manual visual verification if needed.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/ROADMAP.md`

@@ -15,30 +15,32 @@ Keep gameplay stable while continuing small, testable architectural improvements
   - `runtime/run_persistence.py`
   - `players.py` removed
   - `highscore.json` compatibility contract documented
-- Stage 3 has now started with mixed domain/rendering boundary analysis.
+- Stage 3 Step 1 analysis is completed.
+- Stage 3 Step 2 narrow draw-path extraction is completed:
+  - `presentation/coin_rendering.py`
+  - `presentation/block_rendering.py`
 
 ## Next recommended implementation step
 
-Stage 3 Step 1 code-pass:
+Next Stage 3 follow-up:
 
-1. extract only the pygame draw path from `coins.py`
-2. extract only the pygame draw path from `blocks.py`
-3. keep spawn/data/runtime logic in place
-4. do not combine that pass with `maze_game.py` renderer extraction or `ui.py` cleanup
+1. keep `coins.py` and `blocks.py` stable after the narrow draw split
+2. reassess `maze_game.py` world-render extraction separately
+3. do not combine that future pass with `ui.py` cleanup
 
 Why this next:
 
-- it reduces mixed responsibilities in smaller modules first;
-- it is safer than a broad `maze_game.py` rendering move;
-- it builds a cleaner presentation boundary without changing gameplay rules.
+- the first presentation boundary already exists now;
+- the next useful move is broader and therefore should stay separate;
+- this keeps Stage 3 incremental instead of turning into a package rewrite.
 
 ## Near-term roadmap
 
 ### Phase A: Stage 3 mixed support cleanup
 
-1. Narrow draw-helper extraction from `coins.py`
-2. Narrow draw-helper extraction from `blocks.py`
-3. Re-evaluate whether `ui.py` has a similarly small presentation-only split
+1. Completed: narrow draw-helper extraction from `coins.py`
+2. Completed: narrow draw-helper extraction from `blocks.py`
+3. Re-evaluate whether `maze_game.py` world rendering or `ui.py` has a similarly safe next split
 
 ### Phase B: Stage 5 state-screen duplication cleanup
 

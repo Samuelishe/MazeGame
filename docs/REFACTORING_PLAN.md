@@ -84,10 +84,10 @@ Stage 3 analysis status:
 
 Recommended first Stage 3 code-pass:
 
-1. extract only `draw_coin(...)` and its tiny rendering helper(s) from `coins.py`
-2. extract only `draw_block_cell(...)` and its tiny rendering helper(s) from `blocks.py`
-3. leave spawn/data helpers in place
-4. do not combine this with `maze_game.py` world-render extraction or `ui.py` cleanup
+1. completed: extract only `draw_coin(...)` and its tiny rendering helper(s) from `coins.py`
+2. completed: extract only `draw_block_cell(...)` and its tiny rendering helper(s) from `blocks.py`
+3. completed: leave spawn/data helpers in place
+4. keep this separate from `maze_game.py` world-render extraction and `ui.py` cleanup
 
 ## Stage 4
 

@@ -21,6 +21,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `game_app.py`
 - `maze_game.py`
 - `runtime/session_stats.py`
+- `runtime/run_persistence.py`
 
 ### State machine / screen flow
 
@@ -49,6 +50,9 @@ This is an inspection document only. It does not imply any immediate file moves.
 
 ### Presentation / media / pygame-facing helpers
 
+- `presentation/__init__.py`
+- `presentation/coin_rendering.py`
+- `presentation/block_rendering.py`
 - `ui.py`
 - `sounds.py`
 - `sprites.py`
@@ -145,6 +149,57 @@ This is an inspection document only. It does not imply any immediate file moves.
   keep in `runtime/`.
 - Notes:
   owns JSON highscore update plus standalone/controller result-recording branching without taking over score calculation, UI, or raw SQLite writes.
+
+### `presentation/coin_rendering.py`
+
+- Role:
+  pygame-facing coin rendering helpers.
+- Main classes:
+  none.
+- Main functions:
+  `draw_coin`.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  `pygame`, `coins`.
+- Future fit:
+  keep in `presentation/`.
+- Notes:
+  Stage 3 Step 2 extracted the coin draw path here without changing coin spawn/data ownership.
+
+### `presentation/__init__.py`
+
+- Role:
+  package marker for narrow pygame-facing presentation helpers.
+- Main classes:
+  none.
+- Main functions:
+  none.
+- Used by:
+  import system only.
+- Depends on:
+  none.
+- Future fit:
+  keep as package marker.
+- Notes:
+  introduced in Stage 3 Step 2 as the first explicit `presentation/` boundary.
+
+### `presentation/block_rendering.py`
+
+- Role:
+  pygame-facing temporary block rendering helpers.
+- Main classes:
+  none.
+- Main functions:
+  `draw_block_cell`.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  `pygame`, stdlib only.
+- Future fit:
+  keep in `presentation/`.
+- Notes:
+  Stage 3 Step 2 extracted the block draw path here without changing block spawn/respawn ownership.
 
 ### `persistence/run_repository.py`
 
@@ -864,19 +919,19 @@ Priority C: high risk
 ### `blocks.py`
 
 - Role:
-  temporary blocking wall model, spawn/respawn behavior, and rendering.
+  temporary blocking wall model plus spawn/respawn behavior.
 - Main classes:
   `Block`.
 - Main functions:
-  `spawn_blocks`, `respawn_block`, `draw_block_cell`.
+  `spawn_blocks`, `respawn_block`.
 - Used by:
   `maze_game.py`.
 - Depends on:
-  `pygame`, stdlib.
+  stdlib.
 - Future fit:
-  split between `domain/blocks.py` and `presentation/block_rendering.py`, or keep together under `gameplay/blocks.py` until a renderer boundary exists.
+  keep as domain/runtime support beside `presentation/block_rendering.py`, or later regroup under a gameplay/domain package.
 - Notes:
-  mixes gameplay placement logic with pygame drawing.
+  Stage 3 Step 2 removed pygame drawing ownership from this module.
 
 #### `blocks.py` responsibility map
 
@@ -905,21 +960,21 @@ Priority C: high risk
   - classification:
     rendering helper
   - used by:
-    `draw_block_cell(...)`
+    `presentation.block_rendering.draw_block_cell(...)`
   - depends on:
     stdlib math only
 - `draw_block_cell(...)`
   - classification:
     pygame rendering logic
   - used by:
-    `maze_game.py`
+    `maze_game.py` through `presentation.block_rendering`
   - depends on:
     `pygame`, `_pulse_color(...)`
 
 #### `blocks.py` Stage 3 analysis
 
 - Safe future split candidate:
-  move only `_pulse_color(...)` and `draw_block_cell(...)` behind a presentation helper while keeping `Block`, `spawn_blocks(...)`, and `respawn_block(...)` together.
+  completed: `_pulse_color(...)` and `draw_block_cell(...)` moved behind `presentation.block_rendering` while keeping `Block`, `spawn_blocks(...)`, and `respawn_block(...)` together.
 - Why this is the narrowest useful step:
   rendering has a small explicit API, while spawn/respawn behavior stays tightly coupled to maze data and forbidden-cell rules.
 - Risk:
@@ -928,19 +983,19 @@ Priority C: high risk
 ### `coins.py`
 
 - Role:
-  coin rarity definitions, spawn logic, coin rendering.
+  coin rarity definitions, data, spawn logic, and rarity text helper.
 - Main classes:
   `CoinRarity`, `RarityConfig`, `Coin`.
 - Main functions:
-  `spawn_coins`, `rarity_icon`, `draw_coin`.
+  `spawn_coins`, `rarity_icon`.
 - Used by:
   `maze_game.py`, `gameplay/result_text.py`.
 - Depends on:
-  `pygame`, stdlib.
+  stdlib.
 - Future fit:
-  split between `domain/coins.py` and `presentation/coin_rendering.py`, or keep together under `gameplay/coins.py` until rendering split is justified.
+  keep as domain/runtime support beside `presentation/coin_rendering.py`, or later regroup under a gameplay/domain package.
 - Notes:
-  another mixed domain/rendering module.
+  Stage 3 Step 2 removed pygame drawing ownership from this module.
 
 #### `coins.py` responsibility map
 
@@ -997,21 +1052,21 @@ Priority C: high risk
   - classification:
     pygame rendering helper
   - used by:
-    `draw_coin(...)`
+    `presentation.coin_rendering.draw_coin(...)`
   - depends on:
     `pygame`
 - `draw_coin(...)`
   - classification:
     pygame rendering logic
   - used by:
-    `maze_game.py`
+    `maze_game.py` through `presentation.coin_rendering`
   - depends on:
     `pygame`, `RARITY_CONFIG`, `_draw_diamond(...)`
 
 #### `coins.py` Stage 3 analysis
 
 - Safe future split candidate:
-  move only `_draw_diamond(...)` and `draw_coin(...)` behind a presentation helper first.
+  completed: `_draw_diamond(...)` and `draw_coin(...)` moved behind `presentation.coin_rendering`.
 - Keep in place for now:
   `CoinRarity`, `RarityConfig`, `RARITY_CONFIG`, `Coin`, `_choose_rarity(...)`, `spawn_coins(...)`, `rarity_icon(...)`.
 - Why `rarity_icon(...)` is not grouped with draw helpers:
@@ -1373,15 +1428,15 @@ Priority C: high risk
 Current mixed-support conclusions:
 
 - `coins.py`
-  - real mixed module:
+  - previous mixed module:
     domain spawn/data + pygame drawing
-  - safest next extraction:
-    move draw helpers only
+  - current state:
+    draw helpers moved to `presentation.coin_rendering`
 - `blocks.py`
-  - real mixed module:
+  - previous mixed module:
     runtime spawn/respawn + pygame drawing
-  - safest next extraction:
-    move draw helpers only
+  - current state:
+    draw helpers moved to `presentation.block_rendering`
 - `effects.py`
   - presentation-only today
   - not an immediate Stage 3 split target
@@ -1403,9 +1458,9 @@ Option assessment for Stage 3:
 
 Recommended next code-pass:
 
-- choose Option B;
-- start with `coins.py` and `blocks.py` draw-path extraction only;
-- do not combine that step with `maze_game.py` renderer extraction or `ui.py` cleanup in the same pass.
+- completed: Option B narrow draw-path extraction for `coins.py` and `blocks.py`;
+- next sensible Stage 3 target:
+  do not combine further work with `maze_game.py` world-render extraction or `ui.py` cleanup in the same pass.
 
 ## Dependency map
 
@@ -1421,6 +1476,8 @@ Recommended next code-pass:
 - `maze_game.py` -> `enemies.py`
 - `maze_game.py` -> `coins.py`
 - `maze_game.py` -> `blocks.py`
+- `maze_game.py` -> `presentation.coin_rendering.py`
+- `maze_game.py` -> `presentation.block_rendering.py`
 - `maze_game.py` -> `effects.py`
 - `maze_game.py` -> `ui.py`
 - `maze_game.py` -> `sounds.py`
@@ -1475,8 +1532,8 @@ Recommended next code-pass:
 
 ### Mixed-responsibility modules
 
-- `coins.py`: spawn/domain + rendering.
-- `blocks.py`: spawn/domain + rendering.
+- `coins.py`: spawn/domain + rarity text helper; pygame rendering now lives in `presentation.coin_rendering.py`.
+- `blocks.py`: spawn/respawn support; pygame rendering now lives in `presentation.block_rendering.py`.
 - `ui.py`: text/font helpers + overlay rendering + blocking choice loops.
 
 ### State modules with repeated patterns

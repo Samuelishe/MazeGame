@@ -28,7 +28,7 @@ The project also now has an explicit governance baseline for future agents:
 Current refactoring phase reality:
 
 - Stage 4 persistence-boundary work is largely completed at the narrow-boundary level;
-- Stage 3 has now started with domain/rendering boundary analysis for mixed support modules.
+- Stage 3 has now started and completed its first narrow presentation-boundary extraction pass for mixed support modules.
 
 ## Current entrypoints
 
@@ -174,6 +174,7 @@ Current structure reality is still root-heavy:
 - `domain/` now exists and currently hosts pure player domain models
 - `persistence/` now exists and currently hosts the player repository boundary
 - `runtime/` now exists and now contains `SessionStats` plus the gameplay persistence handoff helper
+- `presentation/` now exists and currently hosts coin/block rendering helpers
 
 ## External dependencies actually used
 
@@ -202,11 +203,11 @@ The architecture inspection confirms that the main structural issue is not broke
 
 - `maze_game.py` is still the main concentration point
 - too many modules remain in the root directory
-- some modules still mix domain and rendering concerns
+- some modules still mix domain and rendering concerns, but `coins.py` and `blocks.py` no longer own their pygame draw paths
 - `players.py` has been removed after the compatibility cleanup
 - repeated state-screen UI patterns are present but not yet centralized
 - persistence boundaries are clearer than before, but active JSON compatibility ownership still remains a policy hotspot
-- `coins.py` and `blocks.py` are now the clearest Stage 3 mixed domain/rendering modules
+- `coins.py` and `blocks.py` are now narrower support modules after draw-path extraction into `presentation/`
 
 ## Stabilization notes
 
@@ -223,8 +224,9 @@ The architecture inspection confirms that the main structural issue is not broke
 - `persistence/player_repository.py` now has minimal disposable-DB smoke coverage that uses temporary SQLite files and does not touch the working `maze_stats.db`.
 - `GameSessionController.record_run(...)` now also has disposable-DB safety coverage that uses temporary SQLite files and does not touch the working `maze_stats.db`.
 - Documentation and environment assumptions now point to `.venv`, `pygame-ce`, and the current pytest workflow.
-- Stage 3 analysis has now identified a narrow next step:
-  extract only the pygame draw-path helpers from `coins.py` and `blocks.py` before attempting broader presentation work.
+- Stage 3 Step 2 completed:
+  coin/block pygame draw helpers now live in `presentation/`.
+- World-render extraction and broader presentation cleanup have not started.
 
 ## Inspection notes
 

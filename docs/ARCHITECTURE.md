@@ -139,6 +139,8 @@ Main modules:
 - `persistence/run_repository.py`: completed-run writes and aggregate updates
 - `runtime/run_persistence.py`: end-of-run persistence handoff branching
 - `runtime/session_stats.py`: in-memory `SessionStats`
+- `presentation/coin_rendering.py`: coin draw helpers
+- `presentation/block_rendering.py`: temporary block draw helpers
 - `session_controller.py`: in-memory session plus run recording
 - `leaderboard.py`: read queries for leaderboard screens
 
@@ -323,9 +325,9 @@ Recommended direction:
 - Gameplay/domain:
   `domain/player_models.py`, `maze_gen.py`, `grid_utils.py`, `enemies.py`, `gameplay/*`
 - Mixed gameplay + presentation support:
-  `coins.py`, `blocks.py`
+  none of the Stage 3 narrow draw-boundary work remains in these two modules; they are now closer to gameplay/runtime support modules with presentation helpers extracted
 - Presentation/media:
-  `ui.py`, `sounds.py`, `sprites.py`, `effects.py`, `palette.py`
+  `presentation/coin_rendering.py`, `presentation/block_rendering.py`, `ui.py`, `sounds.py`, `sprites.py`, `effects.py`, `palette.py`
 - Persistence/data:
   `db_manager.py`, `persistence/player_repository.py`, `session_controller.py`, `leaderboard.py`,
   `highscores.py`, `highscore_adapter.py`
@@ -352,8 +354,8 @@ Recommended direction:
 - `maze_gen.py`: maze generation
 - `grid_utils.py`: shared grid helpers
 - `enemies.py`: enemy models, schemes, movement strategies
-- `coins.py`: mixed module with coin spawning plus coin rendering
-- `blocks.py`: mixed module with block spawn/respawn plus block rendering
+- `coins.py`: coin domain/runtime support; coin drawing now lives in `presentation/coin_rendering.py`
+- `blocks.py`: block domain/runtime support; block drawing now lives in `presentation/block_rendering.py`
 - `effects.py`: presentation-only visual effects
 - `palette.py`: presentation-only color palette generation
 - `sprites.py`: sprite sheet helpers
@@ -419,9 +421,8 @@ Current internal responsibility split:
 
 Interpretation:
 
-- the module is genuinely mixed;
-- the narrowest safe split is the draw path only;
-- `rarity_icon(...)` should not move with rendering by default because deterministic text builders already use it without `pygame`.
+- the previous mixed draw-path problem is now reduced;
+- `rarity_icon(...)` still belongs better with deterministic text/data helpers than with `pygame` rendering.
 
 ### `blocks.py`
 
@@ -438,9 +439,8 @@ Current internal responsibility split:
 
 Interpretation:
 
-- the module is also genuinely mixed;
-- the narrowest safe split is the draw path only;
-- spawn/respawn logic should stay together because it is shaped by maze layout and forbidden-cell rules rather than by presentation concerns.
+- the previous mixed draw-path problem is now reduced;
+- spawn/respawn logic still belongs together because it is shaped by maze layout and forbidden-cell rules rather than by presentation concerns.
 
 ### `effects.py` and `palette.py`
 
@@ -465,9 +465,10 @@ Interpretation:
 
 ### Recommended next Stage 3 code-pass
 
-- choose Option B;
-- extract only the draw path from `coins.py` and `blocks.py`;
-- do not combine that pass with `maze_game.py` world-render extraction or `ui.py` cleanup.
+- Stage 3 Step 2 is now completed:
+  draw-path extraction for `coins.py` and `blocks.py`.
+- Next sensible follow-up:
+  keep `maze_game.py` world-render extraction and `ui.py` cleanup as separate future passes.
 
 ## Cyclic imports
 
