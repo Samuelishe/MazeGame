@@ -11,7 +11,6 @@ maze_stats.db
 *.db-wal
 
 logs/
-runtime/
 output/
 tmp/
 

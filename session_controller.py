@@ -16,10 +16,9 @@ session_controller.py — управление игроками и сохран�
 
 from dataclasses import dataclass, field
 from enum import Enum
-import datetime as _dt
 from typing import Dict
 
-from db_manager import PathType, get_connection, init_db
+from db_manager import PathType, init_db
 from domain.player_models import PlayerProfile
 from persistence.player_repository import (
     load_players,
@@ -27,6 +26,7 @@ from persistence.player_repository import (
     create_player,
     delete_player,
 )
+from persistence.run_repository import write_completed_run
 from runtime.session_stats import SessionStats
 
 
@@ -367,8 +367,7 @@ class GameSessionController:
         Регистрирует завершённый забег:
 
         - обновляет SessionStats для соответствующего игрока;
-        - добавляет запись в runs в БД;
-        - обновляет агрегированные значения в player_stats.
+        - делегирует persistence write path в отдельный repository boundary.
 
         Эта функция не занимается пересчётом highscore.json — только SQLite.
         """
@@ -385,106 +384,5 @@ class GameSessionController:
             diamond_count=result.diamond_count,
         )
 
-        # 2) пишем в БД: runs + player_stats
-        connection = get_connection(self.db_path)
-        try:
-            cursor = connection.cursor()
-            try:
-                # 2.1. вставляем запись в runs
-                timestamp_utc = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-                cursor.execute(
-                    """
-                    INSERT INTO runs (
-                        player_id,
-                        score,
-                        elapsed_ms,
-                        coins_value,
-                        won,
-                        bronze_count,
-                        silver_count,
-                        gold_count,
-                        diamond_count,
-                        timestamp_utc
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                    """,
-                    (
-                        result.player_id,
-                        result.score,
-                        result.elapsed_ms,
-                        result.coins_value_sum,
-                        1 if result.won else 0,
-                        result.bronze_count,
-                        result.silver_count,
-                        result.gold_count,
-                        result.diamond_count,
-                        timestamp_utc,
-                    ),
-                )
-
-                # 2.2. обновляем агрегаты в player_stats
-                cursor.execute(
-                    """
-                    UPDATE player_stats
-                    SET
-                        best_score = CASE
-                            WHEN ? > best_score THEN ?
-                            ELSE best_score
-                        END,
-                        max_coins = CASE
-                            WHEN ? > max_coins THEN ?
-                            ELSE max_coins
-                        END,
-                        best_time_ms = CASE
-                            WHEN ? = 1 THEN
-                                CASE
-                                    WHEN best_time_ms IS NULL THEN ?
-                                    WHEN ? < best_time_ms THEN ?
-                                    ELSE best_time_ms
-                                END
-                            ELSE best_time_ms
-                        END,
-                        total_runs = total_runs + 1,
-                        wins = wins + ?,
-                        deaths = deaths + ?,
-                        total_time_ms = total_time_ms + ?,
-                        total_coins = total_coins + ?,
-                        bronze_total = bronze_total + ?,
-                        silver_total = silver_total + ?,
-                        gold_total = gold_total + ?,
-                        diamond_total = diamond_total + ?
-                    WHERE player_id = ?;
-                    """,
-                    (
-                        # best_score
-                        result.score,
-                        result.score,
-                        # max_coins
-                        result.coins_value_sum,
-                        result.coins_value_sum,
-                        # best_time_ms (логика только для побед)
-                        1 if result.won else 0,         # ? = 1 -> победа
-                        result.elapsed_ms,              # новое время
-                        result.elapsed_ms,              # сравнение
-                        result.elapsed_ms,              # если лучше — ставим
-                        # wins / deaths
-                        1 if result.won else 0,
-                        0 if result.won else 1,
-                        # total_time_ms / total_coins
-                        result.elapsed_ms,
-                        result.coins_value_sum,
-                        # суммарные монеты по типам
-                        result.bronze_count,
-                        result.silver_count,
-                        result.gold_count,
-                        result.diamond_count,
-                        # WHERE player_id = ?
-                        result.player_id,
-                    ),
-                )
-
-                connection.commit()
-            finally:
-                cursor.close()
-        finally:
-            connection.close()
+        # 2) делегируем raw SQL write path в persistence boundary
+        write_completed_run(self.db_path, result)

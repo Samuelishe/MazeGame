@@ -31,6 +31,7 @@ Supporting file:
 - Pure gameplay helpers: `gameplay/`
 - Player domain models: `domain/player_models.py`
 - Player repository boundary: `persistence/player_repository.py`
+- Run repository boundary: `persistence/run_repository.py`
 - Runtime session aggregate: `runtime/session_stats.py`
 - Maze position helper: `gameplay/maze_positions.py`
 - Score preparation helper: `gameplay/scoring.py`

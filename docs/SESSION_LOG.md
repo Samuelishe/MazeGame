@@ -746,3 +746,49 @@ Documentation changes:
 - Updated `docs/REFACTORING_PLAN.md`
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
+
+## 2026-05-29 - Stage 4 Step 2B: extract run repository boundary
+
+Scope:
+
+- move only the completed-run SQL write path out of `GameSessionController.record_run(...)`
+- keep runtime/session ownership in the controller
+- fix old `.gitignore` rule that accidentally ignored the Python package `runtime/`
+
+Code changes:
+
+- Added `persistence/run_repository.py`.
+- Moved from `session_controller.py` into the new repository module:
+  - `INSERT INTO runs`;
+  - `UPDATE player_stats`;
+  - win-only `best_time_ms` policy;
+  - SQLite connection/cursor/commit handling.
+- Updated `GameSessionController.record_run(...)` to:
+  - update `SessionStats`;
+  - delegate the write path to `persistence.run_repository.write_completed_run(...)`.
+- Updated `.gitignore` to stop ignoring the Python package `runtime/`.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No production persistence behavior changes.
+- No schema changes.
+
+Database notes:
+
+- The working `maze_stats.db` was not deleted or recreated.
+
+Testing notes:
+
+- No new direct `run_repository` tests were added.
+- Existing `tests/test_session_controller_record_run.py` already locks the public `record_run(...)` contract on temporary SQLite files, which is sufficient for this boundary move without duplicating the same assertions at two layers.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`

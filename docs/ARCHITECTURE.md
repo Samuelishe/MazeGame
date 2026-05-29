@@ -136,6 +136,7 @@ Main modules:
 
 - `db_manager.py`: schema creation and connections
 - `persistence/player_repository.py`: player CRUD and profile loading
+- `persistence/run_repository.py`: completed-run writes and aggregate updates
 - `runtime/session_stats.py`: in-memory `SessionStats`
 - `players.py`: legacy compatibility shim for `SessionStats` and repository re-exports
 - `session_controller.py`: in-memory session plus run recording
@@ -148,8 +149,7 @@ Flow:
 3. At end of a run, `maze_game.play_maze()` creates `RunResult`
 4. `session_controller.record_run(...)` updates:
    - in-memory `SessionStats`
-   - `runs`
-   - `player_stats`
+   - delegates SQL writes to `persistence.run_repository`
    - disposable-DB safety coverage now exists for this controller-level contract
 
 ### Legacy JSON path
@@ -172,12 +172,14 @@ Result: runtime persistence is split between SQLite and legacy JSON.
   - SQLite infrastructure only: connection setup, PRAGMA, schema bootstrap, `meta` flags.
 - `persistence/player_repository.py`
   - dedicated player CRUD/profile-loading repository over SQLite.
+- `persistence/run_repository.py`
+  - dedicated completed-run write path over SQLite, including `runs` insert and `player_stats` aggregate updates.
 - `runtime/session_stats.py`
   - isolated runtime-only `SessionStats`.
 - `players.py`
   - compatibility re-export for `SessionStats` and repository imports.
 - `session_controller.py`
-  - mixed module: session orchestration plus SQLite write path for completed runs.
+  - session orchestration plus runtime/session-state ownership for completed runs.
 - `leaderboard.py`
   - read-only query API over SQLite.
 - `highscores.py`
@@ -206,8 +208,7 @@ Result: runtime persistence is split between SQLite and legacy JSON.
    - otherwise creates `RunResult` and calls `session_controller.record_run(...)`.
 5. `GameSessionController.record_run(...)`:
    - updates in-memory `SessionStats`;
-   - inserts into `runs`;
-   - updates aggregates in `player_stats`.
+   - delegates completed-run persistence to `persistence.run_repository.write_completed_run(...)`.
 
 ### Responsibility boundary assessment
 
@@ -382,9 +383,10 @@ Recommended direction:
 
 - `db_manager.py`: SQLite schema and connection setup
 - `persistence/player_repository.py`: player repository CRUD/profile loading
+- `persistence/run_repository.py`: run-history insert and `player_stats` aggregate updates
 - `runtime/session_stats.py`: in-memory session aggregate
 - `players.py`: compatibility shim for `SessionStats` and repository re-exports
-- `session_controller.py`: current session coordination plus SQLite run recording
+- `session_controller.py`: current session coordination plus run-recording orchestration
 - `leaderboard.py`: leaderboard queries
 - `highscores.py`: legacy JSON highscore read/write
 - `highscore_adapter.py`: one-time migration bridge
@@ -405,6 +407,7 @@ Main dependency spine:
 - `maze_game.py` -> gameplay helpers (`coins`, `enemies`, `blocks`, `ui`, `sounds`, `sprites`, `maze_gen`)
 - `maze_game.py` -> `session_controller.py`
 - `session_controller.py` -> `persistence/player_repository.py`, `runtime/session_stats.py`, `db_manager.py`
+- `session_controller.py` -> `persistence/run_repository.py`
 - `persistence/player_repository.py` -> `db_manager.py`
 - `leaderboard.py` -> `db_manager.py`
 - `state_machine/leaderboard_state.py` -> `leaderboard.py`
@@ -547,30 +550,22 @@ The current end-of-run persistence flow is:
    - calls `GameSessionController.record_run(...)`
 4. `GameSessionController.record_run(...)`
    - updates `SessionStats`
-   - inserts one row into `runs`
-   - updates one row in `player_stats`
+   - delegates one completed-run write transaction to `persistence.run_repository`
 
-### What `record_run(...)` currently mixes
+### What `record_run(...)` mixes after extraction
 
 - runtime/application orchestration
   - obtains per-player session aggregate
   - applies one completed-run result to in-memory state
-- persistence write logic
-  - opens SQLite connection
-  - inserts into `runs`
-  - updates aggregate row in `player_stats`
-- application-level aggregate policy
-  - `best_time_ms` changes only on win
-  - wins/deaths are derived from `result.won`
+- repository delegation
+  - hands the SQL write path to `persistence.run_repository`
 
 ### Best current extraction boundary
 
-The most natural next split is:
+Completed in the current code:
 
-- keep `GameSessionController` as orchestration owner
-- move the SQL write path behind a persistence-facing boundary
-
-That points to a future `persistence/run_repository.py` rather than to a broader service layer.
+- `GameSessionController` remains the orchestration owner;
+- raw SQL write details now live in `persistence.run_repository`.
 
 ### Option assessment
 
@@ -588,7 +583,7 @@ That points to a future `persistence/run_repository.py` rather than to a broader
 
 Recommend Option B.
 
-This keeps:
+This now keeps:
 
 - runtime/session ownership in `GameSessionController`
 - persistence write details in a dedicated persistence module

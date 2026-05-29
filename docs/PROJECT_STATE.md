@@ -102,16 +102,17 @@ Current persistence boundary reality:
 
 - `db_manager.py` and `leaderboard.py` are comparatively clean;
 - `persistence/player_repository.py` now owns player CRUD/profile loading;
+- `persistence/run_repository.py` now owns the SQLite run-write path and aggregate update logic;
 - `players.py` is now a compatibility shim for `SessionStats` and repository functions;
-- `session_controller.py` still mixes session orchestration and direct SQL writes;
+- `session_controller.py` is now closer to runtime/application orchestration and no longer owns raw SQL for run writes;
 - runtime save behavior is still split between SQLite and legacy JSON.
 
 Run-recording boundary reality:
 
 - `maze_game.py` prepares `RunResult` and hands it to `GameSessionController`;
-- `GameSessionController.record_run(...)` still owns both runtime `SessionStats` updates and direct SQLite writes;
+- `GameSessionController.record_run(...)` now owns runtime `SessionStats` updates and delegates SQLite writes to `persistence.run_repository`;
 - `GameSessionController.record_run(...)` now has disposable-DB safety coverage on isolated temporary SQLite files;
-- the next realistic persistence split is the SQL write path inside `record_run(...)`, not a broader gameplay-flow change.
+- the SQL write path has now been extracted without changing the public `GameSessionController` contract.
 
 SessionStats reality:
 

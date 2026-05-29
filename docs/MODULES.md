@@ -56,6 +56,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 ### Persistence / session / leaderboard data
 
 - `persistence/player_repository.py`
+- `persistence/run_repository.py`
 - `db_manager.py`
 - `players.py`
 - `session_controller.py`
@@ -127,6 +128,23 @@ This is an inspection document only. It does not imply any immediate file moves.
   keep in `runtime/`.
 - Notes:
   Stage 4 Step 1C moved `SessionStats` here as the first explicit runtime-oriented boundary step; no broader runtime package migration has started.
+
+### `persistence/run_repository.py`
+
+- Role:
+  SQLite-backed completed-run write boundary.
+- Main classes:
+  none.
+- Main functions:
+  `write_completed_run`.
+- Used by:
+  `session_controller.py`.
+- Depends on:
+  `db_manager`.
+- Future fit:
+  keep in `persistence/`.
+- Notes:
+  owns the former `record_run(...)` raw SQL path: `runs` insert, `player_stats` aggregate update, win-only `best_time_ms` policy, and connection/cursor lifecycle.
 
 ### `game_app.py`
 
@@ -455,11 +473,11 @@ Priority C: high risk
 - Used by:
   `game_app.py`, `maze_game.py`, `state_machine/player_select_state.py`, `state_machine/mode_select_state.py`, `state_machine/multiplayer_setup_state.py`, `state_machine/leaderboard_state.py`.
 - Depends on:
-  `db_manager`, `players`.
+  `db_manager`, `persistence.player_repository`, `persistence.run_repository`, `runtime.session_stats`.
 - Future fit:
   `persistence/session_controller.py` or `application/session_controller.py`.
 - Notes:
-  not a gameplay module, but still broad because it combines session coordination and direct SQL write orchestration; this is the main Stage 4 boundary hotspot.
+  not a gameplay module, but still broad because it combines session coordination, player rotation policy, and run-recording orchestration; raw SQL write ownership has now moved to `persistence/run_repository.py`.
 
 ### `db_manager.py`
 
@@ -732,9 +750,9 @@ Priority C: high risk
   - domain logic:
     `RoundMode`, `RunResult`, current-player rotation policy.
   - persistence logic:
-    `record_run(...)` SQL insert/update path, defensive DB init in lifecycle methods.
+    defensive DB init in lifecycle methods, repository delegation for completed-run writes.
   - mixed incorrectly:
-    yes; application/session orchestration and repository-style writes are combined.
+    still partially; player/session orchestration remains mixed with persistence-boundary calls, but raw SQL no longer lives here.
 
 - `leaderboard.py`
   - domain logic:
@@ -1268,9 +1286,11 @@ Priority C: high risk
 - `session_controller.py` -> `domain.player_models`
 - `session_controller.py` -> `db_manager.py`
 - `session_controller.py` -> `persistence.player_repository.py`
+- `session_controller.py` -> `persistence.run_repository.py`
 - `session_controller.py` -> `runtime/session_stats.py`
 - `persistence/player_repository.py` -> `db_manager.py`
 - `persistence/player_repository.py` -> `domain.player_models`
+- `persistence/run_repository.py` -> `db_manager.py`
 - `leaderboard.py` -> `db_manager.py`
 - `highscore_adapter.py` -> `db_manager.py`
 - `highscore_adapter.py` -> `highscores.py`
@@ -1462,50 +1482,25 @@ Files that should not belong to runtime:
    - calls `session_controller.record_run(run_result)`
 5. `GameSessionController.record_run(...)`
    - updates in-memory `SessionStats`
-   - inserts one row into `runs`
-   - updates one row in `player_stats`
+   - delegates one completed-run write to `persistence.run_repository`
 
-### `record_run(...)` code breakdown
+### `record_run(...)` code breakdown after extraction
 
 - runtime/application orchestration:
   - fetch per-player `SessionStats`
   - decide to update in-memory session aggregate before DB write
 - runtime state update:
   - `stats.add_result(...)`
-- SQL insert responsibility:
-  - `INSERT INTO runs (...)`
-- aggregate update responsibility:
-  - `UPDATE player_stats SET ...`
-  - fields touched:
-    - `best_score`
-    - `max_coins`
-    - `best_time_ms`
-    - `total_runs`
-    - `wins`
-    - `deaths`
-    - `total_time_ms`
-    - `total_coins`
-    - `bronze_total`
-    - `silver_total`
-    - `gold_total`
-    - `diamond_total`
-- application-level policy:
-  - best-time update happens only on win
-  - wins/deaths are derived from `result.won`
-  - aggregate update and run insert happen in one controller-owned DB transaction
+- repository delegation:
+  - `write_completed_run(...)`
+  - one completed-run DB transaction lives behind the persistence boundary
 
 ### Natural extraction boundary
 
-The most natural next boundary is not a broad service split, but a narrow persistence write boundary:
+Completed:
 
 - keep `GameSessionController` as orchestration owner
 - move SQL insert/update details into a dedicated persistence-facing write module
-
-This fits the current code better than extracting the whole flow into a new runtime service, because:
-
-- `maze_game.py` already prepares `RunResult`
-- `GameSessionController` already owns session/runtime state
-- the hottest mixed concern is the raw SQL write path itself
 
 ### Options
 
@@ -1555,7 +1550,7 @@ This fits the current code better than extracting the whole flow into a new runt
 
 ### Recommended direction
 
-- prefer Option B
+- completed: Option B
 
 Reason:
 
@@ -1571,12 +1566,12 @@ Reason:
   - risk:
     low
 - Step 2B
-  - extract raw SQL write path into `persistence/run_repository.py`
-  - keep `GameSessionController.record_run(...)` as orchestration wrapper
+  - completed: extract raw SQL write path into `persistence/run_repository.py`
+  - completed: keep `GameSessionController.record_run(...)` as orchestration wrapper
   - risk:
     medium
 - Step 2C
-  - narrow `GameSessionController.record_run(...)` to:
+  - completed as part of Step 2B:
     1. update `SessionStats`
     2. call repository write API
   - risk:

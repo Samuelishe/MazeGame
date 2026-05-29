@@ -124,11 +124,11 @@ Concrete future Stage 4 steps:
    - expected result:
      `GameSessionController` keeps session orchestration while SQL write logic becomes more localizable.
    - files:
-     `session_controller.py`, `db_manager.py`, `players.py`, `maze_game.py`
+     `session_controller.py`, `persistence/run_repository.py`, docs
 
 Run-recording recommendation after analysis:
 
-- prefer a future `persistence/run_repository.py`;
+- completed: `persistence/run_repository.py` now owns the SQL write path;
 - keep `GameSessionController.record_run(...)` as orchestration owner;
 - avoid introducing a broader recorder/service layer unless narrower extraction proves insufficient.
 
@@ -139,11 +139,11 @@ Suggested safe sequence:
    - risk:
      low
 2. Step 2B
-   - extract SQL write path into `persistence/run_repository.py`
+   - completed: extract SQL write path into `persistence/run_repository.py`
    - risk:
      medium
 3. Step 2C
-   - reduce `GameSessionController.record_run(...)` to runtime-state update plus repository delegation
+   - completed as part of Step 2B: reduce `GameSessionController.record_run(...)` to runtime-state update plus repository delegation
    - risk:
      medium
 
@@ -221,7 +221,8 @@ Stage 4 Step 1 status:
 - completed: Step 1C SessionStats split into `runtime/session_stats.py`
 - completed: minimal disposable-DB smoke tests for `persistence.player_repository.py`
 - completed: disposable-DB safety tests for current `GameSessionController.record_run(...)`
-- next sensible candidate: Stage 4 Step 2B, extract the SQL write path behind a future `persistence/run_repository.py` while keeping `GameSessionController.record_run(...)` as the orchestration wrapper
+- completed: Stage 4 Step 2B run-write extraction into `persistence/run_repository.py`
+- next sensible candidate: remove compatibility re-export from `players.py` or narrow gameplay persistence knowledge around `RunResult` construction and save-path branching
 
 SessionStats recommendation after analysis:
 

@@ -174,7 +174,7 @@ The persistence layer is present, but ownership inside it is still uneven:
 - `db_manager.py` is infrastructure-only and clean;
 - `leaderboard.py` is a coherent read-only query module;
 - `players.py` no longer owns the player repository implementation, but still carries transitional re-exports alongside session-only in-memory stats;
-- `session_controller.py` mixes application/session orchestration with direct SQL write logic;
+- `session_controller.py` still owns session/application orchestration, but raw SQL write logic has been moved out;
 - `highscores.py` keeps a second active persistence path alive during normal gameplay;
 - `highscore_adapter.py` is clean as a migration bridge, but it encodes transitional policy.
 
@@ -286,7 +286,8 @@ Why it matters:
 - `session_controller.py` combines:
   - round mode and active-player policy;
   - session lifecycle and player list management;
-  - direct SQL write orchestration;
+  - run-recording orchestration;
+- `persistence/run_repository.py` now owns raw SQL writes for completed runs and aggregate updates;
 - the gameplay runtime still constructs `RunResult` directly and knows when SQLite writes happen;
 - migration code is isolated, but the migrated legacy path still remains active afterward.
 
@@ -378,17 +379,15 @@ Why:
 
 Target outcome:
 
-- SQLite write details move behind a narrower API;
-- `GameSessionController` can focus on orchestration and session policy.
+- completed: SQLite write details moved behind a narrower API;
+- `GameSessionController` is now closer to orchestration and session policy.
 
 ### Run Recording Boundary Analysis
 
 Current `record_run(...)` responsibilities are:
 
 - update runtime `SessionStats`
-- insert into `runs`
-- update `player_stats`
-- apply win-sensitive aggregate policy
+- delegate into `persistence.run_repository`
 
 Why this matters:
 
@@ -397,14 +396,13 @@ Why this matters:
 
 Best current extraction target:
 
-- not a broad recorder service;
-- a narrow persistence write module for run insertion and aggregate updates.
+- completed: a narrow persistence write module for run insertion and aggregate updates.
 
 Recommended next direction:
 
 - completed: add dedicated disposable-DB tests for `record_run(...)` behavior;
-- next: extract SQL details into a future `persistence/run_repository.py`;
-- keep `GameSessionController.record_run(...)` as the orchestration wrapper.
+- completed: extract SQL details into `persistence/run_repository.py`;
+- completed: keep `GameSessionController.record_run(...)` as the orchestration wrapper.
 
 ### 3. Narrow gameplay knowledge of persistence
 
