@@ -31,6 +31,7 @@ from highscores import (
     load_highscore,
     default_path as highscore_path,
 )
+from presentation.hud_rendering import compose_hud_background
 from presentation.enemy_sprites import load_enemy_sheets_by_type
 from sounds import SoundBank
 from sprites import AnimatedSprite
@@ -647,22 +648,11 @@ def play_maze(
                 font_hud_emoji,
             )
 
-            # Отступы вокруг текста
-            pad_x = 6
-            pad_y = 4
-
-            hud_width = hud_surf.get_width() + pad_x * 2
-            hud_height = hud_surf.get_height() + pad_y * 2
-
-            # Полупрозрачная подложка
-            hud_bg = pygame.Surface((hud_width, hud_height), pygame.SRCALPHA)
-            hud_bg.fill((0, 0, 0, 135))  # чёрная подложка с альфа ≈ 50%
-
-            # Мягкие скругления (ручная маска)
-            pygame.draw.rect(
-                hud_bg,
-                (0, 0, 0, 135),
-                (0, 0, hud_width, hud_height),
+            hud_bg, pad_x, pad_y = compose_hud_background(
+                hud_surf,
+                pad_x=6,
+                pad_y=4,
+                bg_rgba=(0, 0, 0, 135),
                 border_radius=6,
             )
 

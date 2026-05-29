@@ -142,6 +142,7 @@ Main modules:
 - `presentation/coin_rendering.py`: coin draw helpers
 - `presentation/block_rendering.py`: temporary block draw helpers
 - `presentation/enemy_sprites.py`: enemy sprite-sheet loading and type mapping
+- `presentation/hud_rendering.py`: HUD background/surface composition
 - `session_controller.py`: in-memory session plus run recording
 - `leaderboard.py`: read queries for leaderboard screens
 
@@ -551,10 +552,14 @@ The active gameplay HUD currently flows through these steps:
 
 Recommend Option B.
 
-Best next Stage 3 code-pass:
+Stage 3 Step 6 is now completed:
 
-- move only HUD surface/background composition into a narrow presentation helper;
-- keep in `maze_game.py`:
+- `presentation/hud_rendering.py` owns:
+  - HUD width/height calculation
+  - alpha background surface creation
+  - rounded background drawing
+  - composition around a ready `hud_surf`
+- `maze_game.py` still owns:
   - gameplay value preparation
   - `build_hud_text(...)`
   - font objects

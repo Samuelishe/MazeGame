@@ -54,6 +54,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `presentation/coin_rendering.py`
 - `presentation/block_rendering.py`
 - `presentation/enemy_sprites.py`
+- `presentation/hud_rendering.py`
 - `ui.py`
 - `sounds.py`
 - `sprites.py`
@@ -218,6 +219,23 @@ This is an inspection document only. It does not imply any immediate file moves.
   keep in `presentation/`.
 - Notes:
   Stage 3 Step 4 extracted enemy asset paths, sheet loading, fallback-to-red behavior, and type mapping here without moving runtime animation setup.
+
+### `presentation/hud_rendering.py`
+
+- Role:
+  pygame-facing HUD background/surface composition helper.
+- Main classes:
+  none.
+- Main functions:
+  `compose_hud_background`.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  `pygame`.
+- Future fit:
+  keep in `presentation/`.
+- Notes:
+  Stage 3 Step 6 extracted HUD background surface creation, alpha fill, rounded rectangle drawing, and size composition here without moving gameplay values, fonts, or final positioning.
 
 ### `persistence/run_repository.py`
 
@@ -1564,12 +1582,14 @@ Ownership assessment:
   - mixed text rendering
 - still inline:
   - font setup
-  - background/surface composition
   - positioning/blit
+- completed in Stage 3 Step 6:
+  - background/surface composition
 
 Best narrow future split:
 
-- extract only the HUD surface/background composition helper first;
+- completed:
+  extract only the HUD surface/background composition helper first;
 - keep gameplay values, font objects, and final blit positioning in `maze_game.py`.
 
 ## Dependency map

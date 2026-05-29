@@ -1205,3 +1205,51 @@ Documentation changes:
 - Updated `docs/ROADMAP.md`
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
+
+## 2026-05-29 - Stage 3 Step 6: Extract HUD surface composition helper
+
+Scope:
+
+- move only HUD background/surface composition out of `maze_game.py`
+- keep gameplay values, fonts, text assembly, and final positioning inline
+
+Code changes:
+
+- Added `presentation/hud_rendering.py`.
+- Added `compose_hud_background(...)`.
+- Moved from `maze_game.py`:
+  - HUD width/height calculation
+  - background surface creation with `pygame.SRCALPHA`
+  - alpha fill
+  - rounded rectangle drawing
+  - composition around the ready `hud_surf`
+- Kept in `maze_game.py`:
+  - `get_text_font(...)`
+  - `get_emoji_font(...)`
+  - `build_hud_text(...)`
+  - `render_mixed_text(...)`
+  - gameplay counters and `elapsed_ms_live`
+  - final HUD positioning and `screen.blit(...)`
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No HUD text, font, alpha, radius, or positioning changes.
+- World rendering, pause UI, and end-screen UI were not touched.
+
+Testing notes:
+
+- No dedicated HUD-rendering tests were added.
+- This helper is `pygame.Surface`-dependent.
+- Validation relies on `py_compile`, the existing `pytest` suite, and future manual visual verification if needed.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`

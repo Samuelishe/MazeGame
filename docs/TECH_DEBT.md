@@ -547,7 +547,7 @@ Why it matters:
 
 Recommended next move:
 
-- extract HUD surface/background composition only;
+- completed: extract HUD surface/background composition only;
 - keep runtime values, font setup, and final positioning in `maze_game.py`.
 
 What should wait:

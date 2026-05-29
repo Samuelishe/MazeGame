@@ -177,6 +177,7 @@ Current structure reality is still root-heavy:
 - `runtime/` now exists and now contains `SessionStats` plus the gameplay persistence handoff helper
 - `presentation/` now exists and currently hosts coin/block rendering helpers
 - `presentation/` now also hosts enemy sprite loading/type mapping
+- `presentation/` now also hosts HUD surface/background composition
 
 ## External dependencies actually used
 
@@ -195,7 +196,7 @@ Everything else currently imported by the codebase is from the Python standard l
 Not performed in this audit:
 
 - full interactive gameplay playthrough
-- automated tests, because no test suite exists in the repository
+- additional interactive/manual rendering verification beyond the current focused test suite
 
 ## Current architecture assessment
 
@@ -230,9 +231,11 @@ The architecture inspection confirms that the main structural issue is not broke
   coin/block pygame draw helpers now live in `presentation/`.
 - Stage 3 Step 4 completed:
   enemy sprite loading and `EnemyType` mapping now live in `presentation/enemy_sprites.py`.
-- HUD rendering is now documented as the next narrow Stage 3 presentation-boundary candidate.
+- Stage 3 Step 6 completed:
+  HUD surface/background composition now lives in `presentation/hud_rendering.py`.
 - World-render extraction and broader presentation cleanup have not started.
 - Runtime animation setup (`AnimatedSprite`, per-enemy phase staggering) was intentionally not moved.
+- HUD fonts, HUD text assembly, and final HUD positioning intentionally remain in `maze_game.py`.
 
 ## Inspection notes
 
