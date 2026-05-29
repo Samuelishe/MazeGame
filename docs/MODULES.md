@@ -1592,6 +1592,84 @@ Best narrow future split:
   extract only the HUD surface/background composition helper first;
 - keep gameplay values, font objects, and final blit positioning in `maze_game.py`.
 
+## Coin Collection Handler Boundary Analysis
+
+Current coin collection flow in `maze_game.py`:
+
+- coin pickup check happens through local `try_collect_at(position, current_ms)`
+- the helper scans `coins[:]` linearly and matches by `coin_.pos == position`
+- on match it:
+  - increments `coins_collected` by `coin_.value`
+  - increments one rarity counter:
+    - `bronze_count`
+    - `silver_count`
+    - `gold_count`
+    - `diamond_count`
+  - triggers sound:
+    - `sound.play_coin()` for bronze/silver/gold
+    - `sound.play_diamond()` for diamond
+  - triggers visual feedback:
+    - `effects.add_coin_flash(position, current_ms)`
+  - removes the collected coin from `coins`
+- the helper returns nothing; it mutates outer runtime locals only
+- call sites:
+  - immediate keydown movement branch
+  - auto-movement branch
+
+Responsibility zones:
+
+- coin lookup by cell
+  - runtime/domain-support concern
+  - medium extraction risk
+- coin list mutation
+  - runtime concern
+  - medium extraction risk
+- rarity accounting
+  - runtime concern with lightweight domain knowledge
+  - medium extraction risk
+- sound trigger
+  - presentation concern
+  - low to medium extraction risk if passed explicitly
+- visual effect trigger
+  - presentation concern
+  - low to medium extraction risk if passed explicitly
+
+Option assessment:
+
+- Option A: keep the whole handler in `maze_game.py`
+  - lowest immediate risk
+  - keeps runtime and presentation side effects interleaved inline
+- Option B: extract only the coin collection helper with explicit arguments
+  - best value/risk ratio
+  - keeps movement flow in `maze_game.py`
+  - requires an honest signature for coin list, counters, sound, and effects
+- Option C: widen into a larger runtime interaction module
+  - too broad for the current safe surface
+  - risks coupling coin pickup with other update-step systems
+
+Recommended next Stage 3 follow-up:
+
+- prefer Option B:
+  - move only the collection helper logic itself
+  - pass explicit mutable runtime state:
+    - coin list
+    - collected-value counter
+    - rarity counters
+    - sound/effects handles
+    - `position`
+    - `current_ms`
+- do not move:
+  - player movement flow
+  - enemy updates
+  - block timer updates
+  - world rendering
+
+Cheapest later candidate after that:
+
+- world rendering remains broader and higher-blast-radius
+- enemy update helper is still more behavior-sensitive
+- block timer helper is plausible, but coin collection helper is currently cheaper and more local
+
 ## Dependency map
 
 ### Main runtime spine

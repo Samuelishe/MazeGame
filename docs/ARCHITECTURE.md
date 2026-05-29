@@ -636,6 +636,65 @@ Stage 3 Step 4 is now completed:
   - enemy spawn logic
   - enemy AI and runtime timers
 
+## Coin Collection Handler Boundary Analysis
+
+Current coin collection flow in `maze_game.py`:
+
+1. the local helper `try_collect_at(position, current_ms)` is called after player movement
+2. it scans the current `coins` list by position
+3. on match it mutates runtime totals:
+   - `coins_collected`
+   - rarity counters for bronze/silver/gold/diamond
+4. it triggers side effects:
+   - `sound.play_coin()` or `sound.play_diamond()`
+   - `effects.add_coin_flash(...)`
+5. it removes the collected coin from the active `coins` list
+6. it returns no value and communicates only through outer-scope mutation
+
+Responsibility zones:
+
+- coin lookup and removal
+  - runtime/domain-support concern
+- rarity accounting
+  - runtime concern with local domain knowledge
+- sound trigger
+  - presentation concern
+- visual effect trigger
+  - presentation concern
+
+Option assessment:
+
+- Option A: keep the handler inline
+  - lowest risk
+  - keeps mutation and presentation side effects embedded in `maze_game.py`
+- Option B: extract only the coin collection helper
+  - narrowest useful next move
+  - keeps movement/update flow in place
+  - requires explicit arguments rather than a hidden context object
+- Option C: widen into a larger interaction/update module
+  - too wide for the current safe surface
+
+Recommended next Stage 3 code-pass:
+
+- prefer Option B
+- move only:
+  - coin lookup
+  - coin removal
+  - rarity/value mutation
+  - sound/effect triggers
+- keep in `maze_game.py`:
+  - movement branches
+  - goal checks
+  - enemy updates
+  - block timers
+  - world rendering
+
+Cheapest later candidate after that:
+
+- the coin collection helper is cheaper than enemy update extraction
+- the coin collection helper is cheaper than world-render extraction
+- block timer extraction is plausible later, but not cheaper than the current coin handler split
+
 ## Cyclic imports
 
 Based on the current import structure, no direct Python cyclic import was found among project modules.

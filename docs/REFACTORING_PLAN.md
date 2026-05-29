@@ -95,7 +95,8 @@ Next recommended Stage 3 code-pass:
 2. completed: keep `AnimatedSprite(...)` creation in `maze_game.py`
 3. completed: keep enemy spawn logic, AI, and runtime timers unchanged
 4. completed: extract HUD surface/background composition only
-5. keep world-render extraction for a separate later step
+5. analyzed: coin collection handler as the next narrow runtime-support candidate
+6. keep world-render extraction for a separate later step
 
 ## Stage 4
 

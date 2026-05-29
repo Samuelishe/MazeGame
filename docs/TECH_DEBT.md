@@ -550,6 +550,33 @@ Recommended next move:
 - completed: extract HUD surface/background composition only;
 - keep runtime values, font setup, and final positioning in `maze_game.py`.
 
+### Coin collection handler after the current Stage 3 presentation splits
+
+Current code facts:
+
+- `maze_game.py` still owns local `try_collect_at(position, current_ms)`;
+- the helper linearly scans the active `coins` list;
+- it mutates:
+  - `coins_collected`
+  - bronze/silver/gold/diamond counters
+  - the `coins` list itself
+- it also triggers:
+  - `sound.play_coin()` or `sound.play_diamond()`
+  - `effects.add_coin_flash(...)`
+- the helper returns nothing and works through outer-scope mutation only.
+
+Why it matters:
+
+- this is a narrower runtime-support target than enemy update extraction;
+- it is still smaller than world-render extraction;
+- it mixes local gameplay accounting with presentation side effects in one inline helper.
+
+Recommended next move:
+
+- prefer a narrow extraction of the coin collection helper only;
+- keep movement branches, goal checks, enemy updates, and block timers in `maze_game.py`;
+- use explicit arguments instead of a broad context object.
+
 What should wait:
 
 - full `maze_game.py` renderer extraction

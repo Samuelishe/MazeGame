@@ -1039,6 +1039,44 @@ Documentation changes:
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
 
+## 2026-05-29 - Stage 3 Step 7: Coin collection handler boundary analysis
+
+Scope:
+
+- inspect the local coin collection handler in `maze_game.py`
+- decide whether it is a realistic narrow extraction target after the recent presentation-boundary passes
+
+Findings:
+
+- coin pickup currently lives in local `try_collect_at(position, current_ms)`;
+- the helper owns:
+  - linear coin lookup by position
+  - coin list mutation
+  - collected-value mutation
+  - rarity counter mutation
+  - sound trigger
+  - flash-effect trigger
+- the helper is still smaller and cheaper than:
+  - enemy update extraction
+  - world-render extraction
+  - broader interaction/update-module work
+
+Decision:
+
+- the next sensible Stage 3 code-pass is a narrow extraction of the coin collection helper only;
+- movement flow, goal checks, enemy updates, block timers, and world rendering should stay in `maze_game.py` in that pass.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`
+
 ## 2026-05-29 - Stage 3 Step 2: Extract coin and block rendering helpers
 
 Scope:

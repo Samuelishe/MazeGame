@@ -23,6 +23,7 @@ Keep gameplay stable while continuing small, testable architectural improvements
   - `presentation/enemy_sprites.py`
 - Stage 3 Step 6 HUD composition extraction is completed:
   - `presentation/hud_rendering.py`
+- Stage 3 Step 7 coin collection analysis is completed.
 
 ## Next recommended implementation step
 
@@ -31,8 +32,9 @@ Next Stage 3 follow-up:
 1. keep `coins.py` and `blocks.py` stable after the narrow draw split
 2. keep `presentation/enemy_sprites.py` narrow and runtime-neutral
 3. keep `presentation/hud_rendering.py` narrow and runtime-neutral
-4. reassess `maze_game.py` world-render extraction separately
-5. do not combine that future pass with `ui.py` cleanup
+4. evaluate a narrow `maze_game.py` coin collection helper before enemy/block/world update helpers
+5. reassess `maze_game.py` world-render extraction separately
+6. do not combine that future pass with `ui.py` cleanup
 
 Why this next:
 
@@ -48,7 +50,8 @@ Why this next:
 2. Completed: narrow draw-helper extraction from `blocks.py`
 3. Completed: analyze and then extract enemy sprite loading/type mapping as a narrow presentation helper
 4. Completed: analyze and then extract HUD surface/background composition as a narrow presentation helper
-5. Re-evaluate whether `maze_game.py` world rendering or `ui.py` has a similarly safe later split
+5. Analyze and, if still justified, extract the coin collection handler as a narrow runtime-support helper
+6. Re-evaluate whether `maze_game.py` world rendering or `ui.py` has a similarly safe later split
 
 ### Phase B: Stage 5 state-screen duplication cleanup
 
