@@ -1039,6 +1039,49 @@ Documentation changes:
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
 
+## 2026-05-29 - Stage 3 Step 14: Extract enemy update helper
+
+Scope:
+
+- move only the inline enemy update slice out of `maze_game.py`
+- keep collision handling, animation setup, rendering, and spawn/setup inline
+
+Code changes:
+
+- Added `runtime/enemy_updates.py`.
+- Added `update_enemies(...)`.
+- Replaced the inline enemy update loop in `maze_game.py` with a helper call.
+- Kept `enemy.move_strategy(...)` ownership in `enemies.py`.
+- Kept `Enemy` fields and strategy functions unchanged.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- Timer gating, movement validation, movement execution, oscillation updates, and `next_step_at` resets were preserved.
+- Collision handling and death sound logic were intentionally not moved.
+
+Testing notes:
+
+- Added `tests/test_enemy_updates.py`.
+- Covered:
+  - timer not reached
+  - movement allowed
+  - wall-blocked movement
+  - blocked-set-blocked movement
+  - zero-direction movement
+  - preserved oscillation contract
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`
+
 ## 2026-05-29 - Stage 3 Step 7: Coin collection handler boundary analysis
 
 Scope:

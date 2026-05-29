@@ -101,7 +101,8 @@ Next recommended Stage 3 code-pass:
 8. completed: analyze enemy update extraction boundary
 9. completed: analyze world rendering extraction boundary
 10. completed: extract `render_world(...)` before any `update_enemies(...)` extraction
-11. next likely follow-up: enemy update helper extraction
+11. completed: extract `update_enemies(...)` without moving collision handling or rendering
+12. next likely follow-up: Stage 3 checkpoint audit or transition to Stage 5
 
 ## Stage 4
 

@@ -22,6 +22,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `maze_game.py`
 - `runtime/coin_collection.py`
 - `runtime/block_timers.py`
+- `runtime/enemy_updates.py`
 - `runtime/session_stats.py`
 - `runtime/run_persistence.py`
 
@@ -84,6 +85,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `tests/test_session_controller_record_run.py`
 - `tests/test_session_stats.py`
 - `tests/test_run_persistence.py`
+- `tests/test_enemy_updates.py`
 
 ## Module catalogue
 
@@ -188,6 +190,23 @@ This is an inspection document only. It does not imply any immediate file moves.
   keep in `runtime/`.
 - Notes:
   Stage 3 Step 10 extracted blocked-set rebuild, expiration checks, forbidden-cell recomputation, respawn calls, and `expires_at` resets here without moving initial spawn, pause-time shifts, or rendering.
+
+### `runtime/enemy_updates.py`
+
+- Role:
+  runtime-facing per-tick enemy movement update helper.
+- Main classes:
+  none.
+- Main functions:
+  `update_enemies`.
+- Used by:
+  `maze_game.py`, tests.
+- Depends on:
+  `enemies`.
+- Future fit:
+  keep in `runtime/`.
+- Notes:
+  Stage 3 Step 14 extracted timer gating, strategy calls, movement validation, enemy mutation, oscillation updates, and `next_step_at` resets here without moving collision handling, animation setup, spawn/setup, or rendering.
 
 ### `presentation/coin_rendering.py`
 
@@ -1838,50 +1857,40 @@ Responsibility zones:
   - runtime concern
   - low to medium extraction risk
 
-Option assessment:
+Stage 3 Step 14 is now completed:
 
-- Option A: keep enemy updates in `maze_game.py`
-  - lowest immediate risk
-  - keeps all mutable runtime behavior local
-- Option B: extract only `update_enemies(...)`
-  - plausible next move
-  - requires an explicit signature for:
-    - `enemies`
-    - `maze`
-    - `player_pos`
-    - `rng`
-    - `blocked_set`
-    - `now_ms`
-  - returns should likely stay `None` with in-place mutation
-- Option C: introduce an enemy runtime manager/state object
-  - too broad for the current safe surface
-  - risks coupling update logic, animation assumptions, and future AI policy
-
-Recommended next code-pass:
-
-- Option B is possible, but it is more behavior-sensitive than the last two runtime-support extractions
-- if chosen, move only:
-  - timer gate
-  - strategy call
+- `runtime/enemy_updates.py` now owns:
+  - timer gating
+  - strategy calls
   - movement validation
   - enemy mutation
-  - next-step timer reset
-- keep in `maze_game.py`:
-  - collision resolution with player
+  - oscillation updates
+  - `next_step_at` reset
+- `maze_game.py` still owns:
+  - enemy spawn/setup
   - animation objects
+  - collision resolution with player
   - render ordering
-  - spawn/setup
 
-Testability assessment:
+Observed contract note:
 
-- non-pygame tests are possible
-- useful scenarios:
+- oscillation logic was preserved exactly as it existed before extraction;
+- tests now lock the current behavior instead of “fixing” it.
+
+Testability result:
+
+- non-pygame tests now exist for:
   - timer not reached
   - movement allowed
-  - movement blocked
-  - blocked-set interaction
-  - strategy-dependent patrol/chase outcomes
-- risk is higher than block timers because tests depend on mutable `Enemy` state plus strategy behavior from `enemies.py`
+  - wall-blocked movement
+  - blocked-set-blocked movement
+  - zero-direction movement
+  - preserved oscillation behavior
+
+Likely next candidate after that:
+
+- Stage 3 checkpoint audit
+- or transition to Stage 5
 
 Risk comparison against world rendering:
 
@@ -1903,13 +1912,12 @@ Stage 3 Step 13 is now completed:
   - effects
 - `maze_game.py` still owns:
   - HUD rendering
-  - enemy updates
   - collision handling
   - pause/end-screen UI
 
-Likely next candidate after that:
+Post-Step-13 note:
 
-- enemy update helper
+- the later enemy-update extraction was intentionally kept separate from world rendering.
 
 ## World Rendering Boundary Analysis
 

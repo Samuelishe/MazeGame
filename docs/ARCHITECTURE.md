@@ -144,6 +144,7 @@ Main modules:
 - `presentation/enemy_sprites.py`: enemy sprite-sheet loading and type mapping
 - `presentation/hud_rendering.py`: HUD background/surface composition
 - `presentation/world_rendering.py`: world render-order orchestration
+- `runtime/enemy_updates.py`: per-tick enemy movement updates
 - `session_controller.py`: in-memory session plus run recording
 - `leaderboard.py`: read queries for leaderboard screens
 
@@ -803,33 +804,26 @@ Responsibility zones:
 - timer reset
   - runtime concern
 
-Option assessment:
+Stage 3 Step 14 is now completed:
 
-- Option A: keep the whole slice inline
-  - lowest risk
-- Option B: extract only `update_enemies(...)`
-  - feasible but more behavior-sensitive than the recent helper passes
-  - should use explicit mutable arguments and in-place mutation
-- Option C: widen into an enemy runtime manager/state object
-  - too broad for the current safe surface
-
-Recommended next code-pass:
-
-- Option B is viable, but should be treated as a more delicate extraction than:
-  - coin collection
-  - block timers
-- keep out of scope:
+- `runtime/enemy_updates.py` owns:
+  - timer gating
+  - strategy invocation
+  - movement validation
+  - enemy state mutation
+  - oscillation updates
+  - next-step timer reset
+- `maze_game.py` still owns:
   - collision resolution
   - animation objects
   - rendering
   - spawn/setup
 
-Risk comparison versus world rendering:
+Post-Step-14 status:
 
-- enemy update is more testable without `pygame`
-- world rendering is more presentation-local but harder to verify automatically
-- enemy update is cheaper for logic tests, but riskier for gameplay behavior
-- world rendering is cheaper conceptually, but riskier for silent visual regressions
+- both world rendering and enemy updates are now outside the largest inline hotspots;
+- the next sensible move is no longer an automatic new `maze_game.py` extraction;
+- a Stage 3 checkpoint audit or transition to Stage 5 is now more appropriate than continuing to slice runtime behavior immediately.
 
 ## World Rendering Boundary Analysis
 
@@ -935,11 +929,10 @@ Stage 3 Step 13 is now completed:
   - collision handling
   - pause/end-screen UI
 
-Recommended next Stage 3 code-pass:
+Post-Step-13 note:
 
-- enemy update helper analysis is already done;
-- if implementation continues, enemy update extraction is now the next likely runtime-heavy candidate;
-- keep HUD and UI flows separate from that pass.
+- world rendering extraction stayed presentation-only;
+- the later enemy-update extraction was intentionally handled as a separate, more behavior-sensitive pass.
 
 Testability:
 

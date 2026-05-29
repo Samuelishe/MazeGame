@@ -33,23 +33,23 @@ Keep gameplay stable while continuing small, testable architectural improvements
 - Stage 3 Step 12 world rendering analysis is completed.
 - Stage 3 Step 13 world rendering extraction is completed:
   - `presentation/world_rendering.py`
+- Stage 3 Step 14 enemy update extraction is completed:
+  - `runtime/enemy_updates.py`
 
 ## Next recommended implementation step
 
-Next Stage 3 follow-up:
+Next architecture follow-up:
 
-1. keep `coins.py` and `blocks.py` stable after the narrow draw split
-2. keep `presentation/enemy_sprites.py` narrow and runtime-neutral
-3. keep `presentation/hud_rendering.py` narrow and runtime-neutral
-4. keep `presentation/world_rendering.py` narrow and render-order stable
-5. treat enemy-update extraction as the more behavior-sensitive follow-up
-6. do not combine that future pass with `ui.py` cleanup
+1. keep `presentation/` helpers narrow and render-order stable
+2. keep `runtime/` gameplay helpers narrow and contract-focused
+3. do not resume automatic `maze_game.py` slicing without a fresh checkpoint
+4. prefer a Stage 3 checkpoint audit or a transition to Stage 5 state-screen cleanup
 
 Why this next:
 
-- the first presentation boundary already exists now;
-- the next useful move is broader and therefore should stay separate;
-- this keeps Stage 3 incremental instead of turning into a package rewrite.
+- the narrow Stage 3 helper passes are now in place;
+- the remaining runtime slices are more behavior-sensitive;
+- this is the right point to reassess before opening another extraction front.
 
 ## Near-term roadmap
 
@@ -61,7 +61,7 @@ Why this next:
 4. Completed: analyze and then extract HUD surface/background composition as a narrow presentation helper
 5. Completed: analyze and then extract the coin collection handler as a narrow runtime-support helper
 6. Completed: analyze and then extract the block timer helper as a narrow runtime-support helper
-7. Re-evaluate whether `maze_game.py` enemy updates or `ui.py` has a similarly safe later split
+7. Run a Stage 3 checkpoint audit before any broader new refactor slice, or transition to Stage 5
 
 ### Phase B: Stage 5 state-screen duplication cleanup
 
@@ -71,8 +71,8 @@ Why this next:
 
 ### Phase C: Stage 3 deeper presentation work
 
-1. Reassess `maze_game.py` world-render helper extraction
-2. Keep pause/end-screen flow out of scope unless there is a narrower boundary
+1. Keep pause/end-screen flow out of scope unless there is a narrower boundary
+2. Reassess only if a new concrete mixed hotspot appears
 
 ### Phase D: Stage 4 policy follow-up
 

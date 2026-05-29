@@ -630,9 +630,9 @@ Why it matters:
 
 Recommended next move:
 
-- analyze enemy updates before deciding on extraction;
-- if extracted later, keep it as a narrow `update_enemies(...)` helper only;
-- do not combine it with collision handling, animation setup, or world rendering.
+- completed: narrow `update_enemies(...)` extraction only;
+- `runtime/enemy_updates.py` now owns timer gating, strategy calls, movement validation, enemy mutation, oscillation updates, and next-step resets;
+- collision handling, animation setup, and rendering remain outside this helper.
 
 ### World rendering slice after the recent Stage 3 helper passes
 

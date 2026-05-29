@@ -39,6 +39,7 @@ from sprites import AnimatedSprite
 
 from runtime.coin_collection import CoinCollectionStats, collect_coin_at
 from runtime.block_timers import update_block_timers
+from runtime.enemy_updates import update_enemies
 from runtime.run_persistence import handle_run_persistence
 from runtime.session_stats import SessionStats
 
@@ -476,50 +477,14 @@ def play_maze(
 
             # ---- ход врагов ----
             if not (won or lost):
-                for enemy in enemies:
-                    if now_ms >= enemy.next_step_at:
-                        drow1, dcol1 = enemy.move_strategy(
-                            maze,
-                            enemy,
-                            player,
-                            rng,
-                            blocked_set,
-                        )
-                        if (drow1, dcol1) != (0, 0):
-                            next_row1 = enemy.pos[0] + drow1
-                            next_col1 = enemy.pos[1] + dcol1
-
-                            in_row_bounds = 0 <= next_row1 < maze_rows
-                            in_col_bounds = 0 <= next_col1 < maze_cols
-                            if in_row_bounds and in_col_bounds:
-                                is_open_cell = maze[next_row1][next_col1] == 0
-                                not_blocked = (
-                                    next_row1,
-                                    next_col1,
-                                ) not in blocked_set
-                                if is_open_cell and not_blocked:
-                                    prev_pos = enemy.pos
-                                    new_pos = (next_row1, next_col1)
-
-                                    # обновляем осцилляцию: шаг назад
-                                    # в предыдущую клетку → +1
-                                    if (
-                                        enemy.last_pos is not None
-                                        and new_pos == enemy.last_pos
-                                    ):
-                                        enemy.oscillation = min(
-                                            enemy.oscillation + 1,
-                                            10,
-                                        )
-                                    else:
-                                        enemy.oscillation = 0
-
-                                    enemy.last_pos = prev_pos
-                                    enemy.pos = new_pos
-                                    enemy.direction = (drow1, dcol1)
-
-                        # тайминг шага теперь зависит от типа врага
-                        enemy.next_step_at = now_ms + enemy.step_interval_ms
+                update_enemies(
+                    enemies=enemies,
+                    maze=maze,
+                    player_pos=player,
+                    rng=rng,
+                    blocked_set=blocked_set,
+                    now_ms=now_ms,
+                )
 
             # ---- апдейт блоков (переезд по таймеру) ----
             update_block_timers(
