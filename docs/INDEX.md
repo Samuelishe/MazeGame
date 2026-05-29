@@ -1,0 +1,35 @@
+# Documentation Index
+
+Read in this order for minimal token usage:
+
+1. [PROJECT_STATE.md](PROJECT_STATE.md)  
+   Current snapshot, entrypoints, main flows, important constraints.
+2. [ARCHITECTURE.md](ARCHITECTURE.md)  
+   Real module responsibilities, dependencies, runtime and persistence flow.
+3. [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)  
+   Current layout, folder responsibilities, and near-term grouping plan.
+4. [TECH_DEBT.md](TECH_DEBT.md)  
+   Main architectural risks and stabilization targets.
+5. [ROADMAP.md](ROADMAP.md)  
+   Safe, incremental refactor plan.
+6. [SESSION_LOG.md](SESSION_LOG.md)  
+   Dated agent work history.
+
+Supporting file:
+
+- [../AGENTS.md](../AGENTS.md): agent-specific onboarding and operating rules.
+
+## Quick facts
+
+- Entrypoint: `game_app.py`
+- Runtime interpreter: `.\.venv\Scripts\python.exe`
+- Main gameplay loop: `maze_game.play_maze()`
+- Pure gameplay helpers: `gameplay/`
+- HUD text helpers: `gameplay/hud_text.py`
+- Result summary text helpers: `gameplay/result_text.py`
+- State screens: `state_machine/`
+- Tests: `tests/`
+- Main persistent store: `maze_stats.db` via SQLite
+- Legacy persistent store still updated at runtime: `highscore.json`
+- Runtime dependency: `pygame-ce`
+- Test runner: `pytest`

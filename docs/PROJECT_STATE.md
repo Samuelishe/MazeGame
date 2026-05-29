@@ -1,0 +1,113 @@
+# Project State
+
+## Snapshot
+
+Date of audit: 2026-05-28
+
+This project is a working pygame maze game with:
+
+- main menu
+- player selection
+- mode selection
+- multiplayer queue setup
+- leaderboard screen
+- procedural maze generation
+- enemies, coins, temporary block tiles
+- SQLite-backed players and run history
+- legacy JSON highscore compatibility
+- Python 3.14-compatible `.venv` runtime with `pygame-ce`
+
+## Current entrypoints
+
+- Main entrypoint in use: `game_app.py`
+- There is no separate package launcher or test harness in the repository root
+- Current launch command:
+  `.\.venv\Scripts\python.exe game_app.py`
+
+## Current gameplay flow
+
+1. App starts in `game_app.run_game_app()`
+2. DB is initialized and legacy highscore migration is attempted
+3. `GameSessionController` is created from SQLite state
+4. Main menu is shown
+5. Starting a run generates a maze and enters `maze_game.play_maze()`
+6. Gameplay loop runs until:
+   - pause menu requests action
+   - player wins
+   - player loses
+   - window close event occurs
+7. End-of-run logic updates:
+   - `highscore.json`
+   - in-memory session stats
+   - SQLite run history and player aggregates if a session controller is present
+8. Control returns to `game_app.GameplayWrapper`
+9. Wrapper decides next action based on `RoundMode`
+10. Automatic next-round progression inside `GameplayWrapper.start_level()` now uses an explicit loop instead of recursive self-calls
+
+## Current round modes
+
+- `RoundMode.SINGLE`
+- `RoundMode.ROTATE_QUEUE`
+- `RoundMode.PICK_EACH_ROUND`
+
+Behavior today:
+
+- `SINGLE`: same active player stays selected
+- `ROTATE_QUEUE`: current player advances automatically after each completed run
+- `PICK_EACH_ROUND`: player-select screen is shown between runs
+
+## Runtime state reality
+
+Current runtime state is not centralized. It is split across:
+
+- `GameSessionController`: current player list, mode, session stats
+- pygame globals: display, mixer, event queue, tick timing
+- locals inside `maze_game.play_maze()`: active run state
+
+There is no single `GameState` or `RunState` object today.
+
+## Data stores in use
+
+- `maze_stats.db`: authoritative structured store for players and runs
+- `highscore.json`: still updated during gameplay for legacy highscore tracking
+
+## File layout summary
+
+- Root python modules: gameplay, data, utilities
+- `gameplay/`: pure gameplay-domain helpers extracted from `maze_game.py`
+- `state_machine/`: all current menu/setup screens
+- `tests/`: focused unit tests for pure logic
+- `resources/`: images and audio assets
+- `docs/`: architecture and maintenance documents
+
+## External dependencies actually used
+
+- `pygame-ce`
+- `pytest` for local tests
+
+Everything else currently imported by the codebase is from the Python standard library.
+
+## Validation performed during audit
+
+- Static repository inspection
+- Import/dependency review
+- Syntax validation with the project interpreter via `py_compile`
+
+Not performed in this audit:
+
+- full interactive gameplay playthrough
+- automated tests, because no test suite exists in the repository
+
+## Current architecture assessment
+
+This is a workable small-game codebase with a clear separation between menu screens and data access, but the gameplay core has outgrown its current single-file structure. The project is stable enough for incremental improvement, not for a blind refactor.
+
+## Stabilization notes
+
+- Recursive next-round flow in `GameplayWrapper.start_level()` has been replaced with an explicit loop.
+- `play_maze()` return values and menu/pause behavior remain unchanged.
+- `format_time`, `ScoreParams`, and `compute_score` now live in `gameplay/` as pure logic modules.
+- HUD text assembly now also lives in `gameplay/` as pure helper logic, while pygame HUD rendering remains in `maze_game.py`.
+- End-screen result summary text now also lives in `gameplay/` as pure helper logic.
+- The first unit tests cover formatting and scoring behavior without touching pygame runtime.
+- Documentation and environment assumptions now point to `.venv`, `pygame-ce`, and the current pytest workflow.
