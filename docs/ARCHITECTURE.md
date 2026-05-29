@@ -400,7 +400,7 @@ Notable dependency smell:
 
 - `maze_game.py` still remains the main gameplay concentration point, but pure formatting/scoring logic has been extracted into `gameplay/` to reduce incidental coupling.
 - `ui.py` is shared by both gameplay runtime and state-machine screens, so presentation concerns are still centralized in one broad helper module.
-- `coins.py` and `blocks.py` mix gameplay-domain spawning with pygame rendering helpers.
+- `coins.py` and `blocks.py` no longer own their pygame draw paths; that narrow presentation split is completed.
 
 ## Stage 3 Domain/Rendering Boundary Analysis
 
@@ -471,6 +471,94 @@ Interpretation:
   draw-path extraction for `coins.py` and `blocks.py`.
 - Next sensible follow-up:
   keep `maze_game.py` world-render extraction and `ui.py` cleanup as separate future passes.
+
+## HUD Rendering Boundary Analysis
+
+### Current HUD flow in `maze_game.py`
+
+The active gameplay HUD currently flows through these steps:
+
+1. font setup
+   - `hud_font_size = max(14, cell_px // 2)`
+   - `font_hud_text = get_text_font(hud_font_size)`
+   - `font_hud_emoji = get_emoji_font(hud_font_size)`
+2. runtime value preparation
+   - `elapsed_ms_live = now_ms - start_ms`
+   - live counters and player label come from gameplay runtime locals
+3. pure text assembly
+   - `build_hud_text(...)`
+4. mixed text rendering
+   - `render_mixed_text(hud_text, font_hud_text, font_hud_emoji)`
+5. HUD surface/background composition
+   - local padding:
+     - `pad_x = 6`
+     - `pad_y = 4`
+   - width/height from rendered surface
+   - `hud_bg = pygame.Surface((hud_width, hud_height), pygame.SRCALPHA)`
+   - translucent fill `(0, 0, 0, 135)`
+   - rounded rectangle draw with the same alpha/color
+6. positioning and blit
+   - background blit at `(6, 4)`
+   - text blit at `(6 + pad_x, 4 + pad_y)`
+
+### Responsibility split
+
+- gameplay/runtime values
+  - runtime concern
+  - should stay in `maze_game.py`
+- pure HUD text assembly
+  - already extracted
+  - presentation-adjacent pure helper
+  - low move risk
+- font setup
+  - not extracted
+  - presentation concern with light runtime context
+  - low to medium move risk
+- mixed text rendering
+  - already extracted via `ui.render_mixed_text(...)`
+  - presentation concern
+  - move risk already paid
+- HUD background/surface composition
+  - not extracted
+  - presentation concern
+  - low to medium move risk
+- positioning and blit
+  - not extracted
+  - mixed concern:
+    presentation mechanics plus direct ownership of on-screen placement inside gameplay
+  - medium move risk
+
+### Option assessment
+
+- Option A: keep HUD rendering in `maze_game.py`
+  - pluses:
+    lowest immediate risk
+  - minuses:
+    HUD composition remains mixed into the gameplay loop
+- Option B: extract only HUD surface/background composition helper
+  - pluses:
+    narrowest useful next step
+    preserves runtime ownership of values and final placement
+  - minuses:
+    leaves font setup and final blit inline
+- Option C: extract the whole HUD block
+  - pluses:
+    stronger presentation boundary
+  - minuses:
+    too wide for the current safe surface because it would mix runtime values, font setup, composition, and placement in one pass
+
+### Recommended direction
+
+Recommend Option B.
+
+Best next Stage 3 code-pass:
+
+- move only HUD surface/background composition into a narrow presentation helper;
+- keep in `maze_game.py`:
+  - gameplay value preparation
+  - `build_hud_text(...)`
+  - font objects
+  - final positioning and blit
 
 ## Enemy Asset Loading Boundary Analysis
 

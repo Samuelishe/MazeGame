@@ -1532,6 +1532,46 @@ Recommended next code-pass:
 - next sensible Stage 3 target:
   do not combine further work with `maze_game.py` world-render extraction or `ui.py` cleanup in the same pass.
 
+## HUD Rendering Boundary Analysis
+
+Current HUD flow in `maze_game.py`:
+
+- font setup:
+  - `get_text_font(...)`
+  - `get_emoji_font(...)`
+- runtime values:
+  - current player label
+  - coin counters
+  - `elapsed_ms_live`
+- pure text assembly:
+  - `gameplay.hud_text.build_hud_text(...)`
+- mixed text rendering:
+  - `ui.render_mixed_text(...)`
+- background/surface composition:
+  - padding calculation
+  - HUD width/height calculation
+  - `pygame.Surface(..., pygame.SRCALPHA)`
+  - alpha fill `(0, 0, 0, 135)`
+  - rounded background draw
+- positioning/blit:
+  - background at `(6, 4)`
+  - text at `(6 + pad_x, 4 + pad_y)`
+
+Ownership assessment:
+
+- already extracted:
+  - pure HUD text assembly
+  - mixed text rendering
+- still inline:
+  - font setup
+  - background/surface composition
+  - positioning/blit
+
+Best narrow future split:
+
+- extract only the HUD surface/background composition helper first;
+- keep gameplay values, font objects, and final blit positioning in `maze_game.py`.
+
 ## Dependency map
 
 ### Main runtime spine

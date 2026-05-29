@@ -230,6 +230,7 @@ The architecture inspection confirms that the main structural issue is not broke
   coin/block pygame draw helpers now live in `presentation/`.
 - Stage 3 Step 4 completed:
   enemy sprite loading and `EnemyType` mapping now live in `presentation/enemy_sprites.py`.
+- HUD rendering is now documented as the next narrow Stage 3 presentation-boundary candidate.
 - World-render extraction and broader presentation cleanup have not started.
 - Runtime animation setup (`AnimatedSprite`, per-enemy phase staggering) was intentionally not moved.
 

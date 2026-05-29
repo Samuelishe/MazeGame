@@ -1166,3 +1166,42 @@ Documentation changes:
 - Updated `docs/ROADMAP.md`
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
+
+## 2026-05-29 - Stage 3 Step 5: HUD Rendering Boundary Analysis
+
+Scope:
+
+- inspect the gameplay HUD flow in `maze_game.py`
+- determine which HUD pieces are already extracted and which still remain inline
+- check active docs for stale `coins.py` / `blocks.py` draw-ownership statements
+
+Observed:
+
+- `build_hud_text(...)` is already extracted into `gameplay/hud_text.py`.
+- `render_mixed_text(...)` is already reused from `ui.py`.
+- `maze_game.py` still owns:
+  - HUD font object setup
+  - background surface creation
+  - alpha/background behavior
+  - padding math
+  - final positioning and blit
+- the narrowest remaining HUD-specific presentation slice is background/surface composition.
+- one active doc contradiction remained in `docs/ARCHITECTURE.md`, where `coins.py` and `blocks.py` were still described as current mixed render owners.
+
+Conclusions:
+
+- the best next Stage 3 code-pass is not whole-HUD extraction;
+- it is a narrow helper extraction for HUD surface/background composition only;
+- gameplay values, fonts, and final positioning should stay in `maze_game.py` for now;
+- docs were corrected so `coins.py` and `blocks.py` no longer appear to own current draw paths.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`

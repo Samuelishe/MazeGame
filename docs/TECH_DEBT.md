@@ -526,6 +526,30 @@ Recommended next move:
 - completed: extract enemy sprite loading and type mapping only;
 - keep `AnimatedSprite(...)` creation and runtime randomization in `maze_game.py`.
 
+### HUD rendering composition is still inline in `maze_game.py`
+
+Current code facts:
+
+- `gameplay.hud_text.build_hud_text(...)` is already extracted;
+- `ui.render_mixed_text(...)` is already reused for the HUD surface;
+- `maze_game.py` still owns:
+  - HUD font object setup
+  - HUD padding math
+  - HUD background surface creation
+  - alpha/background behavior
+  - final positioning and blit
+
+Why it matters:
+
+- this is a narrower Stage 3 target than full world-render extraction;
+- it is more presentation-oriented than gameplay state advancement;
+- it can likely move without touching pause/end-screen behavior.
+
+Recommended next move:
+
+- extract HUD surface/background composition only;
+- keep runtime values, font setup, and final positioning in `maze_game.py`.
+
 What should wait:
 
 - full `maze_game.py` renderer extraction
