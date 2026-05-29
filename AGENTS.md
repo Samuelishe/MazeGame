@@ -70,18 +70,28 @@ If an architectural decision changes, the corresponding documentation must be up
 - `game_app.py`: pygame bootstrap, FSM wiring, session creation, app loop.
 - `state_machine/`: menu and setup screens.
 - `gameplay/`: pure gameplay-domain helpers extracted from runtime-heavy modules.
+- `domain/`: typed player domain models.
+- `persistence/`: player repository and completed-run write boundaries.
+- `runtime/`: runtime-oriented helpers such as `SessionStats` and gameplay persistence handoff.
 - `maze_game.py`: actual gameplay loop, rendering, input, scoring, enemy/block/coin orchestration.
-- `session_controller.py`: in-memory session and SQLite write path for completed runs.
-- `players.py`, `leaderboard.py`, `db_manager.py`: persistence and query layer.
-- `highscores.py`, `highscore_adapter.py`: legacy JSON highscore plus one-time migration into SQLite.
+- `session_controller.py`: in-memory session, player rotation, and run-recording orchestration.
+- `leaderboard.py`, `db_manager.py`: query and SQLite bootstrap layer.
+- `highscores.py`, `highscore_adapter.py`: legacy highscore compatibility path and one-time migration into SQLite.
 - `ui.py`, `sounds.py`, `sprites.py`: support services for rendering and media.
 - `tests/`: focused unit tests for pure logic.
+
+Legacy highscore contract in one screen:
+
+- SQLite is the main structured store.
+- `highscore.json` is a legacy compatibility output, not the primary store after migration.
+- It stores one global snapshot and is updated only on improvement.
+- It does not guarantee per-player history or full SQLite parity.
 
 ## Known high-risk zones
 
 - `maze_game.py` is the main god module and the highest-risk change surface.
 - `game_app.py` contains gameplay orchestration and recursive round restarts.
-- Runtime persistence currently writes to both `maze_stats.db` and `highscore.json`.
+- Runtime persistence still spans both `maze_stats.db` and `highscore.json`, but SQLite is the main structured store and `highscore.json` is a legacy compatibility output.
 - Pygame event handling is split between the app FSM loop and nested loops inside gameplay/pause/end screens.
 
 ## Rules for safe changes

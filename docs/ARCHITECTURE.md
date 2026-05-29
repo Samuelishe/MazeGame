@@ -696,6 +696,17 @@ Actual code paths today:
    - gameplay continues updating `highscore.json`
    - leaderboard and player/session reads come from SQLite, not from JSON
 
+### Compatibility contract
+
+Current project contract for `highscore.json`:
+
+- it stores one global legacy highscore snapshot;
+- it is updated after a completed run only when that run improves the legacy snapshot;
+- it does not store per-player history;
+- it does not replace SQLite players, runs, or leaderboard data;
+- it is not the authoritative persistence source after migration;
+- after migration it remains a compatibility output, not the primary store.
+
 ### What is unique to JSON today
 
 Only the file itself is unique, not the record categories:
@@ -717,6 +728,15 @@ So the unique part is:
 
 - one global legacy-format snapshot file
 - still maintained during runtime for compatibility reasons
+
+### What `highscore.json` does not guarantee
+
+- full run history
+- per-player aggregates
+- all players known to SQLite
+- leaderboard-equivalent data
+- a complete mirror of SQLite state
+- a stable future primary persistence API
 
 ### Actual status of `highscore.json`
 

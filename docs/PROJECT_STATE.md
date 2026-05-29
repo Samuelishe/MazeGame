@@ -92,6 +92,11 @@ Legacy highscore reality:
 - it is still read during startup migration;
 - it is still written after completed runs;
 - it currently behaves as an active compatibility output and transitional persistence artifact.
+- current compatibility contract is narrow:
+  - one global legacy snapshot;
+  - updated only on improvement;
+  - not a per-player store;
+  - not the primary persistence API.
 
 ### Persistence Architecture
 

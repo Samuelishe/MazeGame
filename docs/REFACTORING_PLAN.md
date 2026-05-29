@@ -132,6 +132,14 @@ Legacy highscore ownership recommendation after analysis:
   keep `highscore.json` as a compatibility export path rather than as a co-equal persistence authority;
 - do not remove runtime writes before the compatibility contract is explicit.
 
+Defined compatibility contract:
+
+- one global legacy snapshot file;
+- update-on-improvement semantics remain unchanged;
+- no per-player history guarantee;
+- no guarantee of full SQLite parity;
+- not the primary persistence API after migration.
+
 Suggested safe sequence:
 
 1. Step 4B

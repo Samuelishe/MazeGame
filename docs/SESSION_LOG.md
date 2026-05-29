@@ -556,6 +556,14 @@ Conclusions:
   - transitional persistence artifact
 - the safest policy direction is to move toward compatibility-export semantics before considering SQLite-only ownership.
 
+Contract defined:
+
+- one global legacy snapshot file;
+- update-on-improvement behavior remains the current compatibility guarantee;
+- no per-player history guarantee;
+- no promise of full SQLite parity;
+- not the primary persistence API after migration.
+
 Documentation changes:
 
 - Updated `docs/MODULES.md`

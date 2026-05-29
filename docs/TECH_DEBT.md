@@ -431,6 +431,13 @@ Current interpretation from code:
 - transitional persistence artifact;
 - not merely archival while gameplay still writes it after completed runs.
 
+Compatibility contract to preserve for now:
+
+- one global legacy snapshot file;
+- update-on-improvement behavior only;
+- no promise of per-player history or full SQLite parity;
+- no claim that JSON is the primary persistence API.
+
 Target outcome:
 
 - explicit decision whether JSON remains compatibility output, archival output, or removable legacy path.

@@ -1676,6 +1676,15 @@ By actual code, `highscore.json` is:
 - a transitional persistence artifact
 - a startup migration source until the migration flag is present
 
+### Compatibility contract
+
+- one global legacy snapshot file
+- updated only when a run improves that snapshot
+- no per-player history guarantee
+- no leaderboard or player-list guarantee
+- not a full mirror of SQLite
+- not the future primary persistence API
+
 ### Policy options
 
 - Option A: keep JSON permanently as a second persistence path
