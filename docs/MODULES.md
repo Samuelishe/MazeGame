@@ -303,14 +303,6 @@ Approximate size: 799 lines total.
 
 Priority A: very safe
 
-- entry/exit inner-cell helper from lines `228-240`
-  - pygame dependency:
-    no.
-  - runtime-state dependency:
-    low.
-  - behavior-safe extraction:
-    yes.
-
 - HUD mixed-text renderer from lines `355-396`
   - pygame dependency:
     yes.
@@ -318,22 +310,6 @@ Priority A: very safe
     low.
   - behavior-safe extraction:
     yes, if signature stays explicit and rendering order is preserved.
-
-- score parameter factory and result value preparation from lines `786-807`
-  - pygame dependency:
-    no.
-  - runtime-state dependency:
-    medium, but data-only.
-  - behavior-safe extraction:
-    yes.
-
-- highscore summary value preparation from lines `859-888`
-  - pygame dependency:
-    no.
-  - runtime-state dependency:
-    medium.
-  - behavior-safe extraction:
-    yes.
 
 Priority B: medium risk
 
@@ -733,19 +709,19 @@ Priority C: high risk
 ### `gameplay/result_text.py`
 
 - Role:
-  pure end-screen text builders.
+  pure end-screen text builders and deterministic end-summary preparation.
 - Main classes:
-  none.
+  `PreparedEndMenuSummary`.
 - Main functions:
-  `build_attempt_info`, `build_coin_types_line`, `build_highscore_line`, `build_end_menu_subtitle`.
+  `build_attempt_info`, `build_coin_types_line`, `build_highscore_line`, `build_end_menu_subtitle`, `prepare_end_menu_summary`.
 - Used by:
   `maze_game.py`, tests.
 - Depends on:
-  `coins` for rarity icons.
+  `coins` for rarity icons, `gameplay.formatting` for best-time formatting.
 - Future fit:
   `presentation/text/result_text.py` or keep in `gameplay/` until text helpers are grouped.
 - Notes:
-  pure function module, but still depends on coin icon mapping from mixed `coins.py`.
+  pure helper module; now also owns deterministic preparation of best-time/highscore summary values before the pygame end-screen overlay is shown.
 
 ### `gameplay/hud_text.py`
 

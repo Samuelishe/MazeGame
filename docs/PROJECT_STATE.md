@@ -131,6 +131,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - `play_maze()` return values and menu/pause behavior remain unchanged.
 - `format_time`, `ScoreParams`, and `compute_score` now live in `gameplay/` as pure logic modules.
 - Data-only score preparation for completed runs now also lives in `gameplay/scoring.py`.
+- Deterministic best-time/highscore/end-summary value preparation now also lives in `gameplay/result_text.py`.
 - HUD text assembly now also lives in `gameplay/` as pure helper logic, while pygame HUD rendering remains in `maze_game.py`.
 - Border-to-inner-cell translation for maze entry/exit now also lives in `gameplay/maze_positions.py` as pure helper logic.
 - End-screen result summary text now also lives in `gameplay/` as pure helper logic.

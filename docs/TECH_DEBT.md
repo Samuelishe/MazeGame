@@ -274,7 +274,7 @@ Current status:
 
 Remaining work:
 
-- highscore summary value preparation is still local to `maze_game.py`
+- highscore summary value preparation is now extracted into `gameplay/result_text.py`
 - score preparation is now separated, but persistence and end-screen UI flow are still in the same runtime block
 
 ### 5. End-screen result summary text
@@ -294,7 +294,7 @@ Why it was safe:
 
 Risk level: low
 
-Why safe:
+Why it was safe:
 
 - deterministic text formatting only
 - can be tested independently
@@ -303,6 +303,11 @@ Dependencies/coupling:
 
 - highscore values
 - preformatted time strings
+
+Current status:
+
+- extracted into `gameplay/result_text.py` as deterministic end-summary preparation
+- pygame overlay flow and persistence hooks remain in `maze_game.py`
 
 ### 7. Enemy sprite loading and type mapping
 
@@ -437,14 +442,13 @@ Already identified and/or extracted:
 
 Remaining low-coupling helper candidates:
 
-- inner-cell coordinate translation
-- score/result value preparation
-- highscore summary value preparation
+- HUD mixed-text rendering helper
 
 Completed low-coupling extractions now include:
 
 - inner-cell coordinate translation
 - score/result value preparation
+- highscore summary value preparation
 
 These remain the safest pattern for continued incremental cleanup.
 
@@ -489,7 +493,7 @@ The lowest-coupling candidates remain runtime-independent text/formatting helper
 Priority ranking after detailed inspection:
 
 - Priority A:
-  inner-cell helper, HUD mixed-text renderer, score/result value preparation, highscore summary value preparation
+  HUD mixed-text renderer
 - Priority B:
   enemy sprite loading, spawn/setup cluster, coin collection handler, world render helper, update-step helpers
 - Priority C:

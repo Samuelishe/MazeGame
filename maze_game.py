@@ -23,9 +23,7 @@ from gameplay.hud_text import build_hud_text
 from gameplay.maze_positions import inner_cell_from_border
 from gameplay.result_text import (
     build_attempt_info,
-    build_coin_types_line,
-    build_end_menu_subtitle,
-    build_highscore_line,
+    prepare_end_menu_summary,
 )
 from gameplay.scoring import compute_score, prepare_run_score
 from highscores import (
@@ -842,40 +840,30 @@ def play_maze(
                     score=score,
                 )
 
-                if highscore.best_time_ms is not None:
-                    best_time_str = format_time(highscore.best_time_ms)
-                else:
-                    best_time_str = "—"
-
-                high_line = build_highscore_line(
+                session_info = stats.summary_line()
+                prepared_summary = prepare_end_menu_summary(
+                    attempt_info=attempt_info,
+                    session_info=session_info,
+                    best_time_ms=highscore.best_time_ms,
                     best_score=highscore.best_score,
-                    best_time_str=best_time_str,
                     max_coins_value=highscore.max_coins_value,
                     bronze_max=highscore.bronze_max,
                     silver_max=highscore.silver_max,
                     gold_max=highscore.gold_max,
                     diamond_max=highscore.diamond_max,
-                )
-
-                session_info = stats.summary_line()
-
-                types_line = build_coin_types_line(
                     bronze_count=bronze_count,
                     silver_count=silver_count,
                     gold_count=gold_count,
                     diamond_count=diamond_count,
                 )
 
-                subtitle = build_end_menu_subtitle(
-                    attempt_info=attempt_info,
-                    types_line=types_line,
-                    high_line=high_line,
-                    session_info=session_info,
-                )
-
                 title = "ПОБЕДА!" if won else "ПОЙМАЛИ!"
                 rect_restart, rect_new = draw_end_menu(
-                    screen, title, subtitle, cell_px=cell_px, palette=colors
+                    screen,
+                    title,
+                    prepared_summary.subtitle,
+                    cell_px=cell_px,
+                    palette=colors,
                 )
 
                 pygame.display.flip()

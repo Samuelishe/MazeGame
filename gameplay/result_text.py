@@ -2,7 +2,25 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from coins import CoinRarity, rarity_icon
+from gameplay.formatting import format_time
+
+
+@dataclass(frozen=True)
+class PreparedEndMenuSummary:
+    """
+    Deterministic end-screen summary values prepared from runtime data.
+
+    This keeps value preparation separate from pygame overlay flow and
+    persistence hooks in ``maze_game.py``.
+    """
+
+    best_time_str: str
+    high_line: str
+    types_line: str
+    subtitle: str
 
 
 def build_attempt_info(
@@ -104,4 +122,61 @@ def build_end_menu_subtitle(
         f"{high_line}\n"
         f"{session_info}\n"
         f"Enter/Space/R — заново • N — другой уровень • Esc — выход"
+    )
+
+
+def prepare_end_menu_summary(
+    *,
+    attempt_info: str,
+    session_info: str,
+    best_time_ms: int | None,
+    best_score: int,
+    max_coins_value: int,
+    bronze_max: int,
+    silver_max: int,
+    gold_max: int,
+    diamond_max: int,
+    bronze_count: int,
+    silver_count: int,
+    gold_count: int,
+    diamond_count: int,
+) -> PreparedEndMenuSummary:
+    """
+    Prepare deterministic highscore and summary values for the end screen.
+
+    This helper intentionally does not interact with pygame or persistence.
+    It only prepares the values and strings that are later passed into the
+    existing end-screen overlay flow.
+    """
+    if best_time_ms is not None:
+        best_time_str = format_time(best_time_ms)
+    else:
+        best_time_str = "—"
+
+    high_line = build_highscore_line(
+        best_score=best_score,
+        best_time_str=best_time_str,
+        max_coins_value=max_coins_value,
+        bronze_max=bronze_max,
+        silver_max=silver_max,
+        gold_max=gold_max,
+        diamond_max=diamond_max,
+    )
+    types_line = build_coin_types_line(
+        bronze_count=bronze_count,
+        silver_count=silver_count,
+        gold_count=gold_count,
+        diamond_count=diamond_count,
+    )
+    subtitle = build_end_menu_subtitle(
+        attempt_info=attempt_info,
+        types_line=types_line,
+        high_line=high_line,
+        session_info=session_info,
+    )
+    return PreparedEndMenuSummary(
+        best_time_str=best_time_str,
+        high_line=high_line,
+        types_line=types_line,
+        subtitle=subtitle,
     )

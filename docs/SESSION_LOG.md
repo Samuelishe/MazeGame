@@ -307,3 +307,32 @@ Documentation changes:
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
 - Updated `docs/REFACTORING_PLAN.md`
+
+## 2026-05-29 - maze_game.py extraction pass 3
+
+Scope:
+
+- extract only deterministic highscore/end-summary value preparation
+- keep pygame end-screen flow and persistence hooks in `maze_game.py`
+
+Code changes:
+
+- Extended `gameplay/result_text.py` with `PreparedEndMenuSummary` and `prepare_end_menu_summary(...)`.
+- Updated `maze_game.py` to prepare best-time/highscore/types/subtitle values through the extracted pure helper.
+- Extended `tests/test_result_text.py` with focused coverage for the new deterministic preparation path.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- Highscore JSON update behavior remains unchanged.
+- SQLite/session recording behavior remains unchanged.
+- End-screen rendering and input flow remain unchanged.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/REFACTORING_PLAN.md`

@@ -48,7 +48,7 @@ Current Stage 2 progress:
 
 - completed: inner-cell border translation helper
 - completed: score/result value preparation
-- remaining: highscore summary value preparation
+- completed: highscore summary value preparation
 - remaining: HUD mixed-text rendering helper
 
 ## Stage 3
@@ -172,10 +172,7 @@ Reason:
 
 ### Priority A
 
-- inner-cell helper
 - HUD mixed-text renderer
-- score/result value preparation
-- highscore summary value preparation
 
 ### Priority B
 

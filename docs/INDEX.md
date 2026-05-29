@@ -33,6 +33,7 @@ Supporting file:
 - Score preparation helper: `gameplay/scoring.py`
 - HUD text helpers: `gameplay/hud_text.py`
 - Result summary text helpers: `gameplay/result_text.py`
+- End-summary value preparation: `gameplay/result_text.py`
 - Module map: `docs/MODULES.md`
 - Staged restructure plan: `docs/REFACTORING_PLAN.md`
 - State screens: `state_machine/`
