@@ -241,7 +241,7 @@ Dependencies/coupling:
 
 Risk level: low to medium
 
-Why partially safe:
+Why it was partially safe:
 
 - logic is local and reusable
 - but it depends on pygame fonts and surfaces
@@ -250,6 +250,11 @@ Dependencies/coupling:
 
 - `pygame.font.Font`
 - `pygame.Surface`
+
+Current status:
+
+- completed by reusing `ui.render_mixed_text(...)`
+- HUD positioning and background drawing remain in `maze_game.py`
 
 ### 4. Score/result value preparation
 
@@ -442,13 +447,14 @@ Already identified and/or extracted:
 
 Remaining low-coupling helper candidates:
 
-- HUD mixed-text rendering helper
+- none in Priority A scope
 
 Completed low-coupling extractions now include:
 
 - inner-cell coordinate translation
 - score/result value preparation
 - highscore summary value preparation
+- HUD mixed-text rendering helper
 
 These remain the safest pattern for continued incremental cleanup.
 
@@ -493,7 +499,7 @@ The lowest-coupling candidates remain runtime-independent text/formatting helper
 Priority ranking after detailed inspection:
 
 - Priority A:
-  HUD mixed-text renderer
+  completed
 - Priority B:
   enemy sprite loading, spawn/setup cluster, coin collection handler, world render helper, update-step helpers
 - Priority C:

@@ -208,7 +208,7 @@ Result: runtime persistence is split between SQLite and legacy JSON.
 - `palette.py`: color palette generation
 - `sprites.py`: sprite sheet helpers
 - `sounds.py`: audio loading/fallback generation
-- `ui.py`: text rendering and pause/end overlays
+- `ui.py`: text rendering and pause/end overlays; its mixed-text renderer is now also reused by gameplay HUD surface rendering
 
 ### Data/persistence
 

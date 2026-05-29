@@ -336,3 +336,39 @@ Documentation changes:
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
 - Updated `docs/REFACTORING_PLAN.md`
+
+## 2026-05-29 - maze_game.py extraction pass 4
+
+Scope:
+
+- complete the remaining Stage 2 / Priority A extraction target
+- remove the nested HUD mixed-text renderer from `maze_game.py`
+- keep HUD layout, background, and runtime flow unchanged
+
+Code changes:
+
+- Updated `maze_game.py` to reuse `ui.render_mixed_text(...)` for HUD surface rendering.
+- Removed the nested local HUD mixed-text renderer from `maze_game.py`.
+- Kept HUD text assembly, positioning, and background drawing in place.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- HUD positioning and background drawing remain unchanged.
+- Event flow, pause/end screens, scoring, and persistence remain unchanged.
+
+Testing notes:
+
+- No new automated tests were added for this pass.
+- The extracted behavior is pygame/font/surface-dependent and would require comparatively brittle font-rendering tests for limited value.
+- Verification stays at `py_compile` plus full `pytest tests` regression coverage for the existing pure-helper surface.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/REFACTORING_PLAN.md`

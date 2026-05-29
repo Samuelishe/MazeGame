@@ -49,7 +49,11 @@ Current Stage 2 progress:
 - completed: inner-cell border translation helper
 - completed: score/result value preparation
 - completed: highscore summary value preparation
-- remaining: HUD mixed-text rendering helper
+- completed: HUD mixed-text rendering helper
+
+Stage 2 status:
+
+- Priority A extraction work is completed.
 
 ## Stage 3
 
@@ -153,13 +157,12 @@ Concrete `maze_game.py` caution for Stage 5:
 
 Recommended next implementation order:
 
-1. Stage 2
-2. Stage 4
-3. Stage 5
-4. Stage 3
-5. Stage 6
-6. Stage 7
-7. Stage 8
+1. Stage 4
+2. Stage 5
+3. Stage 3
+4. Stage 6
+5. Stage 7
+6. Stage 8
 
 Reason:
 
@@ -167,12 +170,13 @@ Reason:
 - persistence boundaries are the next most important architectural clarity problem.
 - state-machine duplication matters, but it is less urgent than reducing runtime concentration.
 - physical file moves should be delayed until boundary work is already done.
+- Stage 3 presentation extraction remains a valid alternative next step, but Stage 4 persistence-boundary analysis is the recommended default after Stage 2 completion.
 
 ## `maze_game.py` extraction priority
 
 ### Priority A
 
-- HUD mixed-text renderer
+- completed
 
 ### Priority B
 

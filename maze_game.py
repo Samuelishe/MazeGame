@@ -51,6 +51,7 @@ from palette import make_palette
 from ui import (
     get_emoji_font,
     get_text_font,
+    render_mixed_text,
     draw_end_menu,
     wait_end_choice,
     draw_pause_menu,
@@ -302,8 +303,6 @@ def play_maze(
         font_hud_text = get_text_font(hud_font_size)
         font_hud_emoji = get_emoji_font(hud_font_size)
 
-        hud_emoji_set = {"💰", "🥉", "🥈", "🥇", "💎", "⏱"}
-
         colors = make_palette(seed_palette)
         wall_rgb, path_rgb = colors["wall"], colors["path"]
         player_rgb, goal_rgb = colors["player"], colors["goal"]
@@ -338,49 +337,6 @@ def play_maze(
         }
 
         rng = random.Random(rng_seed)
-
-        def render_hud_line(line: str) -> pygame.Surface:
-            """
-            Рендерит строку HUD, смешивая обычный текстовый и emoji-шрифт.
-
-            Кириллица и цифры идут через font_hud_text,
-            иконки монет/таймера — через font_hud_emoji.
-            """
-            pieces: list[pygame.Surface] = []
-            total_w = 0
-            max_h = 0
-            buffer = ""
-
-            def flush_buffer() -> None:
-                nonlocal buffer, total_w, max_h
-                if not buffer:
-                    return
-                surf_ = font_hud_text.render(buffer, True, (255, 255, 255))
-                pieces.append(surf_)
-                total_w += surf_.get_width()
-                max_h = max(max_h, surf_.get_height())
-                buffer = ""
-
-            for ch in line:
-                if ch in hud_emoji_set:
-                    flush_buffer()
-                    surf = font_hud_emoji.render(ch, True, (255, 255, 255))
-                    pieces.append(surf)
-                    total_w += surf.get_width()
-                    max_h = max(max_h, surf.get_height())
-                else:
-                    buffer += ch
-            flush_buffer()
-
-            if not pieces:
-                return font_hud_text.render("", True, (255, 255, 255))
-
-            merged = pygame.Surface((total_w, max_h), pygame.SRCALPHA)
-            x = 0
-            for surf in pieces:
-                merged.blit(surf, (x, (max_h - surf.get_height()) // 2))
-                x += surf.get_width()
-            return merged
 
         # --- враги ---
         safe_steps_start = 10  # радиус безопасности от старта (в шагах по клеткам)
@@ -745,7 +701,11 @@ def play_maze(
             )
 
             # --- HUD с полупрозрачной подложкой ---
-            hud_surf = render_hud_line(hud_text)
+            hud_surf = render_mixed_text(
+                hud_text,
+                font_hud_text,
+                font_hud_emoji,
+            )
 
             # Отступы вокруг текста
             pad_x = 6

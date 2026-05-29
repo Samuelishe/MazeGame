@@ -34,6 +34,7 @@ Supporting file:
 - HUD text helpers: `gameplay/hud_text.py`
 - Result summary text helpers: `gameplay/result_text.py`
 - End-summary value preparation: `gameplay/result_text.py`
+- Shared mixed text renderer: `ui.py::render_mixed_text`
 - Module map: `docs/MODULES.md`
 - Staged restructure plan: `docs/REFACTORING_PLAN.md`
 - State screens: `state_machine/`

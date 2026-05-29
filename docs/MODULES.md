@@ -179,13 +179,13 @@ Approximate size: 799 lines total.
   - extraction risk:
     medium, because it is pygame- and asset-path-dependent but behaviorally isolated.
 
-- Lines `314-396`: HUD font setup and `render_hud_line()`
+- Lines `314-396`: HUD font setup and local mixed-text rendering integration
   - responsibility:
-    create HUD fonts, define emoji set, render mixed text into one surface.
+    create HUD fonts and integrate mixed text rendering into one surface.
   - coupling:
     medium.
   - external dependencies:
-    `pygame`, `ui` font helpers.
+    `pygame`, `ui` font helpers and `ui.render_mixed_text`.
   - extraction risk:
     low to medium.
 
@@ -504,7 +504,7 @@ Priority C: high risk
 - Future fit:
   split between `presentation/fonts.py`, `presentation/text.py`, `presentation/overlays.py`.
 - Notes:
-  this is already a presentation module, but it combines reusable text helpers with blocking overlay control flow.
+  this is already a presentation module, but it combines reusable text helpers with blocking overlay control flow; `render_mixed_text` is now reused by gameplay HUD rendering as well as overlay text rendering.
 
 ### `sounds.py`
 

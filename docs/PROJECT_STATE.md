@@ -133,6 +133,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - Data-only score preparation for completed runs now also lives in `gameplay/scoring.py`.
 - Deterministic best-time/highscore/end-summary value preparation now also lives in `gameplay/result_text.py`.
 - HUD text assembly now also lives in `gameplay/` as pure helper logic, while pygame HUD rendering remains in `maze_game.py`.
+- HUD mixed-text surface rendering no longer lives as a nested helper in `maze_game.py`; gameplay now reuses `ui.render_mixed_text(...)`.
 - Border-to-inner-cell translation for maze entry/exit now also lives in `gameplay/maze_positions.py` as pure helper logic.
 - End-screen result summary text now also lives in `gameplay/` as pure helper logic.
 - The first unit tests cover formatting and scoring behavior without touching pygame runtime.
