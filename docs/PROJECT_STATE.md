@@ -99,6 +99,13 @@ Current persistence boundary reality:
 - `session_controller.py` still mixes session orchestration and direct SQL writes;
 - runtime save behavior is still split between SQLite and legacy JSON.
 
+SessionStats reality:
+
+- `SessionStats` is in-memory mutable session state, not a persistence model;
+- it is currently owned operationally by `GameSessionController`;
+- `maze_game.py` can also instantiate it directly in controller-free mode;
+- its current location in `players.py` is a staging compromise, not the intended long-term boundary.
+
 Database governance baseline:
 
 - `maze_stats.db` is treated as a disposable development/test artifact during architecture and persistence work.

@@ -184,9 +184,26 @@ Why it matters:
 - application flow and repository logic are too tightly coupled;
 - future Stage 4 refactors need to separate responsibilities without changing save behavior.
 
+### 12. `SessionStats` still lives in the wrong ownership boundary
+
+`SessionStats` is now the main leftover inside `players.py`.
+
+What the code shows:
+
+- it is mutable in-memory state for the current process only;
+- it is created and managed by `GameSessionController`;
+- it is also instantiated directly by `maze_game.py` when gameplay runs without a controller;
+- it is never stored as its own persistence record.
+
+Why it matters:
+
+- its current home in `players.py` suggests persistence ownership, which is misleading;
+- moving it to `domain/` would also be imprecise, because it is not durable domain data or a pure rule object;
+- the cleanest eventual home is a runtime/application boundary, but the project does not yet have that package boundary in place.
+
 ## Low-risk cleanup
 
-### 12. Small copy/paste drift in state modules
+### 13. Small copy/paste drift in state modules
 
 Some state classes still show repeated declarations and minor local duplication.
 
@@ -195,7 +212,7 @@ Why it matters:
 - low immediate risk
 - worth cleaning only in narrowly scoped passes
 
-### 13. Documentation lag risk
+### 14. Documentation lag risk
 
 Because the project is moving in small steps, docs can drift from code quickly if not updated every pass.
 
@@ -203,7 +220,7 @@ Why it matters:
 
 - onboarding quality depends on docs staying synchronized with reality
 
-### 14. Limited test coverage
+### 15. Limited test coverage
 
 The project now has initial tests, but they still cover only a small pure-logic slice:
 
@@ -306,6 +323,38 @@ Recommended order:
 2. completed: separate repository functions into `persistence.player_repository.py`;
 3. only then move `SessionStats`;
 4. leave behavior of `get_or_create_player(...)` untouched until bootstrap paths are clearer.
+
+### `SessionStats` analysis
+
+Current direct usage surface:
+
+- `maze_game.py`
+  - bootstrap lookup/creation
+  - standalone write path through `add_result(...)`
+  - end-summary read path through `summary_line()`
+- `session_controller.py`
+  - in-memory cache keyed by player id
+  - bootstrap/create/delete/rotation maintenance
+  - end-of-run updates via `record_run(...)`
+
+Classification:
+
+- runtime state:
+  yes
+- session aggregate:
+  yes
+- persistence model:
+  no
+- service object:
+  no
+- stable domain model:
+  weak fit
+
+Recommended direction:
+
+- do not leave it in `players.py` forever;
+- do not move it to `domain/` unless package constraints force that compromise;
+- prefer a later runtime/application-oriented module once one more package boundary step is acceptable.
 
 ### 2. Extract run-recording repository boundary
 

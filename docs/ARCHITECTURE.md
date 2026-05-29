@@ -278,6 +278,57 @@ The next clean future cut is:
 - remove the temporary re-export from `players.py` after imports are fully narrowed;
 - move `SessionStats` separately only after call sites are narrowed, because it currently bridges standalone gameplay and `GameSessionController`.
 
+### `SessionStats` analysis
+
+Current direct consumers:
+
+- `maze_game.play_maze(...)`
+  - gets `SessionStats` from `GameSessionController` when a controller exists;
+  - otherwise creates a standalone `SessionStats()` for controller-free mode;
+  - writes through `add_result(...)`;
+  - reads through `summary_line()`.
+- `GameSessionController`
+  - stores `SessionStats` objects in `session_stats_by_player`;
+  - creates them during bootstrap, player creation, and rotation reconfiguration;
+  - updates them in `record_run(...)`.
+
+No direct imports were found in:
+
+- `game_app.py`
+- `leaderboard.py`
+- `highscore_adapter.py`
+- `state_machine/*`
+
+Boundary interpretation:
+
+- `SessionStats` is not a persistence model because it is never stored directly in SQLite or JSON.
+- `SessionStats` is not a service object because it has no external coordination responsibility.
+- `SessionStats` is best treated as mutable runtime session state: an in-memory per-player aggregate for the current process lifetime.
+
+Dependency profile:
+
+- stdlib only (`dataclass`);
+- no dependency on SQLite;
+- no dependency on pygame;
+- no dependency on `PlayerProfile`;
+- no dependency on repository APIs.
+
+Placement options:
+
+- Keep in `players.py`
+  - lowest immediate risk
+  - weakest ownership clarity
+- Move to `domain/`
+  - physically clean, but semantically weaker because the object is session-lifetime runtime state rather than stable domain data
+- Move to `runtime/` or a later `application/`-style package
+  - best ownership fit for current usage pattern
+  - requires one more package-boundary step first
+
+Recommended direction:
+
+- long-term target should be a runtime/application-oriented home, not `domain/`;
+- near-term staging is still acceptable in `players.py` until the next boundary step is ready.
+
 ## Module responsibilities
 
 ### Architectural categories

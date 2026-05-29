@@ -200,6 +200,12 @@ Stage 4 Step 1 status:
 - completed: minimal disposable-DB smoke tests for `persistence.player_repository.py`
 - next sensitive candidate: Step 1C `SessionStats` relocation
 
+SessionStats recommendation after analysis:
+
+- do not move `SessionStats` into `domain/` by default;
+- preferred long-term target is a runtime/application-oriented module because actual usage is process-lifetime mutable session state;
+- if package-boundary cost is not yet justified, keep it temporarily in `players.py` until the next narrow boundary step.
+
 ## Stage 5
 
 - Goal:

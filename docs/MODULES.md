@@ -523,6 +523,101 @@ Priority C: high risk
   - `SessionStats`, because it is imported directly by both `maze_game.py` and `session_controller.py`
   - `get_or_create_player(...)`, because it is used in controller bootstrap and migration bootstrap paths
 
+#### `SessionStats` analysis
+
+- Current direct usage map:
+  - `players.py`
+    - `SessionStats.add_result(...)`:
+      local mutation API for one completed run
+    - `SessionStats.summary_line(...)`:
+      local summary formatting for HUD/end overlay
+  - `session_controller.py`
+    - `GameSessionController.session_stats_by_player`:
+      in-memory storage keyed by `player_id`
+      usage type: read/write
+      dependency strength: high
+    - `GameSessionController.__post_init__()`:
+      creates missing `SessionStats()` objects
+      usage type: write
+      dependency strength: high
+    - `GameSessionController.create_player(...)`:
+      initializes `SessionStats()` for a new player
+      usage type: write
+      dependency strength: high
+    - `GameSessionController.delete_player_from_session(...)`:
+      removes cached `SessionStats` for deleted player
+      usage type: write
+      dependency strength: medium
+    - `GameSessionController.configure_rotation_players(...)`:
+      filters and backfills `SessionStats` entries
+      usage type: read/write
+      dependency strength: high
+    - `GameSessionController.get_session_stats_for(...)`:
+      lookup-or-create accessor
+      usage type: read/write
+      dependency strength: high
+    - `GameSessionController.record_run(...)`:
+      updates counters through `stats.add_result(...)`
+      usage type: write
+      dependency strength: high
+  - `maze_game.py`
+    - `play_maze(...)` bootstrap:
+      if controller exists, reads `session_controller.get_session_stats_for(...)`;
+      otherwise constructs standalone `SessionStats()`
+      usage type: read/write
+      dependency strength: high
+    - `play_maze(...)` end-of-run flow:
+      standalone mode calls `stats.add_result(...)`
+      usage type: write
+      dependency strength: high
+    - `play_maze(...)` end-of-run summary:
+      reads `stats.summary_line()`
+      usage type: read
+      dependency strength: medium
+- Indirect/non-usage:
+  - `game_app.py`, `leaderboard.py`, `highscore_adapter.py`, and `state_machine/*` do not import `SessionStats` directly.
+- Responsibility classification:
+  - not a persistence model;
+  - not a service object;
+  - best described as runtime session state and session aggregate object.
+- Dependency facts:
+  - imports: stdlib `dataclasses` only;
+  - uses no project models directly;
+  - does not depend on SQLite;
+  - does not depend on pygame;
+  - does not depend on `PlayerProfile`.
+- Placement options:
+  - Option A: keep in `players.py`
+    - pluses:
+      zero import churn
+      keeps current code stable
+    - minuses:
+      misleading ownership next to legacy compatibility re-export
+      keeps runtime state attached to a persistence-flavored root module
+    - risk:
+      low short-term, higher long-term documentation drift
+  - Option B: move to `domain/`
+    - pluses:
+      pure dataclass can live in a non-pygame package
+      removes the last real state object from `players.py`
+    - minuses:
+      this object is not a stable game-domain concept; it is session-lifetime cache/aggregate
+      `domain/` currently hosts durable models and pure rules, which is a weaker fit
+    - risk:
+      medium due to semantic mismatch
+  - Option C: move to `runtime/` or `application/`-style runtime package
+    - pluses:
+      matches actual usage: session-lifetime mutable state for active process only
+      separates runtime/session concerns from persistence concerns cleanly
+      aligns with `GameSessionController` ownership better than `domain/`
+    - minuses:
+      no dedicated `runtime/` or `application/` package exists yet, so this introduces a new boundary decision
+    - risk:
+      medium now, lower after package-boundary prep
+- Recommended direction:
+  - prefer Option C when the project is ready for one more package boundary step;
+  - until then, keeping `SessionStats` temporarily in `players.py` is acceptable, but only as a staging state.
+
 ### `leaderboard.py`
 
 - Role:

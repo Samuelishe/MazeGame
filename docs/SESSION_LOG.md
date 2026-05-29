@@ -569,3 +569,35 @@ Documentation changes:
 - Updated `docs/REFACTORING_PLAN.md`
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
+
+## 2026-05-29 - Stage 4 Step 2A: SessionStats dependency analysis
+
+Scope:
+
+- inspect direct and indirect `SessionStats` usage
+- prepare a safe future split without changing code
+
+Observed:
+
+- direct `SessionStats` usage is limited to `maze_game.py` and `session_controller.py`;
+- `game_app.py`, `leaderboard.py`, `highscore_adapter.py`, and `state_machine/*` do not import it directly;
+- `SessionStats` is not persisted to SQLite or JSON;
+- operationally it behaves as mutable in-memory session aggregate state for the current process lifetime;
+- `domain/` is not the best semantic fit for it;
+- the cleanest eventual target is a runtime/application-oriented boundary, but that package boundary does not exist yet.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+
+Behavior notes:
+
+- No gameplay behavior changes.
+- No runtime code changes.
+- No import changes.
+- No DB changes.
