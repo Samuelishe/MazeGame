@@ -182,19 +182,18 @@ Stage 4 Step 1 status:
 - completed: disposable-DB safety tests for current `GameSessionController.record_run(...)`
 - completed: Stage 4 Step 2B run-write extraction into `persistence/run_repository.py`
 - completed: remove the now-unused `players.py` compatibility shim from the production import graph
-- next sensible candidate: extract a narrow gameplay persistence handoff helper around JSON highscore update and controller/standalone result recording
+- completed: extract a narrow gameplay persistence handoff helper around JSON highscore update and controller/standalone result recording
+- next sensible candidate: clarify `highscore.json` ownership policy or find a smaller post-handoff persistence slice around gameplay result reporting
 
 Gameplay Persistence Boundary recommendation after analysis:
 
-- do not leave the current end-of-run block entirely as-is longer than necessary;
-- do not jump straight to a broad end-of-run coordinator;
-- preferred next step:
-  extract a narrow persistence handoff helper that owns:
+- completed: the narrow persistence handoff helper now owns:
   - JSON highscore update;
   - standalone `SessionStats` recording;
   - `RunResult` creation;
   - `session_controller.record_run(...)` delegation;
-- keep score preparation and blocking end-screen UI in `maze_game.py` for the next pass.
+- keep score preparation and blocking end-screen UI in `maze_game.py`;
+- do not expand this into a broad end-of-run coordinator until there is a clearer low-risk slice.
 
 SessionStats recommendation after analysis:
 

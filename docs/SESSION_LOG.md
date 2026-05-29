@@ -560,6 +560,49 @@ Behavior notes:
 - No gameplay behavior changes.
 - No persistence behavior changes.
 
+## 2026-05-29 - Stage 4 Step 3B: extract gameplay persistence handoff helper
+
+Scope:
+
+- move only the end-of-run persistence branching out of `maze_game.py`
+- keep score preparation, end-screen summary, and blocking UI flow unchanged
+
+Code changes:
+
+- Added `runtime/run_persistence.py`.
+- Moved end-of-run handoff logic there:
+  - legacy JSON highscore update
+  - standalone `SessionStats.add_result(...)`
+  - `RunResult` creation
+  - `session_controller.record_run(...)` delegation
+- Updated `maze_game.py` to call the new helper after score/result value preparation.
+
+Tests:
+
+- Added `tests/test_run_persistence.py`.
+- Covered:
+  - highscore update on better result
+  - no JSON rewrite on worse result
+  - standalone `SessionStats` update
+  - controller-path `RunResult` capture
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No intended persistence behavior changes.
+- No schema changes.
+- The working `maze_stats.db` was not deleted or recreated.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`
+
 ## 2026-05-29 - Stage 4 Step 3A: Gameplay Persistence Boundary Analysis
 
 Scope:

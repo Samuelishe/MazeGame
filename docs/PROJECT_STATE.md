@@ -117,12 +117,13 @@ Run-recording boundary reality:
 Gameplay persistence boundary reality:
 
 - `maze_game.py` no longer owns raw SQL details;
-- but it still owns persistence branching at end-of-run time:
+- `maze_game.py` now also no longer owns the end-of-run persistence branching inline;
+- `runtime/run_persistence.py` now owns:
   - JSON highscore update;
   - standalone `SessionStats` write path;
   - `RunResult` creation for controller-present mode;
-  - the decision to call `session_controller.record_run(...)`;
-- this is now the main remaining Stage 4 hotspot inside gameplay runtime.
+  - delegation to `session_controller.record_run(...)`;
+- the remaining gameplay-side Stage 4 issue is mostly ownership policy around `highscore.json`, not the branch mechanics themselves.
 
 SessionStats reality:
 
@@ -155,7 +156,7 @@ Current structure reality is still root-heavy:
 - `gameplay/` exists, but currently covers only a small pure-logic slice
 - `domain/` now exists and currently hosts pure player domain models
 - `persistence/` now exists and currently hosts the player repository boundary
-- `runtime/` now exists, but currently contains only `SessionStats`
+- `runtime/` now exists and now contains `SessionStats` plus the gameplay persistence handoff helper
 
 ## External dependencies actually used
 

@@ -137,6 +137,7 @@ Main modules:
 - `db_manager.py`: schema creation and connections
 - `persistence/player_repository.py`: player CRUD and profile loading
 - `persistence/run_repository.py`: completed-run writes and aggregate updates
+- `runtime/run_persistence.py`: end-of-run persistence handoff branching
 - `runtime/session_stats.py`: in-memory `SessionStats`
 - `session_controller.py`: in-memory session plus run recording
 - `leaderboard.py`: read queries for leaderboard screens
@@ -200,9 +201,11 @@ Result: runtime persistence is split between SQLite and legacy JSON.
    - `ModeSelectState` -> `session.set_mode(...)`;
    - `LeaderboardState` -> `get_top_scores(...)`, `get_players_sorted(...)`.
 4. `maze_game.play_maze()` end-of-run flow:
-   - updates legacy JSON highscores through `load_highscore(...)`, `update_highscore_if_better(...)`, `save_highscore(...)`;
-   - updates in-memory session stats directly through `SessionStats.add_result(...)` when no controller is present;
-   - otherwise creates `RunResult` and calls `session_controller.record_run(...)`.
+   - delegates persistence branching to `runtime.run_persistence.handle_run_persistence(...)`;
+   - inside that helper:
+     - updates legacy JSON highscores through `update_highscore_if_better(...)`, `save_highscore(...)`;
+     - updates in-memory session stats directly through `SessionStats.add_result(...)` when no controller is present;
+     - otherwise creates `RunResult` and calls `session_controller.record_run(...)`.
 5. `GameSessionController.record_run(...)`:
    - updates in-memory `SessionStats`;
    - delegates completed-run persistence to `persistence.run_repository.write_completed_run(...)`.
@@ -567,22 +570,18 @@ without changing the public gameplay flow or inventing a wider abstraction than 
 
 ### Current end-of-run persistence flow
 
-At the end of a run, `maze_game.play_maze(...)` still owns a mixed runtime/persistence decision block:
+At the end of a run, `maze_game.play_maze(...)` now owns a narrower runtime/persistence edge:
 
 1. prepare end-of-run runtime values:
    - `elapsed_ms`
    - `time_str`
    - `score`
    - per-run coin totals and rarity counters
-2. update legacy JSON highscore path:
-   - `update_highscore_if_better(...)`
-   - `save_highscore(...)` on change
-3. choose between two session-result branches:
-   - standalone branch:
-     `SessionStats.add_result(...)`
-   - controller-present branch:
-     create `RunResult`
-     call `session_controller.record_run(...)`
+2. delegate persistence branching to `runtime.run_persistence.handle_run_persistence(...)`
+   - legacy JSON highscore update
+   - standalone `SessionStats.add_result(...)`
+   - controller-present `RunResult` creation
+   - controller-present `session_controller.record_run(...)`
 4. prepare end-screen summary values
 5. show blocking end-screen UI and wait for the next action
 
@@ -596,23 +595,24 @@ At the end of a run, `maze_game.play_maze(...)` still owns a mixed runtime/persi
     low, and mostly already handled via `gameplay/scoring.py` and `gameplay/result_text.py`
 
 - legacy JSON highscore path
-  - does not naturally belong in the core gameplay loop
+  - now lives behind the runtime handoff helper
   - reason:
     it is persistence policy, not run simulation
   - move risk:
     medium, because behavior is user-visible and still active
 
 - standalone runtime aggregate update
+  - now lives behind the runtime handoff helper
   - partly belongs to gameplay runtime because controller-free mode is a real code path
   - move risk:
     medium, because removing it changes the no-controller contract
 
 - persistence orchestration handoff
-  - does not need to be owned directly by `maze_game.py`
+  - no longer needs to be owned directly by the main end-of-run branch in `maze_game.py`
   - current evidence:
-    gameplay decides when to create `RunResult`, when to call `record_run(...)`, and when not to
+    gameplay now delegates the branching to a runtime helper instead of owning it inline
   - move risk:
-    medium, because it sits next to end-screen flow and current branching semantics
+    reduced to low-medium for future follow-up
 
 - end-screen UI
   - should remain in `maze_game.py` for now
@@ -634,15 +634,10 @@ At the end of a run, `maze_game.play_maze(...)` still owns a mixed runtime/persi
     low now, medium later
 
 - Option B: extract a narrow persistence handoff helper
-  - pluses:
-    smallest useful next step
-    can move JSON update + controller/standalone branching behind one explicit helper
-    leaves score prep and end-screen UI where they already fit
-  - minuses:
-    helper signature will still be fairly wide because end-of-run values are numerous
-    standalone `SessionStats` mode still needs to remain explicit
-  - risk:
-    medium
+  - status:
+    completed
+  - result:
+    JSON update + controller/standalone branching now live in `runtime.run_persistence`
 
 - Option C: extract a broader end-of-run coordinator
   - pluses:
@@ -671,14 +666,11 @@ It is no longer the only persistence source, but it is still part of live gamepl
 
 ### Recommended next Stage 4 code-pass
 
-The best risk/reward move is Option B:
+Option B is now completed.
+
+The next useful Stage 4 decision is narrower:
 
 - keep score preparation in `maze_game.py`;
 - keep end-screen UI flow in `maze_game.py`;
-- extract only the persistence handoff decision:
-  - JSON highscore update
-  - standalone `SessionStats` update
-  - `RunResult` creation
-  - `session_controller.record_run(...)` call
-
-This gives the project a narrower gameplay-to-persistence boundary without changing the public run flow or forcing a wider coordinator abstraction too early.
+- do not widen the helper into a broad end-of-run coordinator yet;
+- focus next on policy clarification around `highscore.json` ownership or on any smaller remaining persistence-knowledge slice that can be moved without touching UI flow.

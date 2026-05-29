@@ -74,6 +74,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `tests/test_player_repository.py`
 - `tests/test_session_controller_record_run.py`
 - `tests/test_session_stats.py`
+- `tests/test_run_persistence.py`
 
 ## Module catalogue
 
@@ -127,6 +128,23 @@ This is an inspection document only. It does not imply any immediate file moves.
   keep in `runtime/`.
 - Notes:
   Stage 4 Step 1C moved `SessionStats` here as the first explicit runtime-oriented boundary step; no broader runtime package migration has started.
+
+### `runtime/run_persistence.py`
+
+- Role:
+  runtime-facing end-of-run persistence handoff helper.
+- Main classes:
+  none.
+- Main functions:
+  `handle_run_persistence`.
+- Used by:
+  `maze_game.py`, tests.
+- Depends on:
+  `highscores`, `session_controller.RunResult`.
+- Future fit:
+  keep in `runtime/`.
+- Notes:
+  owns JSON highscore update plus standalone/controller result-recording branching without taking over score calculation, UI, or raw SQLite writes.
 
 ### `persistence/run_repository.py`
 
@@ -1208,6 +1226,19 @@ Priority C: high risk
 - Notes:
   covers `add_result(...)` and `summary_line(...)` without pygame, SQLite, or repository dependencies.
 
+### `tests/test_run_persistence.py`
+
+- Role:
+  non-pygame tests for the end-of-run persistence handoff helper.
+- Used by:
+  pytest only.
+- Depends on:
+  `runtime.run_persistence`, `runtime.session_stats`, `highscores`, `session_controller.RunResult`.
+- Future fit:
+  keep under `tests/`.
+- Notes:
+  covers JSON highscore updates, standalone `SessionStats` updates, and controller-path `RunResult` handoff without touching the working `maze_stats.db`.
+
 ### `tests/__init__.py`
 
 - Role:
@@ -1234,6 +1265,7 @@ Priority C: high risk
 - `maze_game.py` -> `palette.py`
 - `maze_game.py` -> `session_controller.py`
 - `maze_game.py` -> `highscores.py`
+- `maze_game.py` -> `runtime/run_persistence.py`
 
 ### Persistence spine
 
@@ -1251,6 +1283,7 @@ Priority C: high risk
 - `highscore_adapter.py` -> `persistence.player_repository.py`
 - `maze_game.py` -> `highscores.py`
 - `maze_game.py` -> `runtime/session_stats.py`
+- `maze_game.py` -> `runtime/run_persistence.py`
 - `maze_game.py` -> `session_controller.RunResult`
 
 ### Runtime spine
@@ -1258,6 +1291,7 @@ Priority C: high risk
 - `game_app.py` -> `maze_game.py`
 - `game_app.py` -> `session_controller.py`
 - `maze_game.py` -> `runtime/session_stats.py`
+- `maze_game.py` -> `runtime/run_persistence.py`
 - `session_controller.py` -> `runtime/session_stats.py`
 
 ### UI / screen spine
@@ -1312,6 +1346,8 @@ Priority C: high risk
   - local variables and closures inside `maze_game.play_maze()` / `run_once()`
 - run result handoff between gameplay and persistence
   - `session_controller.RunResult`
+- end-of-run persistence handoff branching
+  - `runtime.run_persistence.handle_run_persistence`
 
 ### Runtime-related files
 
@@ -1343,6 +1379,13 @@ Priority C: high risk
     stdlib only
   - coupling:
     low
+- `runtime/run_persistence.py`
+  - responsibility:
+    end-of-run persistence handoff branching between JSON, standalone session state, and controller-backed recording
+  - dependencies:
+    `highscores`, `session_controller.RunResult`
+  - coupling:
+    medium
 - `state_machine/*`
   - responsibility:
     menu and setup screen runtime flow under the outer app loop
@@ -1543,9 +1586,11 @@ Reason:
    - if there is no controller:
      - updates standalone `SessionStats`
 4. `maze_game.play_maze(...)`
-   - if a controller exists:
-     - constructs `RunResult`
-     - calls `session_controller.record_run(...)`
+   - delegates persistence branching to `runtime.run_persistence.handle_run_persistence(...)`
+   - inside that helper:
+     - standalone mode updates `SessionStats`
+     - controller mode constructs `RunResult`
+     - controller mode calls `session_controller.record_run(...)`
 5. `session_controller.record_run(...)`
    - updates runtime `SessionStats`
    - delegates SQLite write path to `persistence.run_repository.write_completed_run(...)`
@@ -1604,9 +1649,9 @@ Reason:
 
 ### Recommended direction
 
-- prefer Option B next;
+- completed: Option B via `runtime/run_persistence.py`;
 - keep score preparation and blocking end-screen UI in `maze_game.py`;
-- move only the persistence handoff decision and its two save branches behind a narrower helper boundary.
+- remaining Stage 4 question is ownership and lifecycle policy of `highscore.json`, not the basic branch mechanics.
 
 ### Cycles
 

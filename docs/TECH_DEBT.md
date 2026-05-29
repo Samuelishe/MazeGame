@@ -395,20 +395,19 @@ Target outcome:
 
 Current code facts:
 
-- `maze_game.py` still updates `highscore.json` directly;
-- `maze_game.py` still decides whether to update standalone `SessionStats` or create `RunResult` and call `session_controller.record_run(...)`;
-- `maze_game.py` still keeps that persistence branching inside the same end-of-run block as the blocking end-screen UI.
+- `maze_game.py` no longer updates `highscore.json` inline;
+- `maze_game.py` no longer decides inline whether to update standalone `SessionStats` or create `RunResult` and call `session_controller.record_run(...)`;
+- that branching now lives in `runtime/run_persistence.py`.
 
 Why this matters:
 
 - the remaining coupling is no longer raw SQL;
-- it is gameplay runtime knowledge of persistence policy and save-path branching;
-- this makes `maze_game.py` the last major Stage 4 hotspot after repository extraction.
+- it is now mostly gameplay runtime knowledge of persistence policy through helper usage and highscore lifecycle assumptions;
+- this keeps `maze_game.py` narrower, but does not yet solve legacy JSON ownership.
 
 Recommended narrow next target:
 
-- do not build a broad end-of-run coordinator first;
-- prefer a smaller persistence handoff helper that owns:
+- completed: a smaller persistence handoff helper now owns:
   - JSON highscore update;
   - standalone vs controller-present result recording decision;
   - `RunResult` creation and `record_run(...)` invocation.

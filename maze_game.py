@@ -29,13 +29,12 @@ from gameplay.scoring import compute_score, prepare_run_score
 from highscores import (
     Highscore,
     load_highscore,
-    save_highscore,
-    update_highscore_if_better,
     default_path as highscore_path,
 )
 from sounds import SoundBank
 from sprites import SpriteSheet, AnimatedSprite
 
+from runtime.run_persistence import handle_run_persistence
 from runtime.session_stats import SessionStats
 
 from grid_utils import DIRS4, in_bounds
@@ -63,7 +62,7 @@ from maze_gen import (
     set_entrance_exit_and_check,
 )
 
-from session_controller import GameSessionController, RunResult, RoundMode
+from session_controller import GameSessionController, RoundMode
 
 Coord = Tuple[int, int]
 
@@ -750,47 +749,21 @@ def play_maze(
                     params=prepared_score.params,
                 )
 
-                # Рекорды: обновить и сохранить при улучшении (старый JSON highscore)
-                if update_highscore_if_better(
-                        highscore,
-                        score=score,
-                        coins_value_sum=coins_collected,
-                        elapsed_ms=elapsed_ms,
-                        won=won,
-                        bronze_count=bronze_count,
-                        silver_count=silver_count,
-                        gold_count=gold_count,
-                        diamond_count=diamond_count,
-                ):
-                    save_highscore(highscore, highscore_path())
-
-                # Фиксация результата:
-                # - если контроллера нет — пишем только в локальную SessionStats;
-                # - если контроллер есть — он сам обновит и SessionStats, и SQLite.
-                if session_controller is None or active_player_id is None:
-                    stats.add_result(
-                        won=won,
-                        coins_value_sum=coins_collected,
-                        elapsed_ms=elapsed_ms,
-                        score=score,
-                        bronze_count=bronze_count,
-                        silver_count=silver_count,
-                        gold_count=gold_count,
-                        diamond_count=diamond_count,
-                    )
-                else:
-                    run_result = RunResult(
-                        player_id=active_player_id,
-                        score=score,
-                        elapsed_ms=elapsed_ms,
-                        coins_value_sum=coins_collected,
-                        won=won,
-                        bronze_count=bronze_count,
-                        silver_count=silver_count,
-                        gold_count=gold_count,
-                        diamond_count=diamond_count,
-                    )
-                    session_controller.record_run(run_result)
+                handle_run_persistence(
+                    highscore=highscore,
+                    highscore_json_path=highscore_path(),
+                    stats=stats,
+                    session_controller=session_controller,
+                    active_player_id=active_player_id,
+                    score=score,
+                    elapsed_ms=elapsed_ms,
+                    coins_value_sum=coins_collected,
+                    won=won,
+                    bronze_count=bronze_count,
+                    silver_count=silver_count,
+                    gold_count=gold_count,
+                    diamond_count=diamond_count,
+                )
 
                 # 2) формируем строки
                 attempt_info = build_attempt_info(
