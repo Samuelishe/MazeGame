@@ -573,9 +573,9 @@ Why it matters:
 
 Recommended next move:
 
-- prefer a narrow extraction of the coin collection helper only;
-- keep movement branches, goal checks, enemy updates, and block timers in `maze_game.py`;
-- use explicit arguments instead of a broad context object.
+- completed: narrow extraction of the coin collection helper only;
+- `runtime/coin_collection.py` now owns lookup/removal, rarity/value accounting, and sound/effect triggers;
+- movement branches, goal checks, enemy updates, and block timers remain in `maze_game.py`.
 
 What should wait:
 

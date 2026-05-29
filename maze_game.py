@@ -36,6 +36,7 @@ from presentation.enemy_sprites import load_enemy_sheets_by_type
 from sounds import SoundBank
 from sprites import AnimatedSprite
 
+from runtime.coin_collection import CoinCollectionStats, collect_coin_at
 from runtime.run_persistence import handle_run_persistence
 from runtime.session_stats import SessionStats
 
@@ -374,36 +375,7 @@ def play_maze(
             },
         )
 
-        coins_collected = 0  # сумма номиналов
-
-        # разбивка по редкостям за текущий забег
-        bronze_count: int = 0
-        silver_count: int = 0
-        gold_count: int = 0
-        diamond_count: int = 0
-
-        def try_collect_at(position: Coord, current_ms: int) -> None:
-            nonlocal coins_collected, coins
-            nonlocal bronze_count, silver_count, gold_count, diamond_count
-            for coin_ in coins[:]:  # копия списка, чтобы безопасно удалять
-                if coin_.pos == position:
-                    coins_collected += coin_.value
-                    # счётчики по редкости
-                    if coin_.rarity is CoinRarity.BRONZE:
-                        bronze_count += 1
-                        sound.play_coin()
-                    elif coin_.rarity is CoinRarity.SILVER:
-                        silver_count += 1
-                        sound.play_coin()
-                    elif coin_.rarity is CoinRarity.GOLD:
-                        gold_count += 1
-                        sound.play_coin()
-                    else:  # DIAMOND
-                        diamond_count += 1
-                        sound.play_diamond()
-
-                    effects.add_coin_flash(position, current_ms)
-                    coins.remove(coin_)
+        coin_stats = CoinCollectionStats()
 
         while running:
             now_ms = pygame.time.get_ticks()
@@ -455,7 +427,14 @@ def play_maze(
                         if can_step(next_row0, next_col0):
                             player = (next_row0, next_col0)
                             trail.add(player)
-                            try_collect_at(player, now_ms)
+                            collect_coin_at(
+                                position=player,
+                                current_ms=now_ms,
+                                coins=coins,
+                                stats=coin_stats,
+                                sound=sound,
+                                effects=effects,
+                            )
                             if player == goal:
                                 won = True
                                 sound.play_win()
@@ -482,7 +461,14 @@ def play_maze(
                 if can_step(next_row, next_col):
                     player = (next_row, next_col)
                     trail.add(player)
-                    try_collect_at(player, now_ms)
+                    collect_coin_at(
+                        position=player,
+                        current_ms=now_ms,
+                        coins=coins,
+                        stats=coin_stats,
+                        sound=sound,
+                        effects=effects,
+                    )
                     if player == goal:
                         won = True
                         sound.play_win()
@@ -633,11 +619,11 @@ def play_maze(
             elapsed_ms_live = now_ms - start_ms
             hud_text = build_hud_text(
                 active_player_name=active_player_name,
-                coins_collected=coins_collected,
-                bronze_count=bronze_count,
-                silver_count=silver_count,
-                gold_count=gold_count,
-                diamond_count=diamond_count,
+                coins_collected=coin_stats.total_value,
+                bronze_count=coin_stats.bronze_count,
+                silver_count=coin_stats.silver_count,
+                gold_count=coin_stats.gold_count,
+                diamond_count=coin_stats.diamond_count,
                 elapsed_ms_live=elapsed_ms_live,
             )
 
@@ -665,8 +651,8 @@ def play_maze(
                 prepared_score = prepare_run_score(
                     start_ms=start_ms,
                     now_ms=now_ms,
-                    coins_value_sum=coins_collected,
-                    diamond_count=diamond_count,
+                    coins_value_sum=coin_stats.total_value,
+                    diamond_count=coin_stats.diamond_count,
                     won=won,
                 )
                 elapsed_ms = prepared_score.elapsed_ms
@@ -688,19 +674,19 @@ def play_maze(
                     active_player_id=active_player_id,
                     score=score,
                     elapsed_ms=elapsed_ms,
-                    coins_value_sum=coins_collected,
+                    coins_value_sum=coin_stats.total_value,
                     won=won,
-                    bronze_count=bronze_count,
-                    silver_count=silver_count,
-                    gold_count=gold_count,
-                    diamond_count=diamond_count,
+                    bronze_count=coin_stats.bronze_count,
+                    silver_count=coin_stats.silver_count,
+                    gold_count=coin_stats.gold_count,
+                    diamond_count=coin_stats.diamond_count,
                 )
 
                 # 2) формируем строки
                 attempt_info = build_attempt_info(
                     won=won,
                     time_str=time_str,
-                    coins_value_sum=coins_collected,
+                    coins_value_sum=coin_stats.total_value,
                     score=score,
                 )
 
@@ -715,10 +701,10 @@ def play_maze(
                     silver_max=highscore.silver_max,
                     gold_max=highscore.gold_max,
                     diamond_max=highscore.diamond_max,
-                    bronze_count=bronze_count,
-                    silver_count=silver_count,
-                    gold_count=gold_count,
-                    diamond_count=diamond_count,
+                    bronze_count=coin_stats.bronze_count,
+                    silver_count=coin_stats.silver_count,
+                    gold_count=coin_stats.gold_count,
+                    diamond_count=coin_stats.diamond_count,
                 )
 
                 title = "ПОБЕДА!" if won else "ПОЙМАЛИ!"

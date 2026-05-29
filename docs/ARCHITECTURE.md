@@ -674,15 +674,15 @@ Option assessment:
 - Option C: widen into a larger interaction/update module
   - too wide for the current safe surface
 
-Recommended next Stage 3 code-pass:
+Stage 3 Step 8 is now completed:
 
-- prefer Option B
-- move only:
-  - coin lookup
+- `runtime/coin_collection.py` owns:
+  - coin lookup by position
   - coin removal
-  - rarity/value mutation
+  - collected-value mutation
+  - rarity counter mutation
   - sound/effect triggers
-- keep in `maze_game.py`:
+- `maze_game.py` still owns:
   - movement branches
   - goal checks
   - enemy updates
@@ -691,9 +691,9 @@ Recommended next Stage 3 code-pass:
 
 Cheapest later candidate after that:
 
-- the coin collection helper is cheaper than enemy update extraction
-- the coin collection helper is cheaper than world-render extraction
-- block timer extraction is plausible later, but not cheaper than the current coin handler split
+- block timer extraction is now the cheapest next narrow runtime-support candidate
+- enemy update extraction is still more behavior-sensitive
+- world-render extraction is still broader
 
 ## Cyclic imports
 

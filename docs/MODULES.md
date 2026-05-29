@@ -20,6 +20,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 
 - `game_app.py`
 - `maze_game.py`
+- `runtime/coin_collection.py`
 - `runtime/session_stats.py`
 - `runtime/run_persistence.py`
 
@@ -151,6 +152,23 @@ This is an inspection document only. It does not imply any immediate file moves.
   keep in `runtime/`.
 - Notes:
   owns JSON highscore update plus standalone/controller result-recording branching without taking over score calculation, UI, or raw SQLite writes.
+
+### `runtime/coin_collection.py`
+
+- Role:
+  runtime-facing coin pickup accounting and side-effect helper.
+- Main classes:
+  `CoinCollectionStats`.
+- Main functions:
+  `collect_coin_at`.
+- Used by:
+  `maze_game.py`, tests.
+- Depends on:
+  `coins`.
+- Future fit:
+  keep in `runtime/`.
+- Notes:
+  Stage 3 Step 8 extracted coin lookup/removal, rarity/value accounting, and sound/effect triggers here without moving player movement flow or other update-step systems.
 
 ### `presentation/coin_rendering.py`
 
@@ -1647,19 +1665,17 @@ Option assessment:
   - too broad for the current safe surface
   - risks coupling coin pickup with other update-step systems
 
-Recommended next Stage 3 follow-up:
+Completed in Stage 3 Step 8:
 
-- prefer Option B:
-  - move only the collection helper logic itself
-  - pass explicit mutable runtime state:
-    - coin list
-    - collected-value counter
-    - rarity counters
-    - sound/effects handles
-    - `position`
-    - `current_ms`
-- do not move:
+- `runtime/coin_collection.py` now owns:
+  - coin lookup by position
+  - coin removal
+  - collected-value mutation
+  - rarity counter mutation
+  - sound/effect triggers
+- `maze_game.py` still owns:
   - player movement flow
+  - goal checks
   - enemy updates
   - block timer updates
   - world rendering
@@ -1668,7 +1684,7 @@ Cheapest later candidate after that:
 
 - world rendering remains broader and higher-blast-radius
 - enemy update helper is still more behavior-sensitive
-- block timer helper is plausible, but coin collection helper is currently cheaper and more local
+- block timer helper is now the cheapest plausible next candidate
 
 ## Dependency map
 

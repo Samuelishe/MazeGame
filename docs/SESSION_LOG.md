@@ -1077,6 +1077,44 @@ Documentation changes:
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
 
+## 2026-05-29 - Stage 3 Step 8: Extract coin collection helper
+
+Scope:
+
+- move only the local coin pickup handler out of `maze_game.py`
+- keep movement flow, goal checks, enemy updates, block timers, and world rendering inline
+
+Code changes:
+
+- Added `runtime/coin_collection.py`.
+- Added `CoinCollectionStats`.
+- Added `collect_coin_at(...)`.
+- Removed local `try_collect_at(...)` from `maze_game.py`.
+- Replaced local coin counters in `maze_game.py` with one `CoinCollectionStats` instance.
+- Kept score calculation, persistence handoff, HUD semantics, and end-screen values unchanged.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- Coin pickup order, rarity accounting, sound behavior, and flash-effect behavior were preserved.
+- Movement timing, enemy updates, block timers, and rendering order were not touched.
+
+Testing notes:
+
+- Added `tests/test_coin_collection.py`.
+- Used fake sound/effects objects without `pygame` display setup.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`
+
 ## 2026-05-29 - Stage 3 Step 2: Extract coin and block rendering helpers
 
 Scope:
