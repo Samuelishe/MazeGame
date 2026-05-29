@@ -20,6 +20,8 @@
 - Keep changes local, low-risk, and easy to review.
 - Update docs whenever architecture, flow, or project rules change.
 - Preserve current UX, controls, and return contracts unless explicitly approved otherwise.
+- All user-facing responses must be written in Russian.
+- Commit messages in final task summaries must remain in English.
 
 ## Refactoring guardrails
 

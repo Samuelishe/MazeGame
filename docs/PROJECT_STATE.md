@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-Date of audit: 2026-05-28
+Date of audit: 2026-05-29
 
 This project is a working pygame maze game with:
 
@@ -80,6 +80,13 @@ There is no single `GameState` or `RunState` object today.
 - `resources/`: images and audio assets
 - `docs/`: architecture and maintenance documents
 
+Current structure reality is still root-heavy:
+
+- 10+ production modules still live directly in repository root
+- major runtime files remain root-level
+- support modules are only partially grouped
+- `gameplay/` exists, but currently covers only a small pure-logic slice
+
 ## External dependencies actually used
 
 - `pygame-ce`
@@ -102,6 +109,14 @@ Not performed in this audit:
 
 This is a workable small-game codebase with a clear separation between menu screens and data access, but the gameplay core has outgrown its current single-file structure. The project is stable enough for incremental improvement, not for a blind refactor.
 
+The architecture inspection confirms that the main structural issue is not broken behavior but weak physical organization:
+
+- `maze_game.py` is still the main concentration point
+- too many modules remain in the root directory
+- some modules still mix domain and rendering concerns
+- `players.py` still mixes data model and repository responsibilities
+- repeated state-screen UI patterns are present but not yet centralized
+
 ## Stabilization notes
 
 - Recursive next-round flow in `GameplayWrapper.start_level()` has been replaced with an explicit loop.
@@ -111,3 +126,13 @@ This is a workable small-game codebase with a clear separation between menu scre
 - End-screen result summary text now also lives in `gameplay/` as pure helper logic.
 - The first unit tests cover formatting and scoring behavior without touching pygame runtime.
 - Documentation and environment assumptions now point to `.venv`, `pygame-ce`, and the current pytest workflow.
+
+## Inspection notes
+
+The architecture inspection pass added:
+
+- file-level module map in `docs/MODULES.md`
+- staged restructuring plan in `docs/REFACTORING_PLAN.md`
+- explicit target package direction for future work
+
+No runtime code, imports, gameplay behavior, or tests were changed during this pass.

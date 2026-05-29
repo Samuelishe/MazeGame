@@ -10,9 +10,13 @@ Read in this order for minimal token usage:
    Current layout, folder responsibilities, and near-term grouping plan.
 4. [TECH_DEBT.md](TECH_DEBT.md)  
    Main architectural risks and stabilization targets.
-5. [ROADMAP.md](ROADMAP.md)  
+5. [MODULES.md](MODULES.md)  
+   File-level module map, ownership, dependency notes, and future placement hints.
+6. [REFACTORING_PLAN.md](REFACTORING_PLAN.md)  
+   Staged restructuring plan with risk and scope guidance.
+7. [ROADMAP.md](ROADMAP.md)  
    Safe, incremental refactor plan.
-6. [SESSION_LOG.md](SESSION_LOG.md)  
+8. [SESSION_LOG.md](SESSION_LOG.md)  
    Dated agent work history.
 
 Supporting file:
@@ -27,6 +31,8 @@ Supporting file:
 - Pure gameplay helpers: `gameplay/`
 - HUD text helpers: `gameplay/hud_text.py`
 - Result summary text helpers: `gameplay/result_text.py`
+- Module map: `docs/MODULES.md`
+- Staged restructure plan: `docs/REFACTORING_PLAN.md`
 - State screens: `state_machine/`
 - Tests: `tests/`
 - Main persistent store: `maze_stats.db` via SQLite

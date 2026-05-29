@@ -10,6 +10,14 @@ There are three main layers:
 2. Gameplay runtime
 3. Persistence and player/session data
 
+For inspection purposes, the current codebase can be classified more precisely into:
+
+1. runtime orchestration
+2. state machine screens
+3. gameplay/domain helpers
+4. pygame presentation/media helpers
+5. persistence and migration modules
+
 There is now an early sublayer for pure gameplay-domain helpers under `gameplay/`. It is intentionally small and only hosts logic already reused across runtime and read-only screens.
 
 Current runtime environment assumptions are part of the architecture:
@@ -154,6 +162,24 @@ Result: runtime persistence is split between SQLite and legacy JSON.
 
 ## Module responsibilities
 
+### Architectural categories
+
+- Runtime orchestration:
+  `game_app.py`, `maze_game.py`
+- State machine:
+  `state_machine/state_base.py`, `state_machine/main_menu.py`,
+  `state_machine/player_select_state.py`, `state_machine/mode_select_state.py`,
+  `state_machine/multiplayer_setup_state.py`, `state_machine/leaderboard_state.py`
+- Gameplay/domain:
+  `maze_gen.py`, `grid_utils.py`, `enemies.py`, `gameplay/*`
+- Mixed gameplay + presentation support:
+  `coins.py`, `blocks.py`
+- Presentation/media:
+  `ui.py`, `sounds.py`, `sprites.py`, `effects.py`, `palette.py`
+- Persistence/data:
+  `db_manager.py`, `players.py`, `session_controller.py`, `leaderboard.py`,
+  `highscores.py`, `highscore_adapter.py`
+
 ### App shell
 
 - `game_app.py`: bootstrap, navigation wiring, session creation, gameplay handoff
@@ -175,8 +201,8 @@ Result: runtime persistence is split between SQLite and legacy JSON.
 - `maze_gen.py`: maze generation
 - `grid_utils.py`: shared grid helpers
 - `enemies.py`: enemy models, schemes, movement strategies
-- `coins.py`: coin spawning/rendering
-- `blocks.py`: temporary blocking tiles
+- `coins.py`: mixed module with coin spawning plus coin rendering
+- `blocks.py`: mixed module with block spawn/respawn plus block rendering
 - `effects.py`: visual effects
 - `palette.py`: color palette generation
 - `sprites.py`: sprite sheet helpers
@@ -186,8 +212,8 @@ Result: runtime persistence is split between SQLite and legacy JSON.
 ### Data/persistence
 
 - `db_manager.py`: SQLite schema and connection setup
-- `players.py`: player persistence and in-memory `SessionStats`
-- `session_controller.py`: current session coordination
+- `players.py`: player persistence, aggregate models, and in-memory `SessionStats`
+- `session_controller.py`: current session coordination plus SQLite run recording
 - `leaderboard.py`: leaderboard queries
 - `highscores.py`: legacy JSON highscore read/write
 - `highscore_adapter.py`: one-time migration bridge
@@ -213,6 +239,9 @@ Main dependency spine:
 Notable dependency smell:
 
 - `maze_game.py` still remains the main gameplay concentration point, but pure formatting/scoring logic has been extracted into `gameplay/` to reduce incidental coupling.
+- `ui.py` is shared by both gameplay runtime and state-machine screens, so presentation concerns are still centralized in one broad helper module.
+- `players.py` mixes repository-style DB access with domain dataclasses and session aggregate logic.
+- `coins.py` and `blocks.py` mix gameplay-domain spawning with pygame rendering helpers.
 
 ## Cyclic imports
 
@@ -227,3 +256,33 @@ That said, coupling is still high because several UI and runtime paths depend on
 3. Save logic is split between SQLite and JSON.
 4. Nested pygame loops make control flow harder to reason about than pure FSM states.
 5. There is no dedicated runtime model for a round.
+6. Root-level module count is still high, so ownership boundaries are visually weak.
+7. Several modules combine domain logic with rendering or persistence details.
+
+## Current target structure direction
+
+The recommended future package shape is:
+
+- `runtime/`
+  - app startup
+  - gameplay loop coordination
+  - round flow orchestration
+- `state_machine/`
+  - FSM primitives and screen states
+- `domain/`
+  - maze generation
+  - scoring
+  - enemy logic
+  - grid/gameplay pure helpers
+- `presentation/`
+  - pygame rendering helpers
+  - overlays
+  - sprites
+  - audio
+  - visual effects
+- `persistence/`
+  - SQLite setup
+  - repositories and queries
+  - legacy JSON adapter/migration code
+
+This is a planning target only. No file moves are implied by this document yet.

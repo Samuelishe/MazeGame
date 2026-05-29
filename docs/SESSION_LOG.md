@@ -141,3 +141,40 @@ Documentation changes:
 
 - Updated architecture/state docs and index to mention `gameplay/hud_text.py`.
 - Updated `docs/TECH_DEBT.md` to record reduced pure-text responsibility inside `maze_game.py`.
+
+## 2026-05-29 - architecture inspection pass
+
+Scope:
+
+- inspect all project Python modules
+- review existing docstrings and import relationships
+- classify modules by responsibility and layer
+- document future package direction without moving files
+- formalize communication rules for future agents
+
+Observed:
+
+- `maze_game.py` remains the dominant runtime god module.
+- `game_app.py` still combines app bootstrap, menu composition, and gameplay handoff.
+- `enemies.py` is large, but comparatively cohesive.
+- `players.py` mixes repository access, aggregate models, and session-only stats.
+- `coins.py` and `blocks.py` each mix domain logic with pygame rendering.
+- `ui.py` is a broad shared presentation helper used by both gameplay runtime and FSM screens.
+- No direct Python cyclic imports were found in the current import graph.
+- The repository root still contains too many production modules for the current architecture to read clearly.
+
+Documentation changes:
+
+- Updated `AGENTS.md`
+- Updated `docs/DEVELOPMENT_RULES.md`
+- Added `docs/MODULES.md`
+- Added `docs/REFACTORING_PLAN.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/INDEX.md`
+
+Behavior notes:
+
+- No gameplay behavior changes.
+- No runtime code changes.
+- No file moves or import changes.

@@ -1,0 +1,679 @@
+# Modules Map
+
+## Purpose
+
+This document is the file-level architecture map for Maze Game.
+
+It describes:
+
+- what each Python module currently does;
+- which layer it belongs to;
+- who depends on it;
+- where it would fit better in a future directory structure;
+- what architectural issues are visible from the current module graph.
+
+This is an inspection document only. It does not imply any immediate file moves.
+
+## Layer map
+
+### App shell / runtime orchestration
+
+- `game_app.py`
+- `maze_game.py`
+
+### State machine / screen flow
+
+- `state_machine/state_base.py`
+- `state_machine/main_menu.py`
+- `state_machine/player_select_state.py`
+- `state_machine/mode_select_state.py`
+- `state_machine/multiplayer_setup_state.py`
+- `state_machine/leaderboard_state.py`
+
+### Gameplay domain and gameplay support
+
+- `maze_gen.py`
+- `grid_utils.py`
+- `enemies.py`
+- `coins.py`
+- `blocks.py`
+- `effects.py`
+- `palette.py`
+- `gameplay/formatting.py`
+- `gameplay/scoring.py`
+- `gameplay/result_text.py`
+- `gameplay/hud_text.py`
+
+### Presentation / media / pygame-facing helpers
+
+- `ui.py`
+- `sounds.py`
+- `sprites.py`
+
+### Persistence / session / leaderboard data
+
+- `db_manager.py`
+- `players.py`
+- `session_controller.py`
+- `leaderboard.py`
+- `highscores.py`
+- `highscore_adapter.py`
+
+### Tests
+
+- `tests/test_formatting.py`
+- `tests/test_scoring.py`
+- `tests/test_result_text.py`
+- `tests/test_hud_text.py`
+
+## Module catalogue
+
+### `game_app.py`
+
+- Role:
+  app bootstrap, pygame lifecycle start, DB init, migration trigger, FSM wiring, gameplay handoff.
+- Main classes:
+  `GameplayWrapper`.
+- Main functions:
+  `init_environment`, `make_main_menu`, `show_*`, `run_game_app`, `quit_game`.
+- Used by:
+  process entrypoint only.
+- Depends on:
+  `state_machine/*`, `session_controller`, `db_manager`, `highscore_adapter`, `maze_game`.
+- Future fit:
+  `runtime/app.py` or `app_shell/app.py`.
+- Notes:
+  runtime orchestration and menu composition are mixed in one root module.
+
+### `maze_game.py`
+
+- Role:
+  main gameplay runtime loop and the largest behavior host in the project.
+- Main classes:
+  none.
+- Main functions:
+  `compute_window_size`, `sample_coins_count`, `play_maze`, plus small local gameplay helpers.
+- Used by:
+  `game_app.py`.
+- Depends on:
+  `coins`, `effects`, `gameplay/*`, `highscores`, `sounds`, `sprites`, `players`, `grid_utils`, `enemies`, `blocks`, `palette`, `ui`, `maze_gen`, `session_controller`.
+- Future fit:
+  split gradually across `runtime/gameplay_loop.py`, `runtime/gameplay_rendering.py`, `runtime/gameplay_flow.py`, while keeping root file as migration shell until stable.
+- Notes:
+  dominant god module; mixes gameplay rules, state mutation, rendering, pause/end overlays, persistence hooks, audio, assets, and level control.
+
+### `session_controller.py`
+
+- Role:
+  session state, player rotation modes, in-memory session stats, SQLite run recording.
+- Main classes:
+  `RoundMode`, `RunResult`, `GameSessionController`.
+- Main functions:
+  class methods and record/update methods inside `GameSessionController`.
+- Used by:
+  `game_app.py`, `maze_game.py`, `state_machine/player_select_state.py`, `state_machine/mode_select_state.py`, `state_machine/multiplayer_setup_state.py`, `state_machine/leaderboard_state.py`.
+- Depends on:
+  `db_manager`, `players`.
+- Future fit:
+  `persistence/session_controller.py` or `application/session_controller.py`.
+- Notes:
+  not a gameplay module, but still broad because it combines session coordination and direct SQL write orchestration.
+
+### `db_manager.py`
+
+- Role:
+  SQLite connection setup, PRAGMA management, schema bootstrap, meta flags.
+- Main classes:
+  none.
+- Main functions:
+  `get_connection`, `init_db`, `set_meta_flag`, `get_meta_flag`.
+- Used by:
+  `game_app.py`, `session_controller.py`, `players.py`, `leaderboard.py`, `highscore_adapter.py`.
+- Depends on:
+  stdlib only.
+- Future fit:
+  `infrastructure/db_manager.py`.
+- Notes:
+  clean infrastructure module; root placement is the main issue, not internal design.
+
+### `players.py`
+
+- Role:
+  player profiles, aggregate stats model, CRUD for players, in-memory `SessionStats`.
+- Main classes:
+  `PlayerAggregateStats`, `PlayerProfile`, `SessionStats`.
+- Main functions:
+  `load_players`, `create_player`, `delete_player`, `get_player_by_name`, `get_or_create_player`.
+- Used by:
+  `maze_game.py`, `session_controller.py`, `highscore_adapter.py`, `state_machine/player_select_state.py`, `state_machine/multiplayer_setup_state.py`.
+- Depends on:
+  `db_manager`.
+- Future fit:
+  split between `domain/player_models.py` and `persistence/player_repository.py`.
+- Notes:
+  one file holds both domain dataclasses and DB access; this is a clear mixed-responsibility module.
+
+### `leaderboard.py`
+
+- Role:
+  read-only leaderboard/query API over SQLite.
+- Main classes:
+  `RunEntry`, `PlayerEntry`.
+- Main functions:
+  `get_top_scores`, `get_best_times`, `get_top_coins`, `get_players_sorted`, `get_player_aggregate`.
+- Used by:
+  `state_machine/leaderboard_state.py`.
+- Depends on:
+  `db_manager`.
+- Future fit:
+  `persistence/leaderboard_queries.py`.
+- Notes:
+  mostly clean read-model module; root placement is the main structural issue.
+
+### `highscores.py`
+
+- Role:
+  legacy JSON highscore read/write/update logic.
+- Main classes:
+  `Highscore`.
+- Main functions:
+  `default_path`, `load_highscore`, `save_highscore`, `update_highscore_if_better`.
+- Used by:
+  `maze_game.py`, `highscore_adapter.py`.
+- Depends on:
+  stdlib only.
+- Future fit:
+  `persistence/legacy_highscores.py`.
+- Notes:
+  legacy persistence remains active in runtime, which keeps persistence ownership split.
+
+### `highscore_adapter.py`
+
+- Role:
+  one-time migration bridge from `highscore.json` into SQLite.
+- Main classes:
+  none.
+- Main functions:
+  `migrate_highscore_if_needed`.
+- Used by:
+  `game_app.py`.
+- Depends on:
+  `db_manager`, `highscores`, `players`.
+- Future fit:
+  `persistence/migrations/highscore_adapter.py`.
+- Notes:
+  migration logic is cleanly separated, but it documents an unfinished persistence transition.
+
+### `ui.py`
+
+- Role:
+  pygame UI helper layer: font loading, mixed emoji/text rendering, pause overlay, end overlay.
+- Main classes:
+  none.
+- Main functions:
+  `get_emoji_font`, `get_text_font`, `render_mixed_text`, `draw_end_menu`, `wait_end_choice`, `draw_pause_menu`, `wait_pause_choice`.
+- Used by:
+  `maze_game.py`, all screen modules under `state_machine/`.
+- Depends on:
+  `pygame`.
+- Future fit:
+  split between `presentation/fonts.py`, `presentation/text.py`, `presentation/overlays.py`.
+- Notes:
+  this is already a presentation module, but it combines reusable text helpers with blocking overlay control flow.
+
+### `sounds.py`
+
+- Role:
+  audio loading and fallback procedural sound generation.
+- Main classes:
+  `_ToneSpec`, `SoundBank`.
+- Main functions:
+  methods inside `SoundBank`.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  `pygame`.
+- Future fit:
+  `presentation/audio.py`.
+- Notes:
+  clean support module; tightly pygame-bound by nature.
+
+### `sprites.py`
+
+- Role:
+  sprite sheet extraction and animated sprite timing.
+- Main classes:
+  `SpriteSheet`, `AnimatedSprite`.
+- Main functions:
+  methods inside the two classes.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  `pygame`.
+- Future fit:
+  `presentation/sprites.py`.
+- Notes:
+  clean support module.
+
+### `palette.py`
+
+- Role:
+  color palette generation from one seed hue.
+- Main classes:
+  none.
+- Main functions:
+  `make_palette`.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  stdlib only.
+- Future fit:
+  `presentation/palette.py` or `gameplay/visual_palette.py`.
+- Notes:
+  tiny module; current root placement is unnecessary.
+
+### `effects.py`
+
+- Role:
+  lightweight visual effects for gameplay.
+- Main classes:
+  `CoinFlash`, `Effects`.
+- Main functions:
+  methods on `Effects`.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  `pygame`.
+- Future fit:
+  `presentation/effects.py`.
+- Notes:
+  rendering-only concern.
+
+### `blocks.py`
+
+- Role:
+  temporary blocking wall model, spawn/respawn behavior, and rendering.
+- Main classes:
+  `Block`.
+- Main functions:
+  `spawn_blocks`, `respawn_block`, `draw_block_cell`.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  `pygame`, stdlib.
+- Future fit:
+  split between `domain/blocks.py` and `presentation/block_rendering.py`, or keep together under `gameplay/blocks.py` until a renderer boundary exists.
+- Notes:
+  mixes gameplay placement logic with pygame drawing.
+
+### `coins.py`
+
+- Role:
+  coin rarity definitions, spawn logic, coin rendering.
+- Main classes:
+  `CoinRarity`, `RarityConfig`, `Coin`.
+- Main functions:
+  `spawn_coins`, `rarity_icon`, `draw_coin`.
+- Used by:
+  `maze_game.py`, `gameplay/result_text.py`.
+- Depends on:
+  `pygame`, stdlib.
+- Future fit:
+  split between `domain/coins.py` and `presentation/coin_rendering.py`, or keep together under `gameplay/coins.py` until rendering split is justified.
+- Notes:
+  another mixed domain/rendering module.
+
+### `enemies.py`
+
+- Role:
+  enemy types, spawn schemes, movement strategies, BFS chase logic, patrol path building, safe zones.
+- Main classes:
+  `EnemyType`, `EnemyParams`, `Enemy`.
+- Main functions:
+  `spawn_enemies`, `spawn_enemies_by_scheme`, `choose_enemy_direction`, `build_patrol_path`, `bfs_next_step_towards`, strategy functions, `build_safe_zone`.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  `grid_utils`, stdlib.
+- Future fit:
+  `domain/enemies.py` or split into `domain/enemy_models.py` and `domain/enemy_ai.py`.
+- Notes:
+  large but mostly domain-oriented; one of the best candidates for future extraction without touching UX.
+
+### `maze_gen.py`
+
+- Role:
+  Wilson spanning tree generation and maze conversion.
+- Main classes:
+  none.
+- Main functions:
+  `wilson_grid`, `tree_to_maze`, `set_entrance_exit_and_check`, `is_spanning_tree`.
+- Used by:
+  `maze_game.py`, indirectly by `game_app.py` via `maze_game`.
+- Depends on:
+  `grid_utils`, stdlib.
+- Future fit:
+  `domain/maze_generation.py`.
+- Notes:
+  fairly clean algorithm module.
+
+### `grid_utils.py`
+
+- Role:
+  minimal grid primitives.
+- Main classes:
+  none.
+- Main functions:
+  `in_bounds`; constant `DIRS4`.
+- Used by:
+  `maze_game.py`, `maze_gen.py`, `enemies.py`.
+- Depends on:
+  stdlib only.
+- Future fit:
+  `domain/grid_utils.py`.
+- Notes:
+  clean utility module.
+
+### `gameplay/formatting.py`
+
+- Role:
+  pure gameplay-related time formatting.
+- Main classes:
+  none.
+- Main functions:
+  `format_time`.
+- Used by:
+  `maze_game.py`, `gameplay/hud_text.py`, `state_machine/leaderboard_state.py`, tests.
+- Future fit:
+  keep in `gameplay/` or move later to `domain/formatting.py`.
+- Notes:
+  good example of low-risk extraction.
+
+### `gameplay/scoring.py`
+
+- Role:
+  pure score policy and score formula.
+- Main classes:
+  `ScoreParams`.
+- Main functions:
+  `compute_score`.
+- Used by:
+  `maze_game.py`, tests.
+- Future fit:
+  keep in `gameplay/` or move later to `domain/scoring.py`.
+- Notes:
+  clean pure module.
+
+### `gameplay/result_text.py`
+
+- Role:
+  pure end-screen text builders.
+- Main classes:
+  none.
+- Main functions:
+  `build_attempt_info`, `build_coin_types_line`, `build_highscore_line`, `build_end_menu_subtitle`.
+- Used by:
+  `maze_game.py`, tests.
+- Depends on:
+  `coins` for rarity icons.
+- Future fit:
+  `presentation/text/result_text.py` or keep in `gameplay/` until text helpers are grouped.
+- Notes:
+  pure function module, but still depends on coin icon mapping from mixed `coins.py`.
+
+### `gameplay/hud_text.py`
+
+- Role:
+  pure HUD text assembly.
+- Main classes:
+  none.
+- Main functions:
+  `build_player_prefix`, `build_hud_text`.
+- Used by:
+  `maze_game.py`, tests.
+- Depends on:
+  `gameplay.formatting`.
+- Future fit:
+  `presentation/text/hud_text.py` or keep in `gameplay/` until presentation text helpers are grouped.
+- Notes:
+  pure helper module.
+
+### `gameplay/__init__.py`
+
+- Role:
+  package marker.
+- Used by:
+  import system only.
+- Future fit:
+  keep as package marker.
+
+### `state_machine/state_base.py`
+
+- Role:
+  FSM protocol and state manager.
+- Main classes:
+  `BaseState`, `StateManager`.
+- Used by:
+  `game_app.py`, all screen state modules.
+- Depends on:
+  `pygame`.
+- Future fit:
+  `state_machine/state_base.py` is already in the right package.
+- Notes:
+  clean, small coordination module.
+
+### `state_machine/main_menu.py`
+
+- Role:
+  main menu screen with background/logo loading, animated appearance, keyboard/mouse handling.
+- Main classes:
+  `MainMenuState`.
+- Main functions:
+  state lifecycle methods and local render/asset helper methods.
+- Used by:
+  `game_app.py`.
+- Depends on:
+  `state_machine.state_base`, `ui`, `pygame`.
+- Future fit:
+  `state_machine/main_menu.py` is acceptable now; later asset-loading helpers could move to presentation helpers.
+- Notes:
+  very wide state module; combines screen logic, assets, layout, and animation.
+
+### `state_machine/player_select_state.py`
+
+- Role:
+  player selection, player creation, player deletion confirmation, active-player change.
+- Main classes:
+  `PlayerSelectState`.
+- Used by:
+  `game_app.py`.
+- Depends on:
+  `state_machine.state_base`, `session_controller`, `players`, `ui`, `pygame`.
+- Future fit:
+  keep under `state_machine/`; later extract repeated modal/input helpers.
+- Notes:
+  mixes state logic, CRUD UI, keyboard input mode, and overlay rendering.
+
+### `state_machine/mode_select_state.py`
+
+- Role:
+  round mode selection UI.
+- Main classes:
+  `ModeSelectState`.
+- Used by:
+  `game_app.py`.
+- Depends on:
+  `state_machine.state_base`, `session_controller`, `ui`, `pygame`.
+- Future fit:
+  keep under `state_machine/`.
+- Notes:
+  simpler state module; duplicated font and option rendering patterns remain.
+
+### `state_machine/multiplayer_setup_state.py`
+
+- Role:
+  choose queue participants, create/delete players, apply rotate-queue configuration.
+- Main classes:
+  `MultiplayerSetupState`.
+- Used by:
+  `game_app.py`.
+- Depends on:
+  `state_machine.state_base`, `session_controller`, `players`, `ui`, `pygame`.
+- Future fit:
+  keep under `state_machine/`; later extract repeated player-management overlays.
+- Notes:
+  broad state module; overlaps behavior patterns with `player_select_state.py`.
+
+### `state_machine/leaderboard_state.py`
+
+- Role:
+  leaderboard screen, scroll behavior, rendering of top runs and player aggregates.
+- Main classes:
+  `LeaderboardState`.
+- Used by:
+  `game_app.py`.
+- Depends on:
+  `state_machine.state_base`, `leaderboard`, `gameplay.formatting`, `session_controller`, `ui`, `pygame`.
+- Future fit:
+  keep under `state_machine/`; later extract table/scroll rendering helpers.
+- Notes:
+  wide read-only screen module with custom rendering and scrollbar logic.
+
+### `state_machine/__init__.py`
+
+- Role:
+  package marker.
+
+### `tests/test_formatting.py`
+
+- Role:
+  pure formatting assertions.
+- Used by:
+  pytest only.
+- Future fit:
+  keep under `tests/`.
+
+### `tests/test_scoring.py`
+
+- Role:
+  pure scoring assertions.
+- Used by:
+  pytest only.
+- Future fit:
+  keep under `tests/`.
+
+### `tests/test_result_text.py`
+
+- Role:
+  pure end-text formatting assertions.
+- Used by:
+  pytest only.
+- Future fit:
+  keep under `tests/`.
+
+### `tests/test_hud_text.py`
+
+- Role:
+  pure HUD text assertions.
+- Used by:
+  pytest only.
+- Future fit:
+  keep under `tests/`.
+
+### `tests/__init__.py`
+
+- Role:
+  tests package marker.
+
+## Dependency map
+
+### Main runtime spine
+
+- `game_app.py` -> `state_machine/*`
+- `game_app.py` -> `session_controller.py`
+- `game_app.py` -> `db_manager.py`
+- `game_app.py` -> `highscore_adapter.py`
+- `game_app.py` -> `maze_game.py`
+- `maze_game.py` -> `gameplay/*`
+- `maze_game.py` -> `maze_gen.py`
+- `maze_game.py` -> `enemies.py`
+- `maze_game.py` -> `coins.py`
+- `maze_game.py` -> `blocks.py`
+- `maze_game.py` -> `effects.py`
+- `maze_game.py` -> `ui.py`
+- `maze_game.py` -> `sounds.py`
+- `maze_game.py` -> `sprites.py`
+- `maze_game.py` -> `palette.py`
+- `maze_game.py` -> `session_controller.py`
+- `maze_game.py` -> `highscores.py`
+
+### Persistence spine
+
+- `session_controller.py` -> `db_manager.py`
+- `session_controller.py` -> `players.py`
+- `players.py` -> `db_manager.py`
+- `leaderboard.py` -> `db_manager.py`
+- `highscore_adapter.py` -> `db_manager.py`
+- `highscore_adapter.py` -> `highscores.py`
+- `highscore_adapter.py` -> `players.py`
+
+### UI / screen spine
+
+- `state_machine/main_menu.py` -> `ui.py`
+- `state_machine/player_select_state.py` -> `session_controller.py`, `players.py`, `ui.py`
+- `state_machine/mode_select_state.py` -> `session_controller.py`, `ui.py`
+- `state_machine/multiplayer_setup_state.py` -> `session_controller.py`, `players.py`, `ui.py`
+- `state_machine/leaderboard_state.py` -> `leaderboard.py`, `gameplay.formatting`, `ui.py`
+
+## Structural findings
+
+### God modules
+
+- `maze_game.py` is the main god module by both line count and responsibility count.
+- `game_app.py` is smaller, but still broad for an entrypoint because it owns bootstrap, menu assembly, and gameplay progression policy.
+- `enemies.py` is large, but its responsibility is comparatively coherent.
+
+### Mixed-responsibility modules
+
+- `coins.py`: spawn/domain + rendering.
+- `blocks.py`: spawn/domain + rendering.
+- `players.py`: domain models + repository operations + session aggregate object.
+- `ui.py`: text/font helpers + overlay rendering + blocking choice loops.
+
+### State modules with repeated patterns
+
+- `player_select_state.py` and `multiplayer_setup_state.py` duplicate player list, name input, delete confirm, and font setup patterns.
+- `mode_select_state.py`, `leaderboard_state.py`, and `main_menu.py` repeat font setup and common render idioms.
+
+### Coupling hotspots
+
+- `maze_game.py` is the hub for almost every runtime-facing module.
+- `ui.py` is shared across gameplay runtime and FSM screens.
+- `session_controller.py` is shared across runtime and multiple screens.
+
+### Cycles
+
+No direct Python import cycle was found in the current module graph.
+
+This is positive, but absence of cycles does not mean low coupling. The current design still has several high-centrality modules.
+
+## Future placement map
+
+Target grouping direction for later phases:
+
+- `runtime/`
+  - app entry and gameplay flow orchestration
+- `state_machine/`
+  - screen states and FSM primitives
+- `domain/`
+  - pure gameplay rules, generation, scoring, enemy logic, data models
+- `presentation/`
+  - pygame rendering, fonts, sprites, overlays, audio, visual effects
+- `persistence/`
+  - SQLite access, leaderboard queries, player repository, legacy adapters
+
+The important constraint is sequence:
+
+1. first extract pure logic and documentation boundaries;
+2. then introduce thin internal boundaries;
+3. only after that consider moving files physically.

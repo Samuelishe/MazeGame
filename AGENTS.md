@@ -12,6 +12,12 @@ Primary onboarding file for future AI-agent work in this project.
 - Do not rename modules or restructure the project without explicit approval.
 - Treat gameplay stability as the primary constraint.
 
+## Communication rules
+
+- All user-facing responses must be written in Russian.
+- Commit messages at the end of each task must remain in English.
+- Treat both rules as mandatory for all future agents working in this project.
+
 ## Fast start
 
 1. Read [docs/INDEX.md](docs/INDEX.md).
