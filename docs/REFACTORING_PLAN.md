@@ -107,14 +107,14 @@ Concrete `maze_game.py`-adjacent steps inside Stage 4:
 Concrete future Stage 4 steps:
 
 1. Analyze and split `players.py` responsibilities on paper
-   - goal:
-     define the exact cut between player models, repository code, and `SessionStats`.
-   - risk:
-     low in analysis, medium in later implementation.
-   - expected result:
-     clear target ownership before any code moves.
-   - files:
-     `players.py`, `docs/MODULES.md`, `docs/ARCHITECTURE.md`, `docs/TECH_DEBT.md`
+  - goal:
+    define the exact cut between player models, repository code, and `SessionStats`.
+  - risk:
+    low in analysis, medium in later implementation.
+  - expected result:
+    clear target ownership before any code moves.
+  - files:
+    `players.py`, `docs/MODULES.md`, `docs/ARCHITECTURE.md`, `docs/TECH_DEBT.md`
 
 2. Extract run-write boundary from `GameSessionController` in a later code pass
    - goal:
@@ -147,14 +147,50 @@ Concrete future Stage 4 steps:
      `highscores.py`, `highscore_adapter.py`, `maze_game.py`, docs only at first
 
 5. Preserve read-only leaderboard boundary while documenting it as the stable query slice
+  - goal:
+    keep `leaderboard.py` coherent and separate it conceptually from write-side refactors.
+  - risk:
+    low.
+  - expected result:
+    Stage 4 changes do not accidentally destabilize leaderboard reads.
+  - files:
+    `leaderboard.py`, `docs/MODULES.md`, `docs/ARCHITECTURE.md`
+
+Stage 4 Step 1 status:
+
+- completed: `players.py` decomposition analysis
+
+`players.py` implementation-oriented follow-up after this analysis:
+
+1. Step 1A: separate player data models on paper and then in code
    - goal:
-     keep `leaderboard.py` coherent and separate it conceptually from write-side refactors.
+     move `PlayerAggregateStats` and `PlayerProfile` behind a clean model boundary first.
    - risk:
-     low.
+     low to medium.
    - expected result:
-     Stage 4 changes do not accidentally destabilize leaderboard reads.
+     typed player objects stop depending on repository placement.
    - files:
-     `leaderboard.py`, `docs/MODULES.md`, `docs/ARCHITECTURE.md`
+     future: `players.py`, `session_controller.py`, `state_machine/player_select_state.py`, `state_machine/multiplayer_setup_state.py`
+
+2. Step 1B: isolate repository helper and CRUD/read APIs
+   - goal:
+     keep `_row_to_aggregate_stats(...)` and player CRUD/profile-loading functions together as one repository slice.
+   - risk:
+     medium.
+   - expected result:
+     the player repository can move without bringing `SessionStats` with it.
+   - files:
+     future: `players.py`, `session_controller.py`, `highscore_adapter.py`
+
+3. Step 1C: move `SessionStats` only after runtime call sites are narrowed
+   - goal:
+     avoid a premature split that forces broad touch points in gameplay and session orchestration at the same time.
+   - risk:
+     medium.
+   - expected result:
+     session-only memory state leaves `players.py` last, after repository and model boundaries are already stable.
+   - files:
+     future: `players.py`, `maze_game.py`, `session_controller.py`
 
 ## Stage 5
 

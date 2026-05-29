@@ -417,3 +417,37 @@ Behavior notes:
 - No runtime code changes.
 - No imports changed.
 - No tests changed.
+
+## 2026-05-29 - Stage 4 Step 1: players.py decomposition analysis
+
+Scope:
+
+- inspect `players.py` in detail
+- map internal responsibility groups and dependency pressure
+- prepare a safe future split plan without changing code
+
+Observed:
+
+- `players.py` contains four real responsibility slices:
+  - player domain/read models;
+  - repository row-mapping helper;
+  - repository CRUD/profile-loading API;
+  - runtime-only `SessionStats`
+- `SessionStats` is the most structurally awkward resident of the file because it is not persistence logic, but it is imported from the same module by both `maze_game.py` and `session_controller.py`.
+- `GameSessionController` depends on both typed player models and player repository functions from `players.py`, which raises split risk.
+- `get_or_create_player(...)` is a bootstrap-sensitive convenience API because it is used by both session initialization and legacy migration.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+
+Behavior notes:
+
+- No gameplay behavior changes.
+- No runtime code changes.
+- No imports changed.
+- No tests changed.

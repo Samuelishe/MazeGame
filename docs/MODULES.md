@@ -438,6 +438,96 @@ Priority C: high risk
 - Notes:
   one file holds both domain dataclasses and DB access, and also owns in-memory `SessionStats`; this is a clear mixed-responsibility module and the second major Stage 4 hotspot.
 
+#### `players.py` decomposition analysis
+
+- Approximate internal groups:
+  - domain/player read models:
+    `PlayerAggregateStats`, `PlayerProfile`
+  - repository helper:
+    `_row_to_aggregate_stats(...)`
+  - repository API:
+    `load_players(...)`, `create_player(...)`, `delete_player(...)`, `get_player_by_name(...)`, `get_or_create_player(...)`
+  - runtime/session state:
+    `SessionStats`
+
+- Entity classification:
+  - `PlayerAggregateStats`
+    - type:
+      domain model representing persisted aggregate player stats
+    - used by:
+      `PlayerProfile`, `players.py` repository functions, state-machine player list rendering indirectly
+    - dependencies:
+      stdlib dataclass/types only
+  - `PlayerProfile`
+    - type:
+      domain model for active player identity plus optional aggregate stats
+    - used by:
+      `session_controller.py`, `state_machine/player_select_state.py`, `state_machine/multiplayer_setup_state.py`
+    - dependencies:
+      `PlayerAggregateStats`
+  - `_row_to_aggregate_stats(...)`
+    - type:
+      repository mapping utility
+    - used by:
+      `load_players(...)`, `get_player_by_name(...)`
+    - dependencies:
+      `sqlite3.Row`, `PlayerAggregateStats`
+  - `load_players(...)`
+    - type:
+      repository read API
+    - used by:
+      `GameSessionController.from_db(...)`
+    - dependencies:
+      `db_manager.get_connection`, `_row_to_aggregate_stats`, `PlayerProfile`
+  - `create_player(...)`
+    - type:
+      repository write API
+    - used by:
+      `GameSessionController.create_player(...)`
+    - dependencies:
+      `db_manager.get_connection`, `PlayerProfile`, `PlayerAggregateStats`
+  - `delete_player(...)`
+    - type:
+      repository delete API
+    - used by:
+      `GameSessionController.delete_player_from_session(...)`
+    - dependencies:
+      `db_manager.get_connection`
+  - `get_player_by_name(...)`
+    - type:
+      repository read API
+    - used by:
+      `get_or_create_player(...)`
+    - dependencies:
+      `db_manager.get_connection`, `_row_to_aggregate_stats`, `PlayerProfile`
+  - `get_or_create_player(...)`
+    - type:
+      repository convenience API
+    - used by:
+      `GameSessionController.from_db(...)`, `GameSessionController.__post_init__()`, `highscore_adapter.py`
+    - dependencies:
+      `get_player_by_name(...)`, `create_player(...)`
+  - `SessionStats`
+    - type:
+      runtime session state, not a persistence model
+    - used by:
+      `maze_game.py`, `session_controller.py`
+    - dependencies:
+      stdlib only
+
+- Highest-risk dependencies:
+  - `GameSessionController` depends on both repository functions and `SessionStats` from the same module.
+  - `maze_game.py` imports `SessionStats` directly for no-controller runtime mode.
+  - `highscore_adapter.py` depends on `get_or_create_player(...)`, which keeps migration logic tied to the mixed module.
+
+- Safe future split candidates:
+  - `PlayerAggregateStats` and `PlayerProfile` into a pure models module
+  - `_row_to_aggregate_stats(...)` plus CRUD functions into a repository-oriented module
+
+- Cautious future split candidates:
+  - `SessionStats`, because it is imported directly by both `maze_game.py` and `session_controller.py`
+  - `get_or_create_player(...)`, because it is used in controller bootstrap and migration bootstrap paths
+
 ### `leaderboard.py`
 
 - Role:

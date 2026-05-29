@@ -236,6 +236,50 @@ The project does not need enterprise layering. A realistic target is:
 
 This is a target ownership map only. No file moves are implied yet.
 
+### `players.py` decomposition analysis
+
+`players.py` currently contains four distinct responsibility slices:
+
+1. domain/player data shapes
+   - `PlayerAggregateStats`
+   - `PlayerProfile`
+2. repository row-mapping helper
+   - `_row_to_aggregate_stats(...)`
+3. repository API over `players` / `player_stats`
+   - `load_players(...)`
+   - `create_player(...)`
+   - `delete_player(...)`
+   - `get_player_by_name(...)`
+   - `get_or_create_player(...)`
+4. runtime-only session state
+   - `SessionStats`
+
+This means the file is not just "models + persistence". It is actually:
+
+- domain models
+- repository code
+- repository convenience bootstrap
+- runtime in-memory state
+
+Dependency pressure inside the project:
+
+- `session_controller.py` depends on:
+  - `PlayerProfile`
+  - `SessionStats`
+  - all major player CRUD/bootstrap functions
+- `maze_game.py` depends on:
+  - `SessionStats` only
+- `state_machine/player_select_state.py` and `state_machine/multiplayer_setup_state.py` depend on:
+  - `PlayerProfile` for local typed player lists
+- `highscore_adapter.py` depends on:
+  - `get_or_create_player(...)`
+
+The cleanest future cut is:
+
+- move `PlayerAggregateStats` and `PlayerProfile` together first;
+- move repository functions plus row-mapping helper together second;
+- move `SessionStats` separately only after call sites are narrowed, because it currently bridges standalone gameplay and `GameSessionController`.
+
 ## Module responsibilities
 
 ### Architectural categories

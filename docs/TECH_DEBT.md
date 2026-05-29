@@ -273,6 +273,44 @@ Target outcome:
 - player models become separable from SQLite CRUD code;
 - `SessionStats` stops sharing a file with repository functions.
 
+### `players.py` decomposition analysis
+
+Actual responsibility groups inside `players.py`:
+
+- domain/player models:
+  `PlayerAggregateStats`, `PlayerProfile`
+- repository helper:
+  `_row_to_aggregate_stats(...)`
+- repository API:
+  `load_players(...)`, `create_player(...)`, `delete_player(...)`, `get_player_by_name(...)`, `get_or_create_player(...)`
+- runtime/session state:
+  `SessionStats`
+
+Why this matters:
+
+- the file is not merely "models plus CRUD";
+- `SessionStats` is not persistence logic at all, but it shares the same module with repository code;
+- `GameSessionController` currently imports both runtime session state and repository functions from the same place, which makes later splits harder to stage safely.
+
+Safe separation candidates:
+
+- `PlayerAggregateStats`
+- `PlayerProfile`
+- `_row_to_aggregate_stats(...)`
+- repository CRUD functions as one cohesive extraction unit
+
+More dangerous separation candidates:
+
+- `SessionStats`, because it is used both by `maze_game.py` standalone mode and by `session_controller.py`
+- `get_or_create_player(...)`, because it sits on the bootstrap path for both controller initialization and legacy highscore migration
+
+Recommended order:
+
+1. separate player models conceptually;
+2. separate repository functions conceptually;
+3. only then move `SessionStats`;
+4. leave behavior of `get_or_create_player(...)` untouched until bootstrap paths are clearer.
+
 ### 2. Extract run-recording repository boundary
 
 Risk level: medium
