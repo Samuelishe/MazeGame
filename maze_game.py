@@ -20,6 +20,7 @@ from coins import spawn_coins, draw_coin, CoinRarity, rarity_icon
 from effects import Effects
 from gameplay.formatting import format_time
 from gameplay.hud_text import build_hud_text
+from gameplay.maze_positions import inner_cell_from_border
 from gameplay.result_text import (
     build_attempt_info,
     build_coin_types_line,
@@ -225,20 +226,8 @@ def play_maze(
         if not path_ok:
             print("Warning: no pass-through detected (unexpected for tree-based maze)")
 
-        def inner_from_border(border: Coord, side: str) -> Coord:
-            border_row, border_col = border
-            if side == "left":
-                return border_row, border_col + 1
-            if side == "right":
-                return border_row, border_col - 1
-            if side == "top":
-                return border_row + 1, border_col
-            if side == "bottom":
-                return border_row - 1, border_col
-            raise ValueError
-
-        player = inner_from_border(ent_border, entry[0])
-        goal = inner_from_border(ext_border, exit_[0])
+        player = inner_cell_from_border(ent_border, entry[0])
+        goal = inner_cell_from_border(ext_border, exit_[0])
 
         # Используем уже существующее окно, если оно создано (FSM-режим).
         # Если окна ещё нет (запуск maze_game в одиночку) — создаём новое

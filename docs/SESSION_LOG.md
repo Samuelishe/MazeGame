@@ -250,3 +250,30 @@ Behavior notes:
 - No runtime code changes.
 - No import changes.
 - No refactoring performed.
+
+## 2026-05-29 - maze_game.py extraction pass 1
+
+Scope:
+
+- extract the border-to-inner-cell helper from nested `maze_game.py` scope
+- keep gameplay behavior unchanged
+
+Code changes:
+
+- Added `gameplay/maze_positions.py` with pure `inner_cell_from_border(...)`.
+- Updated `maze_game.py` to use the extracted helper instead of the nested local function.
+- Added `tests/test_maze_positions.py`.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- Entry and exit inner-cell translation behavior remains unchanged for `left`, `right`, `top`, and `bottom`.
+- Invalid side handling still raises `ValueError`.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`

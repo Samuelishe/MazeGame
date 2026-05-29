@@ -40,6 +40,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `effects.py`
 - `palette.py`
 - `gameplay/formatting.py`
+- `gameplay/maze_positions.py`
 - `gameplay/scoring.py`
 - `gameplay/result_text.py`
 - `gameplay/hud_text.py`
@@ -62,6 +63,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 ### Tests
 
 - `tests/test_formatting.py`
+- `tests/test_maze_positions.py`
 - `tests/test_scoring.py`
 - `tests/test_result_text.py`
 - `tests/test_hud_text.py`
@@ -695,6 +697,23 @@ Priority C: high risk
 - Notes:
   good example of low-risk extraction.
 
+### `gameplay/maze_positions.py`
+
+- Role:
+  pure border-to-inner-cell translation helper for maze entry and exit setup.
+- Main classes:
+  none.
+- Main functions:
+  `inner_cell_from_border`.
+- Used by:
+  `maze_game.py`, tests.
+- Depends on:
+  stdlib only.
+- Future fit:
+  keep in `gameplay/` or move later to `domain/maze_positions.py`.
+- Notes:
+  extracted from nested `maze_game.py` scope as a Priority A pure helper.
+
 ### `gameplay/scoring.py`
 
 - Role:
@@ -854,6 +873,15 @@ Priority C: high risk
 
 - Role:
   pure formatting assertions.
+- Used by:
+  pytest only.
+- Future fit:
+  keep under `tests/`.
+
+### `tests/test_maze_positions.py`
+
+- Role:
+  pure assertions for border-to-inner-cell translation behavior.
 - Used by:
   pytest only.
 - Future fit:

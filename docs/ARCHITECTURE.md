@@ -196,6 +196,7 @@ Result: runtime persistence is split between SQLite and legacy JSON.
 
 - `gameplay/formatting.py`: pure time-formatting helper shared by gameplay and leaderboard UI
 - `gameplay/hud_text.py`: pure HUD text builders used by gameplay rendering without owning pygame surfaces
+- `gameplay/maze_positions.py`: pure border-to-inner-cell translation helper used by gameplay entry/exit setup
 - `gameplay/result_text.py`: pure end-screen text builders used by gameplay summary rendering
 - `gameplay/scoring.py`: pure score parameters and score calculation logic
 - `maze_gen.py`: maze generation
