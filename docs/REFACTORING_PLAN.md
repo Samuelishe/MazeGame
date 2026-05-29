@@ -108,11 +108,11 @@ Concrete future Stage 4 steps:
 
 1. Narrow `maze_game.py` persistence knowledge
    - goal:
-     reduce gameplay awareness of `RunResult` construction and save-path branching.
+     reduce gameplay awareness of `RunResult` construction and save-path branching without touching end-screen UI flow.
    - risk:
      medium.
    - expected result:
-     gameplay runtime prepares run-result values, while persistence orchestration becomes less embedded in end-of-run flow.
+     gameplay runtime still prepares end-of-run values, while persistence orchestration becomes less embedded in the blocking end-of-run branch.
    - files:
      `maze_game.py`, `session_controller.py`
 
@@ -182,7 +182,19 @@ Stage 4 Step 1 status:
 - completed: disposable-DB safety tests for current `GameSessionController.record_run(...)`
 - completed: Stage 4 Step 2B run-write extraction into `persistence/run_repository.py`
 - completed: remove the now-unused `players.py` compatibility shim from the production import graph
-- next sensible candidate: narrow gameplay persistence knowledge around `RunResult` construction and save-path branching
+- next sensible candidate: extract a narrow gameplay persistence handoff helper around JSON highscore update and controller/standalone result recording
+
+Gameplay Persistence Boundary recommendation after analysis:
+
+- do not leave the current end-of-run block entirely as-is longer than necessary;
+- do not jump straight to a broad end-of-run coordinator;
+- preferred next step:
+  extract a narrow persistence handoff helper that owns:
+  - JSON highscore update;
+  - standalone `SessionStats` recording;
+  - `RunResult` creation;
+  - `session_controller.record_run(...)` delegation;
+- keep score preparation and blocking end-screen UI in `maze_game.py` for the next pass.
 
 SessionStats recommendation after analysis:
 

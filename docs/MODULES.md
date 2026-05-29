@@ -363,6 +363,34 @@ Approximate size: 799 lines total.
   - extraction risk:
     high as one block; medium if split into value preparation vs UI wait.
 
+#### `maze_game.py` gameplay persistence boundary
+
+Current end-of-run persistence knowledge that still lives in `maze_game.py`:
+
+- update `highscore.json` through `highscores.py`;
+- choose between standalone `SessionStats` recording and controller-present recording;
+- construct `RunResult`;
+- call `session_controller.record_run(...)`.
+
+What already moved out:
+
+- score-input preparation -> `gameplay/scoring.py`
+- end-summary value preparation -> `gameplay/result_text.py`
+- raw SQLite write path -> `persistence.run_repository.py` through `session_controller.py`
+
+What still looks like the next useful boundary:
+
+- a narrow persistence handoff helper for:
+  - JSON highscore update
+  - standalone `SessionStats.add_result(...)`
+  - `RunResult` creation
+  - `session_controller.record_run(...)` call
+
+Why not broader yet:
+
+- the same block still touches blocking end-screen UI and live runtime locals;
+- a full end-of-run coordinator would be wider than the current evidence justifies.
+
 - Lines `907-933`: outer replay/new-level wrapper
   - responsibility:
     repeat `run_once()`, return early for multiplayer, internal single-player restart/new-level handling.
@@ -1221,6 +1249,9 @@ Priority C: high risk
 - `highscore_adapter.py` -> `db_manager.py`
 - `highscore_adapter.py` -> `highscores.py`
 - `highscore_adapter.py` -> `persistence.player_repository.py`
+- `maze_game.py` -> `highscores.py`
+- `maze_game.py` -> `runtime/session_stats.py`
+- `maze_game.py` -> `session_controller.RunResult`
 
 ### Runtime spine
 
@@ -1493,6 +1524,89 @@ Reason:
     2. call repository write API
   - risk:
     medium
+
+## Gameplay Persistence Boundary Analysis
+
+### Current end-of-run persistence flow
+
+1. `maze_game.play_maze(...)`
+   - computes final runtime values:
+     - `elapsed_ms`
+     - `score`
+     - `coins_collected`
+     - per-rarity counters
+2. `maze_game.play_maze(...)`
+   - updates legacy JSON highscore in memory and on disk:
+     - `update_highscore_if_better(...)`
+     - `save_highscore(...)`
+3. `maze_game.play_maze(...)`
+   - if there is no controller:
+     - updates standalone `SessionStats`
+4. `maze_game.play_maze(...)`
+   - if a controller exists:
+     - constructs `RunResult`
+     - calls `session_controller.record_run(...)`
+5. `session_controller.record_run(...)`
+   - updates runtime `SessionStats`
+   - delegates SQLite write path to `persistence.run_repository.write_completed_run(...)`
+6. `maze_game.play_maze(...)`
+   - prepares end-screen summary values and shows blocking UI
+
+### Responsibility zones
+
+- score/value preparation
+  - should stay in gameplay runtime
+  - transfer risk:
+    low
+- JSON highscore path
+  - does not naturally belong in core gameplay flow
+  - transfer risk:
+    medium
+- standalone runtime aggregate update
+  - partly justified in gameplay because controller-free mode exists
+  - transfer risk:
+    medium
+- persistence orchestration handoff
+  - can move out of `maze_game.py`
+  - transfer risk:
+    medium
+- end-screen UI
+  - should stay in `maze_game.py` for now
+  - transfer risk:
+    high
+
+### Option assessment
+
+- Option A: keep everything in `maze_game.py`
+  - pluses:
+    lowest immediate change risk
+  - minuses:
+    gameplay runtime still owns two persistence paths and save branching
+  - risk:
+    low now, medium later
+
+- Option B: extract a narrow persistence handoff helper
+  - pluses:
+    best size-to-value ratio
+    separates save-path branching from score prep and UI
+  - minuses:
+    helper signature will still be fairly explicit and wide
+  - risk:
+    medium
+
+- Option C: extract a broader end-of-run coordinator
+  - pluses:
+    could hide more of the current end-of-run block
+  - minuses:
+    too broad for the current runtime/UI coupling
+  - risk:
+    medium to high
+
+### Recommended direction
+
+- prefer Option B next;
+- keep score preparation and blocking end-screen UI in `maze_game.py`;
+- move only the persistence handoff decision and its two save branches behind a narrower helper boundary.
 
 ### Cycles
 

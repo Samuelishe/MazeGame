@@ -391,6 +391,33 @@ Target outcome:
 
 - gameplay runtime keeps result data preparation, but knows less about save-path details.
 
+### Gameplay Persistence Boundary Analysis
+
+Current code facts:
+
+- `maze_game.py` still updates `highscore.json` directly;
+- `maze_game.py` still decides whether to update standalone `SessionStats` or create `RunResult` and call `session_controller.record_run(...)`;
+- `maze_game.py` still keeps that persistence branching inside the same end-of-run block as the blocking end-screen UI.
+
+Why this matters:
+
+- the remaining coupling is no longer raw SQL;
+- it is gameplay runtime knowledge of persistence policy and save-path branching;
+- this makes `maze_game.py` the last major Stage 4 hotspot after repository extraction.
+
+Recommended narrow next target:
+
+- do not build a broad end-of-run coordinator first;
+- prefer a smaller persistence handoff helper that owns:
+  - JSON highscore update;
+  - standalone vs controller-present result recording decision;
+  - `RunResult` creation and `record_run(...)` invocation.
+
+What should stay in `maze_game.py` for now:
+
+- end-of-run value preparation from live runtime state;
+- end-screen UI and blocking choice flow.
+
 ### 4. Clarify legacy JSON ownership
 
 Risk level: medium
@@ -398,6 +425,12 @@ Risk level: medium
 Why:
 
 - `highscore.json` is both a migrated legacy source and an active runtime sink.
+
+Current interpretation from code:
+
+- active compatibility output;
+- transitional persistence artifact;
+- not merely archival while gameplay still writes it after completed runs.
 
 Target outcome:
 

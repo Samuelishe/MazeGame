@@ -114,6 +114,16 @@ Run-recording boundary reality:
 - `GameSessionController.record_run(...)` now has disposable-DB safety coverage on isolated temporary SQLite files;
 - the SQL write path has now been extracted without changing the public `GameSessionController` contract.
 
+Gameplay persistence boundary reality:
+
+- `maze_game.py` no longer owns raw SQL details;
+- but it still owns persistence branching at end-of-run time:
+  - JSON highscore update;
+  - standalone `SessionStats` write path;
+  - `RunResult` creation for controller-present mode;
+  - the decision to call `session_controller.record_run(...)`;
+- this is now the main remaining Stage 4 hotspot inside gameplay runtime.
+
 SessionStats reality:
 
 - `SessionStats` is in-memory mutable session state, not a persistence model;
@@ -177,7 +187,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - some modules still mix domain and rendering concerns
 - `players.py` has been removed after the compatibility cleanup
 - repeated state-screen UI patterns are present but not yet centralized
-- persistence boundaries are clearer than before, but `session_controller.py` and the active JSON/SQLite split still remain architectural hotspots
+- persistence boundaries are clearer than before, but the end-of-run persistence branching in `maze_game.py` and the active JSON/SQLite split still remain architectural hotspots
 
 ## Stabilization notes
 

@@ -562,3 +562,123 @@ This now keeps:
 - persistence write details in a dedicated persistence module
 
 without changing the public gameplay flow or inventing a wider abstraction than the current code needs.
+
+## Gameplay Persistence Boundary Analysis
+
+### Current end-of-run persistence flow
+
+At the end of a run, `maze_game.play_maze(...)` still owns a mixed runtime/persistence decision block:
+
+1. prepare end-of-run runtime values:
+   - `elapsed_ms`
+   - `time_str`
+   - `score`
+   - per-run coin totals and rarity counters
+2. update legacy JSON highscore path:
+   - `update_highscore_if_better(...)`
+   - `save_highscore(...)` on change
+3. choose between two session-result branches:
+   - standalone branch:
+     `SessionStats.add_result(...)`
+   - controller-present branch:
+     create `RunResult`
+     call `session_controller.record_run(...)`
+4. prepare end-screen summary values
+5. show blocking end-screen UI and wait for the next action
+
+### Responsibility zones inside the current end-of-run block
+
+- score/value preparation
+  - should stay near gameplay runtime
+  - reason:
+    values are derived directly from local run state
+  - move risk:
+    low, and mostly already handled via `gameplay/scoring.py` and `gameplay/result_text.py`
+
+- legacy JSON highscore path
+  - does not naturally belong in the core gameplay loop
+  - reason:
+    it is persistence policy, not run simulation
+  - move risk:
+    medium, because behavior is user-visible and still active
+
+- standalone runtime aggregate update
+  - partly belongs to gameplay runtime because controller-free mode is a real code path
+  - move risk:
+    medium, because removing it changes the no-controller contract
+
+- persistence orchestration handoff
+  - does not need to be owned directly by `maze_game.py`
+  - current evidence:
+    gameplay decides when to create `RunResult`, when to call `record_run(...)`, and when not to
+  - move risk:
+    medium, because it sits next to end-screen flow and current branching semantics
+
+- end-screen UI
+  - should remain in `maze_game.py` for now
+  - reason:
+    it is tightly coupled to the nested pygame loop and return-code contract
+  - move risk:
+    high
+
+### Option assessment
+
+- Option A: keep the block as-is
+  - pluses:
+    lowest immediate risk
+    no new boundary decisions
+  - minuses:
+    gameplay runtime keeps knowledge of both JSON and SQLite save paths
+    persistence branching remains embedded in end-of-run UI flow
+  - risk:
+    low now, medium later
+
+- Option B: extract a narrow persistence handoff helper
+  - pluses:
+    smallest useful next step
+    can move JSON update + controller/standalone branching behind one explicit helper
+    leaves score prep and end-screen UI where they already fit
+  - minuses:
+    helper signature will still be fairly wide because end-of-run values are numerous
+    standalone `SessionStats` mode still needs to remain explicit
+  - risk:
+    medium
+
+- Option C: extract a broader end-of-run coordinator
+  - pluses:
+    could hide score finalization, persistence branching, and summary preparation together
+  - minuses:
+    too broad for the current file shape
+    risks mixing runtime UI flow with persistence orchestration in a new abstraction
+  - risk:
+    medium to high
+
+### `highscore.json` interpretation
+
+From the current code:
+
+- it is not only archival;
+- it is not only a startup migration source;
+- it is still an active runtime sink because gameplay writes it after runs;
+- it is also a transitional artifact because SQLite has already become the primary structured store.
+
+Best current description:
+
+- active compatibility output
+- transitional persistence artifact
+
+It is no longer the only persistence source, but it is still part of live gameplay save behavior.
+
+### Recommended next Stage 4 code-pass
+
+The best risk/reward move is Option B:
+
+- keep score preparation in `maze_game.py`;
+- keep end-screen UI flow in `maze_game.py`;
+- extract only the persistence handoff decision:
+  - JSON highscore update
+  - standalone `SessionStats` update
+  - `RunResult` creation
+  - `session_controller.record_run(...)` call
+
+This gives the project a narrower gameplay-to-persistence boundary without changing the public run flow or forcing a wider coordinator abstraction too early.

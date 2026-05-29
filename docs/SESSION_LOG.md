@@ -560,6 +560,46 @@ Behavior notes:
 - No gameplay behavior changes.
 - No persistence behavior changes.
 
+## 2026-05-29 - Stage 4 Step 3A: Gameplay Persistence Boundary Analysis
+
+Scope:
+
+- inspect the end-of-run persistence flow around `maze_game.py`
+- determine which persistence knowledge still lives in gameplay runtime
+- prepare the next narrow Stage 4 extraction without changing behavior
+
+Observed:
+
+- raw SQL no longer lives in gameplay or in `GameSessionController`;
+- the remaining hotspot is `maze_game.py` end-of-run branching;
+- `maze_game.py` still decides:
+  - when to update `highscore.json`;
+  - when to use standalone `SessionStats`;
+  - when to construct `RunResult`;
+  - when to call `session_controller.record_run(...)`;
+- the blocking end-screen UI is still adjacent to that persistence branching.
+
+Conclusions:
+
+- the next useful Stage 4 move is not a broad coordinator;
+- the best risk/reward step is a narrow persistence handoff helper;
+- score preparation and end-screen UI should remain in `maze_game.py` for the next pass.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+
+Behavior notes:
+
+- No code changes.
+- No gameplay behavior changes.
+- No persistence behavior changes.
+
 ## 2026-05-29 - Stage 4 repository safety tests
 
 Scope:
