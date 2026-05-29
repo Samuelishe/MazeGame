@@ -201,9 +201,25 @@ Why it matters:
 - moving it to `domain/` would also be imprecise, because it is not durable domain data or a pure rule object;
 - the cleanest eventual home is a runtime/application boundary, but the project does not yet have that package boundary in place.
 
+### 13. Runtime boundary exists conceptually, but not physically
+
+Current runtime concerns are spread across:
+
+- `game_app.py`
+- `maze_game.py`
+- `session_controller.py`
+- `players.py`
+- `state_machine/*`
+
+Why it matters:
+
+- ownership is understandable only after reading several files together;
+- small runtime-state objects like `SessionStats` have no natural package home yet;
+- introducing a `runtime/` package too early would risk combining multiple medium-coupling moves into one step.
+
 ## Low-risk cleanup
 
-### 13. Small copy/paste drift in state modules
+### 14. Small copy/paste drift in state modules
 
 Some state classes still show repeated declarations and minor local duplication.
 
@@ -212,7 +228,7 @@ Why it matters:
 - low immediate risk
 - worth cleaning only in narrowly scoped passes
 
-### 14. Documentation lag risk
+### 15. Documentation lag risk
 
 Because the project is moving in small steps, docs can drift from code quickly if not updated every pass.
 
@@ -220,7 +236,7 @@ Why it matters:
 
 - onboarding quality depends on docs staying synchronized with reality
 
-### 15. Limited test coverage
+### 16. Limited test coverage
 
 The project now has initial tests, but they still cover only a small pure-logic slice:
 

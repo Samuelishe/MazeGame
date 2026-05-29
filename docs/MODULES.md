@@ -1275,6 +1275,115 @@ Priority C: high risk
 - `ui.py` is shared across gameplay runtime and FSM screens.
 - `session_controller.py` is shared across runtime and multiple screens.
 
+## Runtime Boundary Analysis
+
+### Runtime concerns found in current code
+
+- app lifecycle and pygame process control
+  - `game_app.run_game_app()`
+  - `game_app.quit_game()`
+- gameplay session orchestration
+  - `game_app.GameplayWrapper`
+  - `maze_game.play_maze(...)`
+- active player / round mode / player rotation state
+  - `session_controller.GameSessionController`
+  - `session_controller.RoundMode`
+- per-process session aggregates
+  - `players.SessionStats`
+- current-run mutable state
+  - local variables and closures inside `maze_game.play_maze()` / `run_once()`
+- run result handoff between gameplay and persistence
+  - `session_controller.RunResult`
+
+### Runtime-related files
+
+- `game_app.py`
+  - responsibility:
+    pygame bootstrap, main app loop, FSM wiring, gameplay launch, round-to-round control policy
+  - dependencies:
+    `pygame`, `state_machine/*`, `maze_game`, `session_controller`, `db_manager`, `highscore_adapter`
+  - coupling:
+    high
+- `maze_game.py`
+  - responsibility:
+    current run execution, mutable run state, pause/end flow, runtime save branching
+  - dependencies:
+    very broad: gameplay helpers, presentation helpers, persistence-facing types, pygame
+  - coupling:
+    very high
+- `session_controller.py`
+  - responsibility:
+    active-player state, session rotation, session-level caches, run-result recording
+  - dependencies:
+    `domain.player_models`, `persistence.player_repository`, `db_manager`, `players.SessionStats`
+  - coupling:
+    high
+- `players.py`
+  - responsibility:
+    `SessionStats` plus transitional compatibility re-export
+  - dependencies:
+    `persistence.player_repository`
+  - coupling:
+    medium as code, high as ownership ambiguity
+- `state_machine/*`
+  - responsibility:
+    menu and setup screen runtime flow under the outer app loop
+  - dependencies:
+    `pygame`, `ui`, `session_controller`, selected domain/query modules
+  - coupling:
+    medium to high depending on state
+
+### Candidate future runtime layer
+
+Files and classes that could logically belong to a future runtime-oriented layer:
+
+- `game_app.py`
+  - `GameplayWrapper`
+  - app lifecycle helpers
+- `maze_game.py`
+  - `play_maze(...)`
+  - later split runtime flow/render/update helpers
+- `session_controller.py`
+  - `GameSessionController`
+  - `RoundMode`
+  - `RunResult` if it remains an application/runtime handoff type
+- `players.SessionStats`
+
+Files that should not belong to runtime:
+
+- `domain/player_models.py`
+- `gameplay/*` pure helpers
+- `persistence/player_repository.py`
+- `leaderboard.py`
+- `highscores.py`
+- `db_manager.py`
+
+### Recommendation on introducing `runtime/`
+
+- current answer:
+  later
+- reasoning:
+  - the runtime boundary is conceptually visible already;
+  - but code ownership is not yet narrow enough to justify immediate physical moves;
+  - introducing `runtime/` right now would likely mix package creation with broader import churn across `game_app.py`, `maze_game.py`, `session_controller.py`, and `players.py`;
+  - the safer order is to finish one more narrow boundary step first, then introduce the package with delegation-style moves.
+
+### Possible staged introduction
+
+- Step A
+  - define and document the runtime slice explicitly around:
+    `GameSessionController`, `SessionStats`, round mode, gameplay wrapper
+  - risk:
+    low
+- Step B
+  - move `SessionStats` to a runtime/application-oriented module first, with minimal import churn
+  - risk:
+    medium
+- Step C
+  - move runtime orchestration modules behind a `runtime/` package boundary only after imports are already narrowed
+  - risk:
+    medium to high
+
 ### Cycles
 
 No direct Python import cycle was found in the current module graph.

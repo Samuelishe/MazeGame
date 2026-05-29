@@ -458,3 +458,74 @@ The recommended future package shape is:
   - legacy JSON adapter/migration code
 
 This is a planning target only. No file moves are implied by this document yet.
+
+## Runtime Boundary Analysis
+
+### Runtime concerns visible in current code
+
+The codebase already has a real runtime slice, even though it is not packaged as `runtime/` yet.
+
+That slice currently includes:
+
+- pygame process lifecycle and main loop
+- FSM state switching and screen flow
+- gameplay round execution
+- active-player selection and round-rotation policy
+- session-lifetime in-memory aggregates
+- current-run mutable state and end-of-run branching
+
+Concrete runtime entities:
+
+- `GameplayWrapper`
+- `GameSessionController`
+- `RoundMode`
+- `RunResult`
+- `SessionStats`
+- local mutable run state inside `maze_game.play_maze()`
+
+### Runtime-related file map
+
+- `game_app.py`
+  - outer runtime shell
+  - owns pygame bootstrap, FSM loop, gameplay handoff, and next-round policy
+- `maze_game.py`
+  - inner runtime shell for one active run
+  - owns current-run state, nested event loop, pause/end flow, and runtime save branching
+- `session_controller.py`
+  - session-level runtime/application coordination with persistence write behavior mixed in
+- `players.py`
+  - currently only `SessionStats` plus a temporary compatibility layer
+- `state_machine/*`
+  - user-facing runtime screens running under the outer loop
+
+### What should not be considered runtime
+
+- `domain/player_models.py`
+  - durable typed models, not runtime flow
+- `gameplay/*`
+  - pure helper logic, not runtime orchestration
+- `persistence/player_repository.py`
+  - persistence boundary only
+- `db_manager.py`
+  - infrastructure only
+- `leaderboard.py`
+  - query/read-model boundary
+- `highscores.py`
+  - legacy persistence path
+
+### Should `runtime/` be introduced now
+
+Current recommendation: later.
+
+Reasoning:
+
+- the runtime boundary is already conceptually strong enough to describe;
+- but it is not yet operationally narrow enough to move safely in one pass;
+- the most likely first useful move is not `game_app.py` or `maze_game.py`, but `SessionStats`, because it is small and already classified as runtime state;
+- after that, a `runtime/` package becomes easier to introduce without bundling too many unrelated moves together.
+
+### Safe staged path
+
+1. keep documenting runtime concerns explicitly
+2. move `SessionStats` into a runtime/application-oriented module in a narrow pass
+3. only then consider introducing a visible `runtime/` package for orchestration classes and modules

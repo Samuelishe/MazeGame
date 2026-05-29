@@ -601,3 +601,34 @@ Behavior notes:
 - No runtime code changes.
 - No import changes.
 - No DB changes.
+
+## 2026-05-29 - Runtime Boundary Analysis
+
+Scope:
+
+- inspect whether the project already has a stable runtime slice
+- determine whether `runtime/` should be introduced now or later
+
+Observed:
+
+- runtime concerns are already real and visible in code;
+- they are currently distributed across `game_app.py`, `maze_game.py`, `session_controller.py`, `players.py`, and `state_machine/*`;
+- `SessionStats` is the clearest small runtime-state object;
+- `GameSessionController` is runtime/application-oriented in part, but still mixed with persistence write behavior;
+- a physical `runtime/` package would be premature if introduced together with broad orchestration file moves.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+
+Behavior notes:
+
+- No gameplay behavior changes.
+- No runtime code changes.
+- No import changes.
+- No DB changes.

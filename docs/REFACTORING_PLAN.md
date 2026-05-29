@@ -206,6 +206,12 @@ SessionStats recommendation after analysis:
 - preferred long-term target is a runtime/application-oriented module because actual usage is process-lifetime mutable session state;
 - if package-boundary cost is not yet justified, keep it temporarily in `players.py` until the next narrow boundary step.
 
+Runtime boundary recommendation after analysis:
+
+- do not introduce `runtime/` by a broad file-move pass right now;
+- prefer one narrow runtime-state move first, most likely `SessionStats`;
+- only after that introduce `runtime/` as a visible package boundary for orchestration modules if import pressure is already reduced.
+
 ## Stage 5
 
 - Goal:

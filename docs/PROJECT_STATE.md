@@ -74,6 +74,13 @@ Current runtime state is not centralized. It is split across:
 
 There is no single `GameState` or `RunState` object today.
 
+Runtime boundary reality:
+
+- a real runtime slice already exists conceptually;
+- it is currently spread across `game_app.py`, `maze_game.py`, `session_controller.py`, `players.py`, and `state_machine/*`;
+- the strongest runtime-only object identified so far is `SessionStats`;
+- a physical `runtime/` package is not in place yet.
+
 ## Data stores in use
 
 - `maze_stats.db`: authoritative structured store for players and runs
@@ -129,6 +136,7 @@ Current structure reality is still root-heavy:
 - `gameplay/` exists, but currently covers only a small pure-logic slice
 - `domain/` now exists and currently hosts pure player domain models
 - `persistence/` now exists and currently hosts the player repository boundary
+- no dedicated `runtime/` package exists yet, even though runtime concerns are already identifiable
 
 ## External dependencies actually used
 
