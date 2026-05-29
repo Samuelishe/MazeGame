@@ -1764,6 +1764,117 @@ Likely next candidate after that:
 - enemy update helper
 - or a separate world-render analysis pass
 
+## Enemy Update Boundary Analysis
+
+Current enemy update flow in `maze_game.py`:
+
+- enemy updates run inside the main loop under:
+  - `if not (won or lost):`
+- per-enemy timer gate:
+  - `if now_ms >= enemy.next_step_at:`
+- direction selection:
+  - `enemy.move_strategy(maze, enemy, player, rng, blocked_set)`
+- movement validation:
+  - reject `(0, 0)`
+  - compute next row/col
+  - check bounds
+  - check `maze[next_row][next_col] == 0`
+  - check destination not in `blocked_set`
+- movement execution:
+  - snapshot `prev_pos = enemy.pos`
+  - compute `new_pos`
+  - assign:
+    - `enemy.last_pos = prev_pos`
+    - `enemy.pos = new_pos`
+    - `enemy.direction = (drow1, dcol1)`
+- oscillation update:
+  - if new position equals `enemy.last_pos`, increment `enemy.oscillation` up to `10`
+  - otherwise reset to `0`
+- timer reset:
+  - `enemy.next_step_at = now_ms + enemy.step_interval_ms`
+
+Important current-code note:
+
+- there is no local `choose_enemy_direction(...)` call in `maze_game.py`;
+- strategy dispatch already lives behind `enemy.move_strategy(...)` from `enemies.py`;
+- patrol/chase behavior is owned implicitly by the selected strategy and mutable `Enemy` fields.
+
+Responsibility zones:
+
+- enemy timer gating
+  - runtime concern
+  - medium extraction risk
+- direction selection via strategy
+  - mixed runtime/domain concern
+  - medium extraction risk
+- movement validation
+  - runtime concern with maze-rule dependency
+  - medium extraction risk
+- movement execution
+  - runtime concern
+  - medium extraction risk
+- oscillation / patrol-state mutation
+  - runtime concern
+  - medium to high extraction risk
+- timer reset
+  - runtime concern
+  - low to medium extraction risk
+
+Option assessment:
+
+- Option A: keep enemy updates in `maze_game.py`
+  - lowest immediate risk
+  - keeps all mutable runtime behavior local
+- Option B: extract only `update_enemies(...)`
+  - plausible next move
+  - requires an explicit signature for:
+    - `enemies`
+    - `maze`
+    - `player_pos`
+    - `rng`
+    - `blocked_set`
+    - `now_ms`
+  - returns should likely stay `None` with in-place mutation
+- Option C: introduce an enemy runtime manager/state object
+  - too broad for the current safe surface
+  - risks coupling update logic, animation assumptions, and future AI policy
+
+Recommended next code-pass:
+
+- Option B is possible, but it is more behavior-sensitive than the last two runtime-support extractions
+- if chosen, move only:
+  - timer gate
+  - strategy call
+  - movement validation
+  - enemy mutation
+  - next-step timer reset
+- keep in `maze_game.py`:
+  - collision resolution with player
+  - animation objects
+  - render ordering
+  - spawn/setup
+
+Testability assessment:
+
+- non-pygame tests are possible
+- useful scenarios:
+  - timer not reached
+  - movement allowed
+  - movement blocked
+  - blocked-set interaction
+  - strategy-dependent patrol/chase outcomes
+- risk is higher than block timers because tests depend on mutable `Enemy` state plus strategy behavior from `enemies.py`
+
+Risk comparison against world rendering:
+
+- enemy update helper is cheaper than world rendering for automated tests because it is non-pygame
+- world rendering helper is simpler conceptually but harder to verify automatically without visual/runtime checks
+- overall risk is close:
+  - enemy update has higher behavior risk
+  - world rendering has higher visual regression risk
+- current recommendation:
+  analyze enemy updates first, but treat extraction more cautiously than the last narrow helper passes
+
 ## Dependency map
 
 ### Main runtime spine

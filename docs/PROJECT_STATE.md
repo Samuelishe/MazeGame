@@ -29,7 +29,7 @@ Current refactoring phase reality:
 
 - Stage 4 persistence-boundary work is largely completed at the narrow-boundary level;
 - Stage 3 has now started and completed its first narrow presentation-boundary extraction pass for mixed support modules.
-- the next likely Stage 3 follow-up is either enemy update extraction analysis or a separate world-render analysis pass.
+- the next analyzed Stage 3 hotspot is the enemy update slice inside `maze_game.py`.
 
 ## Current entrypoints
 
@@ -243,6 +243,8 @@ The architecture inspection confirms that the main structural issue is not broke
   block timer updates are now documented as the next likely narrow runtime-support extraction candidate inside `maze_game.py`.
 - Stage 3 Step 10 completed:
   block timer/respawn updates now live in `runtime/block_timers.py`.
+- Stage 3 Step 11 analysis completed:
+  enemy updates are now documented as the next runtime-heavy hotspot, with world rendering retained as a separate comparison path.
 - World-render extraction and broader presentation cleanup have not started.
 - Runtime animation setup (`AnimatedSprite`, per-enemy phase staggering) was intentionally not moved.
 - HUD fonts, HUD text assembly, and final HUD positioning intentionally remain in `maze_game.py`.

@@ -762,6 +762,74 @@ Likely next candidate after that:
 - enemy update helper
 - or a separate world-render analysis pass
 
+## Enemy Update Boundary Analysis
+
+Current enemy update flow in `maze_game.py`:
+
+1. the update slice runs only while the round is still active
+2. each enemy checks `now_ms >= enemy.next_step_at`
+3. direction comes from `enemy.move_strategy(maze, enemy, player, rng, blocked_set)`
+4. movement is validated against:
+   - bounds
+   - passable maze cell
+   - `blocked_set`
+5. on success the code mutates:
+   - `enemy.last_pos`
+   - `enemy.pos`
+   - `enemy.direction`
+   - `enemy.oscillation`
+6. every processed enemy gets:
+   - `enemy.next_step_at = now_ms + enemy.step_interval_ms`
+
+Important current-code note:
+
+- there is no inline `choose_enemy_direction(...)` call here;
+- strategy ownership is already delegated through `enemy.move_strategy(...)`;
+- patrol/chase details therefore live partly in `enemies.py` and partly in `Enemy` mutable fields.
+
+Responsibility zones:
+
+- timer gating
+  - runtime concern
+- strategy invocation
+  - mixed runtime/domain concern
+- movement validation
+  - runtime concern with maze-rule dependency
+- movement execution
+  - runtime concern
+- oscillation/patrol-state mutation
+  - runtime concern
+- timer reset
+  - runtime concern
+
+Option assessment:
+
+- Option A: keep the whole slice inline
+  - lowest risk
+- Option B: extract only `update_enemies(...)`
+  - feasible but more behavior-sensitive than the recent helper passes
+  - should use explicit mutable arguments and in-place mutation
+- Option C: widen into an enemy runtime manager/state object
+  - too broad for the current safe surface
+
+Recommended next code-pass:
+
+- Option B is viable, but should be treated as a more delicate extraction than:
+  - coin collection
+  - block timers
+- keep out of scope:
+  - collision resolution
+  - animation objects
+  - rendering
+  - spawn/setup
+
+Risk comparison versus world rendering:
+
+- enemy update is more testable without `pygame`
+- world rendering is more presentation-local but harder to verify automatically
+- enemy update is cheaper for logic tests, but riskier for gameplay behavior
+- world rendering is cheaper conceptually, but riskier for silent visual regressions
+
 Testability:
 
 - strong candidate for non-pygame tests

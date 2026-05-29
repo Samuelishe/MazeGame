@@ -98,7 +98,8 @@ Next recommended Stage 3 code-pass:
 5. completed: extract the coin collection handler with explicit runtime arguments
 6. keep world-render extraction for a separate later step
 7. completed: extract the block timer helper with in-place mutation of `blocks` and `blocked_set`
-8. next likely follow-up: enemy update helper analysis or a separate world-render analysis pass
+8. completed: analyze enemy update extraction boundary
+9. next likely follow-up: either a cautious `update_enemies(...)` extraction or a separate world-render analysis pass
 
 ## Stage 4
 

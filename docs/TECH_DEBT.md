@@ -610,6 +610,30 @@ Recommended next move:
 - `runtime/block_timers.py` now owns blocked-set rebuild, expiration checks, forbidden-cell recomputation, respawn calls, and `expires_at` resets;
 - initial spawn, pause-time shifts, movement flow, enemy updates, and rendering remain in `maze_game.py`.
 
+### Enemy update slice after the block timer split
+
+Current code facts:
+
+- enemy updates still live inline in `maze_game.py`;
+- strategy selection is already delegated through `enemy.move_strategy(...)`;
+- the inline slice still owns:
+  - timer gating
+  - move validation
+  - mutation of `enemy.pos`, `enemy.direction`, `enemy.last_pos`, `enemy.oscillation`
+  - `enemy.next_step_at` reset
+
+Why it matters:
+
+- this is the next obvious runtime-heavy hotspot after block timers;
+- it remains non-pygame and therefore testable;
+- but it is more behavior-sensitive than the last narrow helper extractions.
+
+Recommended next move:
+
+- analyze enemy updates before deciding on extraction;
+- if extracted later, keep it as a narrow `update_enemies(...)` helper only;
+- do not combine it with collision handling, animation setup, or world rendering.
+
 What should wait:
 
 - full `maze_game.py` renderer extraction

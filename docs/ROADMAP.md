@@ -29,6 +29,7 @@ Keep gameplay stable while continuing small, testable architectural improvements
 - Stage 3 Step 9 block timer analysis is completed.
 - Stage 3 Step 10 block timer extraction is completed:
   - `runtime/block_timers.py`
+- Stage 3 Step 11 enemy update analysis is completed.
 
 ## Next recommended implementation step
 

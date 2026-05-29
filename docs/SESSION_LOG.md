@@ -1191,6 +1191,42 @@ Documentation changes:
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
 
+## 2026-05-29 - Stage 3 Step 11: Enemy update boundary analysis
+
+Scope:
+
+- inspect the inline enemy update slice in `maze_game.py`
+- compare its extraction risk against a separate world-render helper path
+
+Findings:
+
+- enemy updates are already partly abstracted through `enemy.move_strategy(...)`;
+- the remaining inline slice still owns:
+  - timer gating
+  - move validation
+  - mutation of `enemy.pos`, `enemy.direction`, `enemy.last_pos`, `enemy.oscillation`
+  - `enemy.next_step_at` reset
+- the slice is non-pygame and testable, but more behavior-sensitive than:
+  - coin collection
+  - block timers
+
+Decision:
+
+- a narrow `update_enemies(...)` helper is viable in principle;
+- however, it should be treated more cautiously than the recent helper passes;
+- world rendering remains a separate alternative, with lower gameplay risk but higher visual-regression risk.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`
+
 ## 2026-05-29 - Stage 3 Step 2: Extract coin and block rendering helpers
 
 Scope:
