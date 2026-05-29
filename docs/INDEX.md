@@ -30,6 +30,7 @@ Supporting file:
 - Main gameplay loop: `maze_game.play_maze()`
 - Pure gameplay helpers: `gameplay/`
 - Maze position helper: `gameplay/maze_positions.py`
+- Score preparation helper: `gameplay/scoring.py`
 - HUD text helpers: `gameplay/hud_text.py`
 - Result summary text helpers: `gameplay/result_text.py`
 - Module map: `docs/MODULES.md`

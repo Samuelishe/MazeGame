@@ -65,6 +65,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `tests/test_formatting.py`
 - `tests/test_maze_positions.py`
 - `tests/test_scoring.py`
+- `tests/test_scoring_preparation.py`
 - `tests/test_result_text.py`
 - `tests/test_hud_text.py`
 
@@ -717,17 +718,17 @@ Priority C: high risk
 ### `gameplay/scoring.py`
 
 - Role:
-  pure score policy and score formula.
+  pure score policy, score-input preparation, and score formula.
 - Main classes:
-  `ScoreParams`.
+  `ScoreParams`, `PreparedRunScore`.
 - Main functions:
-  `compute_score`.
+  `prepare_run_score`, `compute_score`.
 - Used by:
   `maze_game.py`, tests.
 - Future fit:
   keep in `gameplay/` or move later to `domain/scoring.py`.
 - Notes:
-  clean pure module.
+  clean pure module; now also owns data-only preparation for runtime score calculation without taking over persistence or UI flow.
 
 ### `gameplay/result_text.py`
 
@@ -891,6 +892,15 @@ Priority C: high risk
 
 - Role:
   pure scoring assertions.
+- Used by:
+  pytest only.
+- Future fit:
+  keep under `tests/`.
+
+### `tests/test_scoring_preparation.py`
+
+- Role:
+  pure assertions for score-input preparation before runtime score calculation.
 - Used by:
   pytest only.
 - Future fit:

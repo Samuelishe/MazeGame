@@ -28,6 +28,59 @@ class ScoreParams:
     apply_time_on_loss: bool = False
 
 
+@dataclass(frozen=True)
+class PreparedRunScore:
+    """
+    Prepared score-related values for one completed run.
+
+    This container keeps the data-only preparation step separate from the
+    actual score calculation call in runtime code.
+    """
+
+    elapsed_ms: int
+    coins_value_sum: int
+    diamond_count: int
+    won: bool
+    params: ScoreParams
+
+
+def prepare_run_score(
+    *,
+    start_ms: int,
+    now_ms: int,
+    coins_value_sum: int,
+    diamond_count: int,
+    won: bool,
+) -> PreparedRunScore:
+    """
+    Prepare pure score-related values for one completed run.
+
+    This helper intentionally does not call ``compute_score``. It only
+    prepares:
+
+    - elapsed time derived from ``start_ms`` and ``now_ms``;
+    - the current ``ScoreParams`` configuration;
+    - the explicit score input values used by runtime code.
+    """
+    elapsed_ms = now_ms - start_ms
+    params = ScoreParams(
+        coin_k=30,
+        time_penalty_per_sec=0.25,
+        win_bonus=400,
+        win_multiplier=1.25,
+        loss_multiplier=0.35,
+        diamond_bonus=400,
+        apply_time_on_loss=False,
+    )
+    return PreparedRunScore(
+        elapsed_ms=elapsed_ms,
+        coins_value_sum=coins_value_sum,
+        diamond_count=diamond_count,
+        won=won,
+        params=params,
+    )
+
+
 def compute_score(
     coins_value_sum: int,
     elapsed_ms: int,

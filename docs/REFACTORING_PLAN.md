@@ -44,6 +44,13 @@ Concrete `maze_game.py` steps inside Stage 2:
 
 These are the current Priority A candidates from the detailed `maze_game.py` inspection.
 
+Current Stage 2 progress:
+
+- completed: inner-cell border translation helper
+- completed: score/result value preparation
+- remaining: highscore summary value preparation
+- remaining: HUD mixed-text rendering helper
+
 ## Stage 3
 
 - Goal:

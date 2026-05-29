@@ -268,6 +268,15 @@ Dependencies/coupling:
 - `ScoreParams`
 - local `won/lost` flags
 
+Current status:
+
+- partially extracted into `gameplay/scoring.py` via pure score-input preparation
+
+Remaining work:
+
+- highscore summary value preparation is still local to `maze_game.py`
+- score preparation is now separated, but persistence and end-screen UI flow are still in the same runtime block
+
 ### 5. End-screen result summary text
 
 Risk level: low
@@ -431,6 +440,11 @@ Remaining low-coupling helper candidates:
 - inner-cell coordinate translation
 - score/result value preparation
 - highscore summary value preparation
+
+Completed low-coupling extractions now include:
+
+- inner-cell coordinate translation
+- score/result value preparation
 
 These remain the safest pattern for continued incremental cleanup.
 

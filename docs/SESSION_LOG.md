@@ -277,3 +277,33 @@ Documentation changes:
 - Updated `docs/PROJECT_STATE.md`
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
+
+## 2026-05-29 - maze_game.py extraction pass 2
+
+Scope:
+
+- extract only score/result value preparation from the end-of-run block
+- keep compute call, persistence hooks, and UI flow in `maze_game.py`
+
+Code changes:
+
+- Extended `gameplay/scoring.py` with pure `PreparedRunScore` and `prepare_run_score(...)`.
+- Updated `maze_game.py` to prepare score inputs through the extracted helper, while keeping `compute_score(...)` call local.
+- Added `tests/test_scoring_preparation.py`.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- Score formula remains unchanged.
+- Persistence behavior remains unchanged.
+- End-screen flow remains unchanged.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/REFACTORING_PLAN.md`

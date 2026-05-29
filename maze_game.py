@@ -27,7 +27,7 @@ from gameplay.result_text import (
     build_end_menu_subtitle,
     build_highscore_line,
 )
-from gameplay.scoring import ScoreParams, compute_score
+from gameplay.scoring import compute_score, prepare_run_score
 from highscores import (
     Highscore,
     load_highscore,
@@ -774,25 +774,22 @@ def play_maze(
 
             # HUD/оверлеи конца
             if won or lost:
-                elapsed_ms = now_ms - start_ms
+                prepared_score = prepare_run_score(
+                    start_ms=start_ms,
+                    now_ms=now_ms,
+                    coins_value_sum=coins_collected,
+                    diamond_count=diamond_count,
+                    won=won,
+                )
+                elapsed_ms = prepared_score.elapsed_ms
                 time_str = format_time(elapsed_ms)
 
-                score_params = ScoreParams(
-                    coin_k=30,
-                    time_penalty_per_sec=0.25,
-                    win_bonus=400,
-                    win_multiplier=1.25,
-                    loss_multiplier=0.35,
-                    diamond_bonus=400,
-                    apply_time_on_loss=False,
-                )
-
                 score = compute_score(
-                    coins_collected,
-                    elapsed_ms,
-                    won=won,
-                    diamond_count=diamond_count,
-                    params=score_params,
+                    prepared_score.coins_value_sum,
+                    prepared_score.elapsed_ms,
+                    won=prepared_score.won,
+                    diamond_count=prepared_score.diamond_count,
+                    params=prepared_score.params,
                 )
 
                 # Рекорды: обновить и сохранить при улучшении (старый JSON highscore)
