@@ -175,9 +175,9 @@ The architecture inspection confirms that the main structural issue is not broke
 - `maze_game.py` is still the main concentration point
 - too many modules remain in the root directory
 - some modules still mix domain and rendering concerns
-- `players.py` has been removed from the active production import graph after the compatibility cleanup
+- `players.py` has been removed after the compatibility cleanup
 - repeated state-screen UI patterns are present but not yet centralized
-- persistence boundaries are clearer on paper than in code, especially around `players.py` and `session_controller.py`
+- persistence boundaries are clearer than before, but `session_controller.py` and the active JSON/SQLite split still remain architectural hotspots
 
 ## Stabilization notes
 

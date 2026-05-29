@@ -103,7 +103,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - Main functions:
   `load_players`, `create_player`, `delete_player`, `get_player_by_name`, `get_or_create_player`.
 - Used by:
-  `session_controller.py`, `highscore_adapter.py`, transitional compatibility re-export in `players.py`.
+  `session_controller.py`, `highscore_adapter.py`.
 - Depends on:
   `db_manager`, `domain.player_models`.
 - Future fit:
@@ -173,7 +173,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - Used by:
   `game_app.py`.
 - Depends on:
-  `coins`, `effects`, `gameplay/*`, `highscores`, `sounds`, `sprites`, `players`, `grid_utils`, `enemies`, `blocks`, `palette`, `ui`, `maze_gen`, `session_controller`.
+  `coins`, `effects`, `gameplay/*`, `highscores`, `sounds`, `sprites`, `runtime.session_stats`, `grid_utils`, `enemies`, `blocks`, `palette`, `ui`, `maze_gen`, `session_controller`.
 - Future fit:
   split gradually across `runtime/gameplay_loop.py`, `runtime/gameplay_rendering.py`, `runtime/gameplay_flow.py`, while keeping root file as migration shell until stable.
 - Notes:
@@ -359,7 +359,7 @@ Approximate size: 799 lines total.
   - coupling:
     very high.
   - external dependencies:
-    `gameplay.formatting`, `gameplay.scoring`, `gameplay.result_text`, `highscores`, `session_controller`, `players.SessionStats`, `ui`, `pygame`.
+    `gameplay.formatting`, `gameplay.scoring`, `gameplay.result_text`, `highscores`, `session_controller`, `runtime.session_stats.SessionStats`, `ui`, `pygame`.
   - extraction risk:
     high as one block; medium if split into value preparation vs UI wait.
 
@@ -487,7 +487,7 @@ Priority C: high risk
 - Main functions:
   `get_connection`, `init_db`, `set_meta_flag`, `get_meta_flag`.
 - Used by:
-  `game_app.py`, `session_controller.py`, `players.py`, `leaderboard.py`, `highscore_adapter.py`.
+  `game_app.py`, `session_controller.py`, `leaderboard.py`, `highscore_adapter.py`.
 - Depends on:
   stdlib only.
 - Future fit:
@@ -554,7 +554,7 @@ Priority C: high risk
   - does not depend on pygame;
   - does not depend on `PlayerProfile`.
 - Placement options:
-  - Option A: keep in `players.py`
+  - Option A: keep in a legacy root compatibility module
     - pluses:
       zero import churn
       keeps current code stable
@@ -566,7 +566,7 @@ Priority C: high risk
   - Option B: move to `domain/`
     - pluses:
       pure dataclass can live in a non-pygame package
-      removes the last real state object from `players.py`
+      removes the last real state object from the old root compatibility area
     - minuses:
       this object is not a stable game-domain concept; it is session-lifetime cache/aggregate
       `domain/` currently hosts durable models and pure rules, which is a weaker fit
@@ -582,8 +582,8 @@ Priority C: high risk
     - risk:
       medium now, lower after package-boundary prep
 - Recommended direction:
-  - prefer Option C when the project is ready for one more package boundary step;
-  - until then, keeping `SessionStats` temporarily in `players.py` is acceptable, but only as a staging state.
+  - completed: `SessionStats` now lives in `runtime/session_stats.py`;
+  - broader runtime-package migration remains a separate later decision.
 
 ### `leaderboard.py`
 
@@ -678,14 +678,6 @@ Priority C: high risk
   - mixed incorrectly:
     no; this is now the dedicated player CRUD/profile-loading slice.
 
-- `players.py`
-  - domain logic:
-    `SessionStats`.
-  - persistence logic:
-    only transitional re-export, not ownership.
-  - mixed incorrectly:
-    mildly; runtime session state remains in a legacy root module and compatibility imports still exist temporarily.
-
 - `session_controller.py`
   - domain logic:
     `RoundMode`, `RunResult`, current-player rotation policy.
@@ -719,12 +711,6 @@ Priority C: high risk
     acceptably; it is a transitional migration module by nature.
 
 ## Persistence Refactoring Candidates
-
-- `players.py` split candidate
-  - target:
-    remove transitional re-export and later relocate `SessionStats`.
-  - risk:
-    medium.
 
 - `session_controller.py` split candidate
   - target:
@@ -1263,7 +1249,6 @@ Priority C: high risk
 
 - `coins.py`: spawn/domain + rendering.
 - `blocks.py`: spawn/domain + rendering.
-- `players.py`: legacy compatibility shim for runtime/persistence re-exports.
 - `ui.py`: text/font helpers + overlay rendering + blocking choice loops.
 
 ### State modules with repeated patterns
@@ -1367,7 +1352,7 @@ Files that should not belong to runtime:
 - reasoning:
   - the runtime boundary is conceptually visible already;
   - but code ownership is not yet narrow enough to justify immediate physical moves;
-  - introducing `runtime/` right now would likely mix package creation with broader import churn across `game_app.py`, `maze_game.py`, `session_controller.py`, and `players.py`;
+  - introducing `runtime/` right now would likely mix package creation with broader import churn across `game_app.py`, `maze_game.py`, and `session_controller.py`;
   - the safer order is to finish one more narrow boundary step first, then introduce the package with delegation-style moves.
 
 ### Possible staged introduction

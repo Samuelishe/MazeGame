@@ -532,6 +532,34 @@ Documentation changes:
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
 
+## 2026-05-29 - Documentation consistency cleanup after players.py removal
+
+Scope:
+
+- inspect active architecture documents for stale `players.py` references
+- remove current-state mentions of `players.py` as a live module, dependency, or compatibility shim
+
+Observed:
+
+- several docs still described `players.py` as if it were an active compatibility layer;
+- some dependency maps still pointed `maze_game.py` or `db_manager.py` at `players.py`;
+- historical and completed-step references remained valid and were kept only as historical context.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+
+Behavior notes:
+
+- No code changes.
+- No gameplay behavior changes.
+- No persistence behavior changes.
+
 ## 2026-05-29 - Stage 4 repository safety tests
 
 Scope:

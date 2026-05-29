@@ -86,7 +86,7 @@ Concrete `maze_game.py`-adjacent steps inside Stage 3:
   migration code,
   runtime save orchestration.
 - Candidate targets:
-  split `players.py` responsibilities; keep `session_controller.py` focused on session coordination.
+  keep `session_controller.py` focused on session coordination, continue narrowing gameplay persistence knowledge, and clarify legacy JSON ownership.
 - Risk:
   medium.
 - Estimated change size:
@@ -106,48 +106,7 @@ Concrete `maze_game.py`-adjacent steps inside Stage 4:
 
 Concrete future Stage 4 steps:
 
-1. Analyze and split `players.py` responsibilities on paper
-  - goal:
-    define the exact cut between player models, repository code, and `SessionStats`.
-  - risk:
-    low in analysis, medium in later implementation.
-  - expected result:
-    clear target ownership before any code moves.
-  - files:
-    `players.py`, `docs/MODULES.md`, `docs/ARCHITECTURE.md`, `docs/TECH_DEBT.md`
-
-2. Extract run-write boundary from `GameSessionController` in a later code pass
-   - goal:
-     isolate `record_run(...)` SQL details behind a narrower persistence-facing API.
-   - risk:
-     medium.
-   - expected result:
-     `GameSessionController` keeps session orchestration while SQL write logic becomes more localizable.
-   - files:
-     `session_controller.py`, `persistence/run_repository.py`, docs
-
-Run-recording recommendation after analysis:
-
-- completed: `persistence/run_repository.py` now owns the SQL write path;
-- keep `GameSessionController.record_run(...)` as orchestration owner;
-- avoid introducing a broader recorder/service layer unless narrower extraction proves insufficient.
-
-Suggested safe sequence:
-
-1. Step 2A
-   - completed: add disposable-DB tests for current `record_run(...)`
-   - risk:
-     low
-2. Step 2B
-   - completed: extract SQL write path into `persistence/run_repository.py`
-   - risk:
-     medium
-3. Step 2C
-   - completed as part of Step 2B: reduce `GameSessionController.record_run(...)` to runtime-state update plus repository delegation
-   - risk:
-     medium
-
-3. Narrow `maze_game.py` persistence knowledge
+1. Narrow `maze_game.py` persistence knowledge
    - goal:
      reduce gameplay awareness of `RunResult` construction and save-path branching.
    - risk:
@@ -157,7 +116,7 @@ Suggested safe sequence:
    - files:
      `maze_game.py`, `session_controller.py`
 
-4. Clarify legacy JSON highscore policy
+2. Clarify legacy JSON highscore policy
    - goal:
      define whether `highscore.json` stays as compatibility output, archive output, or removable legacy path.
    - risk:
@@ -167,7 +126,7 @@ Suggested safe sequence:
    - files:
      `highscores.py`, `highscore_adapter.py`, `maze_game.py`, docs only at first
 
-5. Preserve read-only leaderboard boundary while documenting it as the stable query slice
+3. Preserve read-only leaderboard boundary while documenting it as the stable query slice
   - goal:
     keep `leaderboard.py` coherent and separate it conceptually from write-side refactors.
   - risk:
@@ -229,7 +188,7 @@ SessionStats recommendation after analysis:
 
 - do not move `SessionStats` into `domain/` by default;
 - preferred long-term target is a runtime/application-oriented module because actual usage is process-lifetime mutable session state;
-- if package-boundary cost is not yet justified, keep it temporarily in `players.py` until the next narrow boundary step.
+- completed: the narrow boundary step landed and `SessionStats` now lives in `runtime/session_stats.py`.
 
 Runtime boundary recommendation after analysis:
 

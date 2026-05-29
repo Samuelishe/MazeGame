@@ -15,7 +15,8 @@ The repository root still contains the main runtime modules:
 - `game_app.py`: pygame bootstrap and FSM wiring
 - `maze_game.py`: main gameplay runtime loop
 - `session_controller.py`: session coordination and run recording
-- `players.py`, `leaderboard.py`, `db_manager.py`: persistence and query logic
+- `leaderboard.py`, `db_manager.py`: root-level persistence and query logic
+- `domain/`, `persistence/`, `runtime/`: newly introduced ownership packages for player models, repositories, run writes, and session stats
 - support modules such as `ui.py`, `sounds.py`, `sprites.py`, `maze_gen.py`, `coins.py`, `enemies.py`, `blocks.py`, `effects.py`, `palette.py`, `grid_utils.py`
 
 This flat layout is still the current production reality.
@@ -29,6 +30,9 @@ Current role:
 Current contents:
 
 - `formatting.py`
+- `hud_text.py`
+- `maze_positions.py`
+- `result_text.py`
 - `scoring.py`
 
 This folder is intentionally small. It is not a generic dumping ground.
@@ -48,7 +52,7 @@ Current role:
 
 - focused unit tests for pure deterministic logic
 
-Current contents are intentionally limited to formatting and scoring tests.
+Current contents now include pure helper tests and disposable-DB safety tests for isolated persistence boundaries.
 
 ### `docs/`
 

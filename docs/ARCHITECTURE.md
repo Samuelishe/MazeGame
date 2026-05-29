@@ -290,9 +290,9 @@ Dependency profile:
 - no dependency on `PlayerProfile`;
 - no dependency on repository APIs.
 
-Placement options:
+Placement options considered during the analysis:
 
-- Keep in `players.py`
+- Keep in a legacy root compatibility module
   - lowest immediate risk
   - weakest ownership clarity
 - Move to `domain/`
@@ -323,7 +323,7 @@ Recommended direction:
 - Presentation/media:
   `ui.py`, `sounds.py`, `sprites.py`, `effects.py`, `palette.py`
 - Persistence/data:
-  `db_manager.py`, `persistence/player_repository.py`, `players.py`, `session_controller.py`, `leaderboard.py`,
+  `db_manager.py`, `persistence/player_repository.py`, `session_controller.py`, `leaderboard.py`,
   `highscores.py`, `highscore_adapter.py`
 
 ### App shell

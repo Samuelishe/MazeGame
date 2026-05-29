@@ -296,7 +296,7 @@ Risk level: medium
 
 Why:
 
-- the repository and runtime boundaries are now isolated, and the remaining cleanup is to keep docs and ownership maps aligned with the fact that `players.py` is no longer needed.
+- the repository and runtime boundaries are now isolated, and the compatibility cleanup around the removed `players.py` file is complete.
 
 Target outcome:
 
@@ -339,7 +339,7 @@ Classification:
 Recommended direction:
 
 - completed: move to `runtime/session_stats.py`;
-- next: remove compatibility imports from `players.py` when safe.
+- completed: production compatibility imports from `players.py` were removed and the file is no longer part of the active import graph.
 
 ### 2. Extract run-recording repository boundary
 
