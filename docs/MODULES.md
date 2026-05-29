@@ -57,6 +57,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `presentation/block_rendering.py`
 - `presentation/enemy_sprites.py`
 - `presentation/hud_rendering.py`
+- `presentation/world_rendering.py`
 - `ui.py`
 - `sounds.py`
 - `sprites.py`
@@ -272,6 +273,23 @@ This is an inspection document only. It does not imply any immediate file moves.
   keep in `presentation/`.
 - Notes:
   Stage 3 Step 6 extracted HUD background surface creation, alpha fill, rounded rectangle drawing, and size composition here without moving gameplay values, fonts, or final positioning.
+
+### `presentation/world_rendering.py`
+
+- Role:
+  pygame-facing world rendering orchestration helper.
+- Main classes:
+  none.
+- Main functions:
+  `render_world`.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  `pygame`, `blocks`, `coins`, `effects`, `enemies`, `presentation.block_rendering`, `presentation.coin_rendering`, `sprites`.
+- Future fit:
+  keep in `presentation/`.
+- Notes:
+  Stage 3 Step 13 extracted the world render order here without moving HUD rendering, enemy updates, or any gameplay-state mutation.
 
 ### `persistence/run_repository.py`
 
@@ -1872,8 +1890,26 @@ Risk comparison against world rendering:
 - overall risk is close:
   - enemy update has higher behavior risk
   - world rendering has higher visual regression risk
-- current recommendation:
-  prefer world rendering as the next code-pass, because it is less likely to change gameplay behavior even though it is harder to verify automatically
+Stage 3 Step 13 is now completed:
+
+- `presentation/world_rendering.py` now owns:
+  - maze/background drawing
+  - blocks
+  - coins
+  - goal
+  - trail
+  - enemies
+  - player
+  - effects
+- `maze_game.py` still owns:
+  - HUD rendering
+  - enemy updates
+  - collision handling
+  - pause/end-screen UI
+
+Likely next candidate after that:
+
+- enemy update helper
 
 ## World Rendering Boundary Analysis
 

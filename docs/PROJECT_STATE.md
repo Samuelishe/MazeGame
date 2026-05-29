@@ -29,7 +29,7 @@ Current refactoring phase reality:
 
 - Stage 4 persistence-boundary work is largely completed at the narrow-boundary level;
 - Stage 3 has now started and completed its first narrow presentation-boundary extraction pass for mixed support modules.
-- the current Stage 3 comparison hotspot is enemy updates vs world rendering inside `maze_game.py`.
+- the current Stage 3 follow-up hotspot is enemy updates inside `maze_game.py`.
 
 ## Current entrypoints
 
@@ -221,7 +221,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - `format_time`, `ScoreParams`, and `compute_score` now live in `gameplay/` as pure logic modules.
 - Data-only score preparation for completed runs now also lives in `gameplay/scoring.py`.
 - Deterministic best-time/highscore/end-summary value preparation now also lives in `gameplay/result_text.py`.
-- HUD text assembly now also lives in `gameplay/` as pure helper logic, while pygame HUD rendering remains in `maze_game.py`.
+- HUD text assembly now also lives in `gameplay/` as pure helper logic, while HUD rendering remains split between `maze_game.py`, `ui.py`, and `presentation/hud_rendering.py`.
 - HUD mixed-text surface rendering no longer lives as a nested helper in `maze_game.py`; gameplay now reuses `ui.render_mixed_text(...)`.
 - Border-to-inner-cell translation for maze entry/exit now also lives in `gameplay/maze_positions.py` as pure helper logic.
 - End-screen result summary text now also lives in `gameplay/` as pure helper logic.
@@ -247,6 +247,8 @@ The architecture inspection confirms that the main structural issue is not broke
   enemy updates are now documented as the next runtime-heavy hotspot, with world rendering retained as a separate comparison path.
 - Stage 3 Step 12 analysis completed:
   world rendering is now documented as the safer next extraction candidate than enemy updates, despite a wider signature and higher visual-regression risk.
+- Stage 3 Step 13 completed:
+  world rendering now lives in `presentation/world_rendering.py`, while HUD rendering and enemy updates remain separate.
 - World-render extraction and broader presentation cleanup have not started.
 - Runtime animation setup (`AnimatedSprite`, per-enemy phase staggering) was intentionally not moved.
 - HUD fonts, HUD text assembly, and final HUD positioning intentionally remain in `maze_game.py`.

@@ -36,7 +36,7 @@ Supporting file:
 - Gameplay persistence handoff helper: `runtime/run_persistence.py`
 - Coin collection helper: `runtime/coin_collection.py`
 - Block timer helper: `runtime/block_timers.py`
-- Presentation helpers: `presentation/coin_rendering.py`, `presentation/block_rendering.py`, `presentation/enemy_sprites.py`, `presentation/hud_rendering.py`
+- Presentation helpers: `presentation/coin_rendering.py`, `presentation/block_rendering.py`, `presentation/enemy_sprites.py`, `presentation/hud_rendering.py`, `presentation/world_rendering.py`
 - Maze position helper: `gameplay/maze_positions.py`
 - Score preparation helper: `gameplay/scoring.py`
 - HUD text helpers: `gameplay/hud_text.py`
@@ -49,8 +49,8 @@ Supporting file:
 - Gameplay persistence handoff tests: `tests/test_run_persistence.py`
 - Current Stage 3 mixed support hotspots: `coins.py`, `blocks.py`
 - Current narrow Stage 3 gameplay presentation status: enemy sprite loading and HUD composition completed
-- Current likely Stage 3 follow-up in `maze_game.py`: world rendering helper
-- Current Stage 3 runtime-support analysis status: coin collection completed, block timers completed, enemy updates analyzed, world rendering analyzed
+- Current likely Stage 3 follow-up in `maze_game.py`: enemy update helper
+- Current Stage 3 runtime-support analysis status: coin collection completed, block timers completed, enemy updates analyzed, world rendering completed
 - Module map: `docs/MODULES.md`
 - Staged restructure plan: `docs/REFACTORING_PLAN.md`
 - State screens: `state_machine/`

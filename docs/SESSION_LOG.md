@@ -1265,6 +1265,51 @@ Documentation changes:
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
 
+## 2026-05-29 - Stage 3 Step 13: Extract world rendering helper
+
+Scope:
+
+- move only the world rendering block out of `maze_game.py`
+- keep HUD rendering, enemy updates, collision handling, and UI flows inline
+
+Code changes:
+
+- Added `presentation/world_rendering.py`.
+- Added `render_world(...)`.
+- Moved world render order in the same layer sequence:
+  - maze/background
+  - blocks
+  - coins
+  - goal
+  - trail
+  - enemies
+  - player
+  - effects
+- Replaced the inline render block in `maze_game.py` with a single helper call.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- Render order, colors, offsets, enemy scaling, player draw order, and `effects.draw_all(...)` ordering were preserved.
+- HUD rendering was intentionally not moved.
+
+Testing notes:
+
+- No dedicated world-render unit tests were added.
+- This slice is heavily `pygame` rendering-oriented.
+- Validation relies on `py_compile`, the existing `pytest` suite, and future manual visual verification if needed.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`
+
 ## 2026-05-29 - Stage 3 Step 2: Extract coin and block rendering helpers
 
 Scope:

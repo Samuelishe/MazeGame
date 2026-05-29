@@ -33,6 +33,7 @@ from highscores import (
 )
 from presentation.hud_rendering import compose_hud_background
 from presentation.enemy_sprites import load_enemy_sheets_by_type
+from presentation.world_rendering import render_world
 from sounds import SoundBank
 from sprites import AnimatedSprite
 
@@ -50,8 +51,6 @@ from enemies import (
     build_safe_zone,
 )
 from blocks import spawn_blocks
-from presentation.block_rendering import draw_block_cell
-from presentation.coin_rendering import draw_coin
 from palette import make_palette
 from ui import (
     get_emoji_font,
@@ -543,74 +542,28 @@ def play_maze(
                         sound.play_lose()
                         break
 
-            # ---- рендер ----
-            screen.lock()
-            for row_draw in range(maze_rows):
-                y_px = row_draw * cell_px
-                row_maze = maze[row_draw]
-                for col_draw in range(maze_cols):
-                    x_px = col_draw * cell_px
-                    cell_rgb = path_rgb if row_maze[col_draw] == 0 else wall_rgb
-                    pygame.draw.rect(screen, cell_rgb, (x_px, y_px, cell_px, cell_px))
-            screen.unlock()
-
-            # пульсирующие блоки как временная стена (+ штриховка)
-            for block in blocks:
-                block_x_px = block.pos[1] * cell_px
-                block_y_px = block.pos[0] * cell_px
-                draw_block_cell(
-                    screen, block_x_px, block_y_px, cell_px, wall_rgb, now_ms, block_pulse_ms
-                )
-
-            # монеты
-            for coin in coins:
-                draw_coin(screen, coin, cell_px)
-
-            # цель
-            goal_x_px = goal[1] * cell_px
-            goal_y_px = goal[0] * cell_px
-            pygame.draw.rect(
-                screen,
-                goal_rgb,
-                (goal_x_px + cell_px * 0.2, goal_y_px + cell_px * 0.2, cell_px * 0.6, cell_px * 0.6),
-                border_radius=4,
+            # ---- рендер мира ----
+            render_world(
+                screen=screen,
+                maze=maze,
+                maze_rows=maze_rows,
+                maze_cols=maze_cols,
+                cell_px=cell_px,
+                wall_rgb=wall_rgb,
+                path_rgb=path_rgb,
+                goal_rgb=goal_rgb,
+                player_rgb=player_rgb,
+                blocks=blocks,
+                block_pulse_ms=block_pulse_ms,
+                coins=coins,
+                goal=goal,
+                trail=trail,
+                enemies=enemies,
+                enemy_anims=enemy_anims,
+                player=player,
+                effects=effects,
+                now_ms=now_ms,
             )
-
-            # след
-            for (trail_row, trail_col) in trail:
-                trail_x_px = trail_col * cell_px
-                trail_y_px = trail_row * cell_px
-                pygame.draw.rect(
-                    screen,
-                    (255, 255, 255),
-                    (trail_x_px + cell_px * 0.35, trail_y_px + cell_px * 0.35, cell_px * 0.3, cell_px * 0.3),
-                    border_radius=3,
-                )
-
-            # враги (анимированные, центрированы в клетке)
-            for enemy, anim in zip(enemies, enemy_anims):
-                x_px = enemy.pos[1] * cell_px
-                y_px = enemy.pos[0] * cell_px
-
-                frame = anim.get_current_frame(now_ms)
-
-                enemy_size = int(cell_px * 0.85)
-                offset = (cell_px - enemy_size) // 2
-
-                frame_scaled = pygame.transform.scale(frame, (enemy_size, enemy_size))
-                screen.blit(frame_scaled, (x_px + offset, y_px + offset))
-
-            # игрок
-            player_x_px = player[1] * cell_px
-            player_y_px = player[0] * cell_px
-            pygame.draw.rect(
-                screen,
-                player_rgb,
-                (player_x_px + cell_px * 0.15, player_y_px + cell_px * 0.15, cell_px * 0.7, cell_px * 0.7),
-                border_radius=6,
-            )
-
-            effects.draw_all(screen, cell_px, now_ms)
 
             # HUD: имя игрока (если есть контроллер), монеты и текущее время
             elapsed_ms_live = now_ms - start_ms

@@ -143,6 +143,7 @@ Main modules:
 - `presentation/block_rendering.py`: temporary block draw helpers
 - `presentation/enemy_sprites.py`: enemy sprite-sheet loading and type mapping
 - `presentation/hud_rendering.py`: HUD background/surface composition
+- `presentation/world_rendering.py`: world render-order orchestration
 - `session_controller.py`: in-memory session plus run recording
 - `leaderboard.py`: read queries for leaderboard screens
 
@@ -917,11 +918,28 @@ Comparison with enemy update extraction:
   - lower gameplay-behavior risk
   - higher visual-regression risk
 
+Stage 3 Step 13 is now completed:
+
+- `presentation/world_rendering.py` owns:
+  - maze/background
+  - blocks
+  - coins
+  - goal
+  - trail
+  - enemies
+  - player
+  - effects
+- `maze_game.py` still owns:
+  - HUD rendering
+  - enemy updates
+  - collision handling
+  - pause/end-screen UI
+
 Recommended next Stage 3 code-pass:
 
-- prefer world rendering helper extraction before enemy update extraction
-- reason:
-  behavior preservation matters more than unit-test convenience at the current stage
+- enemy update helper analysis is already done;
+- if implementation continues, enemy update extraction is now the next likely runtime-heavy candidate;
+- keep HUD and UI flows separate from that pass.
 
 Testability:
 

@@ -100,7 +100,8 @@ Next recommended Stage 3 code-pass:
 7. completed: extract the block timer helper with in-place mutation of `blocks` and `blocked_set`
 8. completed: analyze enemy update extraction boundary
 9. completed: analyze world rendering extraction boundary
-10. next likely follow-up: prefer a narrow `render_world(...)` extraction before any `update_enemies(...)` extraction
+10. completed: extract `render_world(...)` before any `update_enemies(...)` extraction
+11. next likely follow-up: enemy update helper extraction
 
 ## Stage 4
 

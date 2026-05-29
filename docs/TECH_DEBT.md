@@ -662,9 +662,9 @@ Why it matters:
 
 Recommended next move:
 
-- prefer a single `render_world(...)` extraction before touching enemy updates;
-- keep HUD, pause UI, end-screen UI, and runtime update logic out of scope;
-- preserve render order exactly.
+- completed: single `render_world(...)` extraction before touching enemy updates;
+- `presentation/world_rendering.py` now owns world draw order while HUD, pause UI, end-screen UI, and runtime update logic remain outside it;
+- enemy updates are now the next more behavior-sensitive candidate.
 
 What should wait:
 
