@@ -1227,6 +1227,44 @@ Documentation changes:
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
 
+## 2026-05-29 - Stage 3 Step 12: World rendering boundary analysis
+
+Scope:
+
+- inspect the inline world rendering block in `maze_game.py`
+- compare its extraction risk directly with enemy update extraction
+
+Findings:
+
+- world rendering currently owns draw order for:
+  - maze/background
+  - blocks
+  - coins
+  - goal
+  - trail
+  - enemies
+  - player
+  - effects
+- several low-level presentation helpers already exist, so the remaining hotspot is render orchestration rather than primitive drawing.
+- a future `render_world(...)` helper would need a wide but explicit signature.
+
+Decision:
+
+- the next better Stage 3 code-pass is world rendering helper extraction, not enemy update extraction;
+- reason:
+  it is less likely to change gameplay behavior, even though it is harder to verify automatically and may cause visual regressions if mishandled.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`
+
 ## 2026-05-29 - Stage 3 Step 2: Extract coin and block rendering helpers
 
 Scope:

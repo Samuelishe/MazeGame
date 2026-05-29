@@ -634,6 +634,38 @@ Recommended next move:
 - if extracted later, keep it as a narrow `update_enemies(...)` helper only;
 - do not combine it with collision handling, animation setup, or world rendering.
 
+### World rendering slice after the recent Stage 3 helper passes
+
+Current code facts:
+
+- `maze_game.py` still owns the whole world draw order:
+  - maze/background
+  - blocks
+  - coins
+  - goal
+  - trail
+  - enemies
+  - player
+  - effects
+- several narrow rendering helpers already exist:
+  - `presentation.block_rendering`
+  - `presentation.coin_rendering`
+  - `presentation.enemy_sprites`
+  - `presentation.hud_rendering`
+- the remaining gap is orchestration of world draw order, not missing low-level draw helpers.
+
+Why it matters:
+
+- this is now the main presentation-side hotspot left in `maze_game.py`;
+- it is less likely than enemy updates to change gameplay behavior;
+- but it carries a wider signature and higher visual-regression risk.
+
+Recommended next move:
+
+- prefer a single `render_world(...)` extraction before touching enemy updates;
+- keep HUD, pause UI, end-screen UI, and runtime update logic out of scope;
+- preserve render order exactly.
+
 What should wait:
 
 - full `maze_game.py` renderer extraction

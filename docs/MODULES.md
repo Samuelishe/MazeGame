@@ -1873,7 +1873,152 @@ Risk comparison against world rendering:
   - enemy update has higher behavior risk
   - world rendering has higher visual regression risk
 - current recommendation:
-  analyze enemy updates first, but treat extraction more cautiously than the last narrow helper passes
+  prefer world rendering as the next code-pass, because it is less likely to change gameplay behavior even though it is harder to verify automatically
+
+## World Rendering Boundary Analysis
+
+Current world rendering flow in `maze_game.py`:
+
+1. maze/background
+   - loops over `maze_rows`, `maze_cols`
+   - reads `maze[row][col]`
+   - chooses `path_rgb` or `wall_rgb`
+   - draws cells via `pygame.draw.rect(...)`
+2. blocks
+   - iterates `blocks`
+   - calls `presentation.block_rendering.draw_block_cell(...)`
+3. coins
+   - iterates `coins`
+   - calls `presentation.coin_rendering.draw_coin(...)`
+4. goal
+   - uses `goal`
+   - draws a rounded `pygame.draw.rect(...)` with `goal_rgb`
+5. trail
+   - iterates `trail`
+   - draws white rounded rect markers
+6. enemies
+   - iterates `zip(enemies, enemy_anims)`
+   - calls `anim.get_current_frame(now_ms)`
+   - scales via `pygame.transform.scale(...)`
+   - blits to `screen`
+7. player
+   - draws rounded `pygame.draw.rect(...)` with `player_rgb`
+8. effects
+   - calls `effects.draw_all(screen, cell_px, now_ms)`
+
+Collections and helpers involved:
+
+- `maze`
+- `blocks`
+- `coins`
+- `trail`
+- `enemies`
+- `enemy_anims`
+- `effects`
+- `draw_block_cell(...)`
+- `draw_coin(...)`
+- `AnimatedSprite.get_current_frame(...)`
+
+Palette/runtime values involved:
+
+- `wall_rgb`
+- `path_rgb`
+- `goal_rgb`
+- `player_rgb`
+- `cell_px`
+- `block_pulse_ms`
+- `now_ms`
+
+Pygame objects involved:
+
+- `screen: pygame.Surface`
+- `pygame.draw.rect(...)`
+- `pygame.transform.scale(...)`
+- `screen.blit(...)`
+
+Section-by-section ownership:
+
+- maze/background
+  - presentation concern
+  - low to medium extraction risk
+- blocks
+  - mixed concern: presentation call plus runtime collection iteration
+  - medium extraction risk
+- coins
+  - mixed concern: presentation call plus runtime collection iteration
+  - medium extraction risk
+- goal
+  - presentation concern
+  - low extraction risk
+- trail
+  - presentation concern with runtime data input
+  - low to medium extraction risk
+- enemies
+  - mixed concern:
+    - rendering is presentation
+    - `enemy_anims` and `now_ms` are runtime-driven
+  - medium extraction risk
+- player
+  - presentation concern
+  - low extraction risk
+- effects
+  - presentation concern with runtime timing input
+  - medium extraction risk
+
+Potential `render_world(...)` signature pressure:
+
+- likely parameters:
+  - `screen`
+  - `maze`
+  - `maze_rows`
+  - `maze_cols`
+  - `cell_px`
+  - `wall_rgb`
+  - `path_rgb`
+  - `goal_rgb`
+  - `player_rgb`
+  - `blocks`
+  - `block_pulse_ms`
+  - `coins`
+  - `goal`
+  - `trail`
+  - `enemies`
+  - `enemy_anims`
+  - `player`
+  - `effects`
+  - `now_ms`
+- this is a large signature with many runtime and presentation inputs
+
+Option assessment:
+
+- Option A: keep world rendering inline
+  - lowest immediate risk
+- Option B: extract one `render_world(...)` helper
+  - likely the best narrow rendering move if extraction happens
+  - but creates a wide explicit signature
+- Option C: split into several specialized rendering helpers
+  - cleaner long-term
+  - too broad for the next safe pass because it would multiply file churn
+
+Direct comparison against enemy updates:
+
+- gameplay behavior risk:
+  - lower for world rendering
+  - higher for enemy updates
+- visual regression risk:
+  - higher for world rendering
+  - lower for enemy updates
+- unit testing:
+  - weaker for world rendering
+  - stronger for enemy updates
+- signature size:
+  - larger for world rendering
+  - smaller for enemy updates
+- touched files:
+  - similar order of magnitude
+  - world rendering likely stays within presentation-facing dependencies
+- overall extraction risk:
+  - world rendering is currently the safer next code-pass because it is less likely to alter gameplay behavior
 
 ## Dependency map
 

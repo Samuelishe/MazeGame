@@ -49,8 +49,8 @@ Supporting file:
 - Gameplay persistence handoff tests: `tests/test_run_persistence.py`
 - Current Stage 3 mixed support hotspots: `coins.py`, `blocks.py`
 - Current narrow Stage 3 gameplay presentation status: enemy sprite loading and HUD composition completed
-- Current likely Stage 3 runtime-support hotspot in `maze_game.py`: enemy update helper
-- Current Stage 3 runtime-support analysis status: coin collection completed, block timers completed, enemy updates analyzed
+- Current likely Stage 3 follow-up in `maze_game.py`: world rendering helper
+- Current Stage 3 runtime-support analysis status: coin collection completed, block timers completed, enemy updates analyzed, world rendering analyzed
 - Module map: `docs/MODULES.md`
 - Staged restructure plan: `docs/REFACTORING_PLAN.md`
 - State screens: `state_machine/`

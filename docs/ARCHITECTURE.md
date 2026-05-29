@@ -830,6 +830,99 @@ Risk comparison versus world rendering:
 - enemy update is cheaper for logic tests, but riskier for gameplay behavior
 - world rendering is cheaper conceptually, but riskier for silent visual regressions
 
+## World Rendering Boundary Analysis
+
+Current rendering order inside `maze_game.py`:
+
+1. maze/background cells
+2. blocks
+3. coins
+4. goal
+5. trail
+6. enemies
+7. player
+8. effects
+
+Current rendering inputs:
+
+- runtime collections:
+  - `maze`
+  - `blocks`
+  - `coins`
+  - `trail`
+  - `enemies`
+  - `enemy_anims`
+- runtime state:
+  - `goal`
+  - `player`
+  - `now_ms`
+- presentation state:
+  - `screen`
+  - `cell_px`
+  - `wall_rgb`
+  - `path_rgb`
+  - `goal_rgb`
+  - `player_rgb`
+  - `block_pulse_ms`
+  - `effects`
+
+Current helper calls:
+
+- `draw_block_cell(...)`
+- `draw_coin(...)`
+- `anim.get_current_frame(...)`
+- `effects.draw_all(...)`
+
+Potential `render_world(...)` signature:
+
+- `screen`
+- `maze`
+- `maze_rows`
+- `maze_cols`
+- `cell_px`
+- `wall_rgb`
+- `path_rgb`
+- `goal_rgb`
+- `player_rgb`
+- `blocks`
+- `block_pulse_ms`
+- `coins`
+- `goal`
+- `trail`
+- `enemies`
+- `enemy_anims`
+- `player`
+- `effects`
+- `now_ms`
+
+This is wide, but it is still explicit and mostly presentation-facing.
+
+Option assessment:
+
+- Option A: keep world rendering inline
+  - lowest immediate risk
+- Option B: extract one `render_world(...)` helper
+  - strongest candidate if the next pass should stay on the presentation side
+- Option C: split rendering into several specialized helpers
+  - cleaner eventually
+  - too broad for the next safe pass
+
+Comparison with enemy update extraction:
+
+- enemy updates:
+  - better unit-testability
+  - higher gameplay-behavior risk
+- world rendering:
+  - worse unit-testability
+  - lower gameplay-behavior risk
+  - higher visual-regression risk
+
+Recommended next Stage 3 code-pass:
+
+- prefer world rendering helper extraction before enemy update extraction
+- reason:
+  behavior preservation matters more than unit-test convenience at the current stage
+
 Testability:
 
 - strong candidate for non-pygame tests
