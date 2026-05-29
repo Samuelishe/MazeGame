@@ -160,6 +160,82 @@ Flow:
 
 Result: runtime persistence is split between SQLite and legacy JSON.
 
+## Persistence Architecture
+
+### Current persistence modules
+
+- `db_manager.py`
+  - SQLite infrastructure only: connection setup, PRAGMA, schema bootstrap, `meta` flags.
+- `players.py`
+  - mixed module: player data models, player repository operations, and in-memory `SessionStats`.
+- `session_controller.py`
+  - mixed module: session orchestration plus SQLite write path for completed runs.
+- `leaderboard.py`
+  - read-only query API over SQLite.
+- `highscores.py`
+  - legacy JSON read/write/update path for global highscores.
+- `highscore_adapter.py`
+  - one-time migration bridge from legacy JSON into SQLite.
+
+### Current persistence flow
+
+1. `game_app.init_environment()`:
+   - computes `maze_stats.db` path;
+   - calls `init_db(db_path)`;
+   - calls `migrate_highscore_if_needed(db_path, legacy_player_name="Игрок 1")`.
+2. `GameSessionController.from_db(db_path)`:
+   - calls `init_db(db_path)` again defensively;
+   - loads players through `load_players(db_path)`;
+   - creates a default player through `get_or_create_player(...)` when needed.
+3. State-machine screens mutate persistent player state indirectly:
+   - `PlayerSelectState` -> `session.create_player(...)`, `session.delete_player_from_session(...)`, `session.choose_player(...)`;
+   - `MultiplayerSetupState` -> `session.create_player(...)`, `session.delete_player_from_session(...)`, `session.configure_rotation_players(...)`, `session.set_mode(...)`;
+   - `ModeSelectState` -> `session.set_mode(...)`;
+   - `LeaderboardState` -> `get_top_scores(...)`, `get_players_sorted(...)`.
+4. `maze_game.play_maze()` end-of-run flow:
+   - updates legacy JSON highscores through `load_highscore(...)`, `update_highscore_if_better(...)`, `save_highscore(...)`;
+   - updates in-memory session stats directly through `SessionStats.add_result(...)` when no controller is present;
+   - otherwise creates `RunResult` and calls `session_controller.record_run(...)`.
+5. `GameSessionController.record_run(...)`:
+   - updates in-memory `SessionStats`;
+   - inserts into `runs`;
+   - updates aggregates in `player_stats`.
+
+### Responsibility boundary assessment
+
+- `db_manager.py` is a clean infrastructure boundary.
+- `leaderboard.py` is a clean read-model/query boundary.
+- `highscores.py` is internally coherent, but it keeps a second active persistence path alive.
+- `highscore_adapter.py` is coherent as a migration module, but it encodes transitional persistence policy.
+- `players.py` and `session_controller.py` are the main persistence-boundary problems:
+  - `players.py` mixes domain models, repository functions, and session-only in-memory state;
+  - `session_controller.py` mixes application/session orchestration with direct SQL write logic.
+
+### Target persistence shape
+
+The project does not need enterprise layering. A realistic target is:
+
+- `persistence/db_manager.py`
+  - SQLite bootstrap, connection, PRAGMA, meta flags
+- `persistence/player_repository.py`
+  - CRUD and profile-loading operations over `players` / `player_stats`
+- `persistence/run_repository.py`
+  - append completed runs and update aggregates
+- `persistence/leaderboard_queries.py`
+  - read-only leaderboard queries
+- `persistence/legacy_highscores.py`
+  - runtime JSON compatibility path while it still exists
+- `persistence/migrations/highscore_adapter.py`
+  - one-time legacy migration
+- `domain/player_models.py`
+  - `PlayerProfile`, `PlayerAggregateStats`
+- `application/session_controller.py`
+  - current-player rotation, mode management, session-level orchestration
+- `application/session_stats.py` or `domain/session_stats.py`
+  - in-memory `SessionStats`
+
+This is a target ownership map only. No file moves are implied yet.
+
 ## Module responsibilities
 
 ### Architectural categories

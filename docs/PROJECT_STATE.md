@@ -79,6 +79,25 @@ There is no single `GameState` or `RunState` object today.
 - `maze_stats.db`: authoritative structured store for players and runs
 - `highscore.json`: still updated during gameplay for legacy highscore tracking
 
+### Persistence Architecture
+
+Current persistence flow is:
+
+1. `game_app.init_environment()` creates/initializes SQLite and runs legacy migration.
+2. `GameSessionController.from_db(...)` loads players and ensures a default player exists.
+3. Menu states mutate player/session state through `GameSessionController`.
+4. `LeaderboardState` reads SQLite through `leaderboard.py`.
+5. `maze_game.play_maze()` writes:
+   - legacy highscores to `highscore.json`;
+   - SQLite run data through `session_controller.record_run(...)` when a session controller is present.
+
+Current persistence boundary reality:
+
+- `db_manager.py` and `leaderboard.py` are comparatively clean;
+- `players.py` still mixes player models, repository functions, and session-only memory stats;
+- `session_controller.py` still mixes session orchestration and direct SQL writes;
+- runtime save behavior is still split between SQLite and legacy JSON.
+
 ## File layout summary
 
 - Root python modules: gameplay, data, utilities
@@ -124,6 +143,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - some modules still mix domain and rendering concerns
 - `players.py` still mixes data model and repository responsibilities
 - repeated state-screen UI patterns are present but not yet centralized
+- persistence boundaries are clearer on paper than in code, especially around `players.py` and `session_controller.py`
 
 ## Stabilization notes
 

@@ -372,3 +372,48 @@ Documentation changes:
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
 - Updated `docs/REFACTORING_PLAN.md`
+
+## 2026-05-29 - Stage 4 persistence boundary analysis
+
+Scope:
+
+- inspect the full persistence layer without changing runtime code
+- map SQLite, session, leaderboard, and legacy JSON ownership
+- prepare concrete Stage 4 follow-up steps
+
+Modules inspected:
+
+- `db_manager.py`
+- `players.py`
+- `session_controller.py`
+- `leaderboard.py`
+- `highscores.py`
+- `highscore_adapter.py`
+- calling sites in `game_app.py`, `maze_game.py`, and relevant `state_machine/*` modules
+
+Observed:
+
+- `db_manager.py` is the cleanest persistence module and already behaves like infrastructure.
+- `leaderboard.py` is also comparatively clean as a read-only query boundary.
+- `players.py` mixes player models, player repository functions, and in-memory `SessionStats`.
+- `session_controller.py` mixes session orchestration, current-player policy, and direct SQL write logic.
+- `maze_game.py` still knows about both active persistence paths:
+  - legacy JSON highscores;
+  - SQLite run recording through `GameSessionController`.
+- `highscore_adapter.py` is structurally clean, but it documents a persistence transition that is not yet complete because runtime JSON writes still continue after migration.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+
+Behavior notes:
+
+- No gameplay behavior changes.
+- No runtime code changes.
+- No imports changed.
+- No tests changed.

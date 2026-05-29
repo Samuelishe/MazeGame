@@ -402,7 +402,7 @@ Priority C: high risk
 - Future fit:
   `persistence/session_controller.py` or `application/session_controller.py`.
 - Notes:
-  not a gameplay module, but still broad because it combines session coordination and direct SQL write orchestration.
+  not a gameplay module, but still broad because it combines session coordination and direct SQL write orchestration; this is the main Stage 4 boundary hotspot.
 
 ### `db_manager.py`
 
@@ -436,7 +436,7 @@ Priority C: high risk
 - Future fit:
   split between `domain/player_models.py` and `persistence/player_repository.py`.
 - Notes:
-  one file holds both domain dataclasses and DB access; this is a clear mixed-responsibility module.
+  one file holds both domain dataclasses and DB access, and also owns in-memory `SessionStats`; this is a clear mixed-responsibility module and the second major Stage 4 hotspot.
 
 ### `leaderboard.py`
 
@@ -453,7 +453,7 @@ Priority C: high risk
 - Future fit:
   `persistence/leaderboard_queries.py`.
 - Notes:
-  mostly clean read-model module; root placement is the main structural issue.
+  mostly clean read-model module; root placement is the main structural issue, not the query API itself.
 
 ### `highscores.py`
 
@@ -488,6 +488,106 @@ Priority C: high risk
   `persistence/migrations/highscore_adapter.py`.
 - Notes:
   migration logic is cleanly separated, but it documents an unfinished persistence transition.
+
+## Persistence Architecture
+
+### Current flow map
+
+1. `game_app.py`
+   - calls `db_manager.init_db(...)`
+   - calls `highscore_adapter.migrate_highscore_if_needed(...)`
+   - creates `GameSessionController.from_db(...)`
+2. `GameSessionController.from_db(...)`
+   - reads players via `players.load_players(...)`
+   - may create a default player via `players.get_or_create_player(...)`
+3. `state_machine/player_select_state.py`
+   - uses `GameSessionController` to create, delete, choose players
+4. `state_machine/multiplayer_setup_state.py`
+   - uses `GameSessionController` to create, delete, and configure active player rotation
+5. `state_machine/mode_select_state.py`
+   - changes `RoundMode` through `GameSessionController`
+6. `state_machine/leaderboard_state.py`
+   - reads leaderboard data through `leaderboard.get_top_scores(...)` and `leaderboard.get_players_sorted(...)`
+7. `maze_game.py`
+   - updates legacy JSON highscores through `highscores.py`
+   - writes SQLite run data through `session_controller.record_run(...)` when a session controller exists
+   - otherwise updates only local in-memory `SessionStats`
+
+### Per-module boundary assessment
+
+- `db_manager.py`
+  - domain logic:
+    none.
+  - persistence logic:
+    all of it.
+  - mixed incorrectly:
+    no.
+
+- `players.py`
+  - domain logic:
+    `PlayerAggregateStats`, `PlayerProfile`, parts of `SessionStats`.
+  - persistence logic:
+    `load_players`, `create_player`, `delete_player`, `get_player_by_name`, `get_or_create_player`, row mapping.
+  - mixed incorrectly:
+    yes; domain models, repository code, and session-only memory state are combined.
+
+- `session_controller.py`
+  - domain logic:
+    `RoundMode`, `RunResult`, current-player rotation policy.
+  - persistence logic:
+    `record_run(...)` SQL insert/update path, defensive DB init in lifecycle methods.
+  - mixed incorrectly:
+    yes; application/session orchestration and repository-style writes are combined.
+
+- `leaderboard.py`
+  - domain logic:
+    `RunEntry`, `PlayerEntry` as read-model data shapes.
+  - persistence logic:
+    all query functions.
+  - mixed incorrectly:
+    mildly; read models and SQL are together, but the module is still coherent.
+
+- `highscores.py`
+  - domain logic:
+    `Highscore` data shape and record-improvement rules.
+  - persistence logic:
+    JSON load/save path.
+  - mixed incorrectly:
+    moderately; update policy and JSON I/O are in one module, but the larger problem is that this path is still active alongside SQLite.
+
+- `highscore_adapter.py`
+  - domain logic:
+    migration interpretation rules for legacy highscore data.
+  - persistence logic:
+    writes migrated data into `player_stats`, `runs`, and `meta`.
+  - mixed incorrectly:
+    acceptably; it is a transitional migration module by nature.
+
+## Persistence Refactoring Candidates
+
+- `players.py` split candidate
+  - target:
+    separate player data models from player repository functions and session-only stats.
+  - risk:
+    medium.
+
+- `session_controller.py` split candidate
+  - target:
+    keep session/mode/current-player orchestration separate from SQLite write logic.
+  - risk:
+    medium.
+
+- `maze_game.py` persistence-boundary narrowing
+  - target:
+    reduce direct knowledge of both JSON and SQLite save paths in gameplay runtime.
+  - risk:
+    medium.
+
+- `highscores.py` ownership decision
+  - target:
+    make runtime legacy JSON support either explicit compatibility mode or eventual archival path.
+  - risk:
+    medium because save behavior is user-visible.
 
 ### `ui.py`
 

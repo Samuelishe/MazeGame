@@ -167,9 +167,26 @@ Why it matters:
 - save behavior still has two active paths
 - future persistence simplification needs explicit migration handling
 
+### 11. Persistence boundaries are still blurred
+
+The persistence layer is present, but ownership inside it is still uneven:
+
+- `db_manager.py` is infrastructure-only and clean;
+- `leaderboard.py` is a coherent read-only query module;
+- `players.py` mixes player models, repository functions, and session-only in-memory stats;
+- `session_controller.py` mixes application/session orchestration with direct SQL write logic;
+- `highscores.py` keeps a second active persistence path alive during normal gameplay;
+- `highscore_adapter.py` is clean as a migration bridge, but it encodes transitional policy.
+
+Why it matters:
+
+- the gameplay runtime still knows about two save systems;
+- application flow and repository logic are too tightly coupled;
+- future Stage 4 refactors need to separate responsibilities without changing save behavior.
+
 ## Low-risk cleanup
 
-### 11. Small copy/paste drift in state modules
+### 12. Small copy/paste drift in state modules
 
 Some state classes still show repeated declarations and minor local duplication.
 
@@ -178,7 +195,7 @@ Why it matters:
 - low immediate risk
 - worth cleaning only in narrowly scoped passes
 
-### 12. Documentation lag risk
+### 13. Documentation lag risk
 
 Because the project is moving in small steps, docs can drift from code quickly if not updated every pass.
 
@@ -186,7 +203,7 @@ Why it matters:
 
 - onboarding quality depends on docs staying synchronized with reality
 
-### 13. Limited test coverage
+### 14. Limited test coverage
 
 The project now has initial tests, but they still cover only a small pure-logic slice:
 
@@ -205,6 +222,96 @@ Not yet covered:
 Why it matters:
 
 - regression safety is improving, but still limited
+
+## Persistence Architecture
+
+### Current flow
+
+- DB bootstrap:
+  `game_app.init_environment()` -> `db_manager.init_db(...)`
+- legacy migration:
+  `game_app.init_environment()` -> `highscore_adapter.migrate_highscore_if_needed(...)`
+- player/profile loading:
+  `GameSessionController.from_db(...)` -> `players.load_players(...)`
+- default-player bootstrap:
+  `GameSessionController.from_db(...)` / `GameSessionController.__post_init__()` -> `players.get_or_create_player(...)`
+- player writes:
+  `GameSessionController.create_player(...)` / `delete_player_from_session(...)` -> `players.create_player(...)` / `players.delete_player(...)`
+- run writes:
+  `maze_game.play_maze()` -> `session_controller.record_run(...)`
+- leaderboard reads:
+  `state_machine/leaderboard_state.py` -> `leaderboard.get_top_scores(...)`, `leaderboard.get_players_sorted(...)`
+- legacy runtime highscores:
+  `maze_game.play_maze()` -> `highscores.load_highscore(...)`, `update_highscore_if_better(...)`, `save_highscore(...)`
+
+### Main boundary problems
+
+- runtime save behavior is split across SQLite and JSON in the same gameplay path;
+- `players.py` combines:
+  - player data models;
+  - DB mapping/query/write functions;
+  - session-only in-memory stats;
+- `session_controller.py` combines:
+  - round mode and active-player policy;
+  - session lifecycle and player list management;
+  - direct SQL write orchestration;
+- the gameplay runtime still constructs `RunResult` directly and knows when SQLite writes happen;
+- migration code is isolated, but the migrated legacy path still remains active afterward.
+
+## Persistence Refactoring Candidates
+
+### 1. Extract player repository boundary
+
+Risk level: medium
+
+Why:
+
+- `players.py` is the clearest mixed-responsibility module in the persistence layer.
+
+Target outcome:
+
+- player models become separable from SQLite CRUD code;
+- `SessionStats` stops sharing a file with repository functions.
+
+### 2. Extract run-recording repository boundary
+
+Risk level: medium
+
+Why:
+
+- `session_controller.record_run(...)` is the tightest coupling point between application flow and SQL writes.
+
+Target outcome:
+
+- SQLite write details move behind a narrower API;
+- `GameSessionController` can focus on orchestration and session policy.
+
+### 3. Narrow gameplay knowledge of persistence
+
+Risk level: medium
+
+Why:
+
+- `maze_game.py` still knows about:
+  - JSON highscore updates;
+  - `RunResult` construction;
+  - the split between controller-present and controller-absent save behavior.
+
+Target outcome:
+
+- gameplay runtime keeps result data preparation, but knows less about save-path details.
+
+### 4. Clarify legacy JSON ownership
+
+Risk level: medium
+
+Why:
+
+- `highscore.json` is both a migrated legacy source and an active runtime sink.
+
+Target outcome:
+
+- explicit decision whether JSON remains compatibility output, archival output, or removable legacy path.
 
 ## Safe extraction candidates
 

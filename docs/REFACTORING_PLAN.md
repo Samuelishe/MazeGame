@@ -92,10 +92,69 @@ Concrete `maze_game.py`-adjacent steps inside Stage 3:
 - Estimated change size:
   medium, 3-6 files plus tests for non-pygame behavior.
 
+Persistence Architecture focus for Stage 4:
+
+- separate player data models from repository functions;
+- separate session orchestration from SQLite run-write implementation;
+- narrow gameplay runtime knowledge of active save-path details;
+- clarify the intended runtime role of `highscore.json` after migration.
+
 Concrete `maze_game.py`-adjacent steps inside Stage 4:
 
 1. isolate the value-preparation side of run persistence from the blocking end-screen UI flow
 2. reduce direct knowledge of SQLite write-path details at the gameplay-runtime boundary
+
+Concrete future Stage 4 steps:
+
+1. Analyze and split `players.py` responsibilities on paper
+   - goal:
+     define the exact cut between player models, repository code, and `SessionStats`.
+   - risk:
+     low in analysis, medium in later implementation.
+   - expected result:
+     clear target ownership before any code moves.
+   - files:
+     `players.py`, `docs/MODULES.md`, `docs/ARCHITECTURE.md`, `docs/TECH_DEBT.md`
+
+2. Extract run-write boundary from `GameSessionController` in a later code pass
+   - goal:
+     isolate `record_run(...)` SQL details behind a narrower persistence-facing API.
+   - risk:
+     medium.
+   - expected result:
+     `GameSessionController` keeps session orchestration while SQL write logic becomes more localizable.
+   - files:
+     `session_controller.py`, `db_manager.py`, `players.py`, `maze_game.py`
+
+3. Narrow `maze_game.py` persistence knowledge
+   - goal:
+     reduce gameplay awareness of `RunResult` construction and save-path branching.
+   - risk:
+     medium.
+   - expected result:
+     gameplay runtime prepares run-result values, while persistence orchestration becomes less embedded in end-of-run flow.
+   - files:
+     `maze_game.py`, `session_controller.py`, `players.py`
+
+4. Clarify legacy JSON highscore policy
+   - goal:
+     define whether `highscore.json` stays as compatibility output, archive output, or removable legacy path.
+   - risk:
+     medium because behavior is user-visible.
+   - expected result:
+     explicit product/architecture decision before any removal or demotion work.
+   - files:
+     `highscores.py`, `highscore_adapter.py`, `maze_game.py`, docs only at first
+
+5. Preserve read-only leaderboard boundary while documenting it as the stable query slice
+   - goal:
+     keep `leaderboard.py` coherent and separate it conceptually from write-side refactors.
+   - risk:
+     low.
+   - expected result:
+     Stage 4 changes do not accidentally destabilize leaderboard reads.
+   - files:
+     `leaderboard.py`, `docs/MODULES.md`, `docs/ARCHITECTURE.md`
 
 ## Stage 5
 
