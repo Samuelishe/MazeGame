@@ -29,6 +29,7 @@ Current refactoring phase reality:
 
 - Stage 4 persistence-boundary work is largely completed at the narrow-boundary level;
 - Stage 3 has now started and completed its first narrow presentation-boundary extraction pass for mixed support modules.
+- the next analyzed Stage 3 candidate is enemy asset loading inside `maze_game.py`.
 
 ## Current entrypoints
 
@@ -227,6 +228,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - Stage 3 Step 2 completed:
   coin/block pygame draw helpers now live in `presentation/`.
 - World-render extraction and broader presentation cleanup have not started.
+- Enemy sprite loading and type mapping are now documented as the next narrow presentation-oriented analysis target.
 
 ## Inspection notes
 

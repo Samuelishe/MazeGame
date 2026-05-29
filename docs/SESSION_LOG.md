@@ -1085,3 +1085,37 @@ Documentation changes:
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
 - Updated `docs/ROADMAP.md`
+
+## 2026-05-29 - Stage 3 Step 3: Enemy Asset Loading Boundary Analysis
+
+Scope:
+
+- inspect the enemy sprite-loading block inside `maze_game.py`
+- determine whether asset loading can leave gameplay runtime without changing behavior
+- keep `AnimatedSprite` and enemy runtime behavior out of scope
+
+Observed:
+
+- `maze_game.py` hardcodes four enemy sprite paths under `resources/images/enemies/`.
+- It loads `SpriteSheet` objects directly through `SpriteSheet.from_file(...)`.
+- Missing files are skipped during the batch load through `except pygame.error`.
+- If no sheets load at all, the code force-loads `Tiny_Slime Red.png` as a fallback.
+- A local `sheet_or_default(...)` helper and `enemy_sheets_by_type` mapping assign sheets to `EnemyType`.
+- Only after that does runtime code create `AnimatedSprite(...)` objects and randomize animation phase.
+
+Conclusions:
+
+- asset path definition, `SpriteSheet` loading, fallback-to-red behavior, and `EnemyType -> SpriteSheet` mapping form one narrow presentation-oriented slice;
+- per-enemy `AnimatedSprite(...)` creation is runtime behavior and should stay in `maze_game.py` for now;
+- the best next Stage 3 code-pass is a narrow helper extraction for enemy sprite loading and type mapping only;
+- a full enemy presentation module would be too wide for the current safe surface.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/SESSION_LOG.md`

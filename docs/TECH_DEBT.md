@@ -505,6 +505,27 @@ Next recommended Stage 3 target:
 - do not widen the change surface immediately;
 - keep world-render extraction as a separate future pass.
 
+### Enemy asset-loading hotspot after the first presentation split
+
+Current code facts:
+
+- `maze_game.py` still hardcodes enemy sprite paths;
+- `maze_game.py` still performs `SpriteSheet.from_file(...)` calls directly;
+- `maze_game.py` still owns fallback-to-red loading behavior;
+- `maze_game.py` still builds the `EnemyType -> SpriteSheet` mapping inline;
+- per-enemy `AnimatedSprite(...)` creation happens immediately afterward.
+
+Why it matters:
+
+- this is a smaller Stage 3 target than full world-render extraction;
+- it is more presentation-oriented than enemy AI/spawn logic;
+- it is still coupled enough to runtime that only the asset-loading half should move first.
+
+Recommended next move:
+
+- extract enemy sprite loading and type mapping only;
+- keep `AnimatedSprite(...)` creation and runtime randomization in `maze_game.py`.
+
 What should wait:
 
 - full `maze_game.py` renderer extraction

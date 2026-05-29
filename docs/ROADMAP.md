@@ -25,8 +25,9 @@ Keep gameplay stable while continuing small, testable architectural improvements
 Next Stage 3 follow-up:
 
 1. keep `coins.py` and `blocks.py` stable after the narrow draw split
-2. reassess `maze_game.py` world-render extraction separately
-3. do not combine that future pass with `ui.py` cleanup
+2. extract enemy sprite loading and type mapping before any world-render pass
+3. reassess `maze_game.py` world-render extraction separately
+4. do not combine that future pass with `ui.py` cleanup
 
 Why this next:
 
@@ -40,7 +41,8 @@ Why this next:
 
 1. Completed: narrow draw-helper extraction from `coins.py`
 2. Completed: narrow draw-helper extraction from `blocks.py`
-3. Re-evaluate whether `maze_game.py` world rendering or `ui.py` has a similarly safe next split
+3. Analyze and then extract enemy sprite loading/type mapping as a narrow presentation helper
+4. Re-evaluate whether `maze_game.py` world rendering or `ui.py` has a similarly safe later split
 
 ### Phase B: Stage 5 state-screen duplication cleanup
 

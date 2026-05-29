@@ -326,6 +326,57 @@ Approximate size: 799 lines total.
   - extraction risk:
     medium, because it is pygame- and asset-path-dependent but behaviorally isolated.
 
+#### Enemy asset loading boundary analysis
+
+Current asset-loading path inside `maze_game.py`:
+
+- asset path definition
+  - four hardcoded files:
+    - `resources/images/enemies/Tiny_Slime Red.png`
+    - `resources/images/enemies/Tiny_Slime Green.png`
+    - `resources/images/enemies/Tiny_Slime Purple.png`
+    - `resources/images/enemies/Tiny_Slime Yellow.png`
+- sprite loading
+  - `SpriteSheet.from_file(...)` with:
+    - `frame_size=(16, 16)`
+    - `spacing=(8, 8)`
+    - `margin=(4, 4)`
+- fallback behavior
+  - load loop skips missing files via `except pygame.error`
+  - if nothing loaded at all, force-load `Tiny_Slime Red.png`
+- type mapping
+  - local `sheet_or_default(...)`
+  - local `enemy_sheets_by_type: dict[EnemyType, list[SpriteSheet]]`
+- runtime usage after loading
+  - later loop chooses a sheet per enemy from `enemy_sheets_by_type`
+  - then creates `AnimatedSprite(...)`
+  - then shifts `anim.start_time` for desynchronization
+
+Responsibility split:
+
+- asset path definition:
+  presentation concern
+- `SpriteSheet.from_file(...)` calls:
+  presentation concern
+- missing-asset fallback:
+  mixed concern, because it is asset-loading policy but affects runtime resilience
+- `EnemyType -> SpriteSheet` mapping:
+  presentation concern with light design semantics
+- `AnimatedSprite(...)` creation and per-enemy randomization:
+  runtime concern
+
+Recommended narrow future split:
+
+- move only:
+  - asset path definition
+  - `SpriteSheet.from_file(...)` loop
+  - `sheet_or_default(...)`
+  - `enemy_sheets_by_type` construction
+- keep in `maze_game.py`:
+  - per-enemy `AnimatedSprite(...)` creation
+  - `anim.start_time` staggering
+  - all enemy spawn/runtime behavior
+
 - Lines `314-396`: HUD font setup and local mixed-text rendering integration
   - responsibility:
     create HUD fonts and integrate mixed text rendering into one surface.

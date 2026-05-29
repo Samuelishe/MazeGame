@@ -89,6 +89,13 @@ Recommended first Stage 3 code-pass:
 3. completed: leave spawn/data helpers in place
 4. keep this separate from `maze_game.py` world-render extraction and `ui.py` cleanup
 
+Next recommended Stage 3 code-pass:
+
+1. extract enemy sprite loading and type mapping only
+2. keep `AnimatedSprite(...)` creation in `maze_game.py`
+3. keep enemy spawn logic, AI, and runtime timers unchanged
+4. keep world-render extraction for a separate later step
+
 ## Stage 4
 
 - Goal:

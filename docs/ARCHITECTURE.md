@@ -470,6 +470,77 @@ Interpretation:
 - Next sensible follow-up:
   keep `maze_game.py` world-render extraction and `ui.py` cleanup as separate future passes.
 
+## Enemy Asset Loading Boundary Analysis
+
+### Current flow in `maze_game.py`
+
+Enemy presentation setup currently happens in two adjacent slices:
+
+1. asset-loading slice
+   - define four enemy sprite paths
+   - load `SpriteSheet` objects from disk
+   - skip missing assets during the batch load
+   - if all loads fail, force-load the red slime sheet
+   - build `EnemyType -> list[SpriteSheet]` mapping
+2. runtime animation slice
+   - for each spawned enemy, choose one sheet from the mapping
+   - create `AnimatedSprite(...)`
+   - randomize animation phase through `anim.start_time`
+
+### Responsibility zones
+
+- asset path definition
+  - presentation concern
+  - low runtime coupling
+- `SpriteSheet.from_file(...)` loading
+  - presentation concern
+  - medium extraction risk because it touches filesystem assets and `pygame`
+- fallback behavior
+  - mixed concern
+  - mostly presentation, but it also defines resilience when assets are missing
+- `EnemyType -> SpriteSheet` mapping
+  - presentation concern
+  - low to medium extraction risk
+- `AnimatedSprite(...)` creation and random phase staggering
+  - runtime concern
+  - should stay in `maze_game.py` for now
+
+### Option assessment
+
+- Option A: keep everything in `maze_game.py`
+  - pluses:
+    lowest immediate risk
+  - minuses:
+    `maze_game.py` keeps asset-loading policy inline
+- Option B: extract only enemy sprite loading and type mapping helper
+  - pluses:
+    narrowest useful boundary
+    leaves enemy runtime behavior untouched
+  - minuses:
+    still requires a helper signature that exposes asset-loading policy explicitly
+- Option C: create a full enemy presentation module
+  - pluses:
+    cleaner long-term ownership
+  - minuses:
+    too wide for the current safe surface because it would invite moving animation/runtime presentation behavior together
+
+### Recommended direction
+
+Recommend Option B.
+
+Best next Stage 3 code-pass after the completed coin/block draw split:
+
+- create one narrow presentation helper for:
+  - enemy sprite path list
+  - `SpriteSheet.from_file(...)` loading
+  - fallback-to-red behavior
+  - `EnemyType -> list[SpriteSheet]` mapping
+- do not move:
+  - `AnimatedSprite`
+  - per-enemy random phase shifting
+  - enemy spawn logic
+  - enemy AI or runtime timers
+
 ## Cyclic imports
 
 Based on the current import structure, no direct Python cyclic import was found among project modules.
