@@ -124,6 +124,26 @@ Why it matters:
 - gameplay and presentation concerns are still entangled
 - extraction beyond pure text helpers remains medium risk
 
+### 6A. Mixed support modules still combine domain/runtime rules with pygame drawing
+
+The two clearest remaining support-module hotspots are:
+
+- `coins.py`
+  - coin data, rarity configuration, and spawn logic live next to `draw_coin(...)`
+- `blocks.py`
+  - block spawn/respawn logic lives next to `draw_block_cell(...)`
+
+Why it matters:
+
+- these modules are smaller than `maze_game.py`, so they are good Stage 3 targets;
+- they still keep domain/runtime concerns and presentation concerns in the same files;
+- they are risky enough to deserve narrow extraction passes, but not broad enough to justify a package rewrite.
+
+Current Stage 3 conclusion:
+
+- safest next move is to extract draw-path helpers only;
+- `effects.py` and `palette.py` do not currently show the same mixed-responsibility problem.
+
 ### 7. Partial package migration
 
 The codebase has started moving pure logic into `gameplay/`, but most runtime/support files remain root-level.
@@ -173,7 +193,6 @@ The persistence layer is present, but ownership inside it is still uneven:
 
 - `db_manager.py` is infrastructure-only and clean;
 - `leaderboard.py` is a coherent read-only query module;
-- `players.py` no longer participates in the production import graph;
 - `session_controller.py` still owns session/application orchestration, but raw SQL write logic has been moved out;
 - `highscores.py` keeps a second active persistence path alive during normal gameplay;
 - `highscore_adapter.py` is clean as a migration bridge, but it encodes transitional policy.
@@ -467,6 +486,23 @@ Recommended direction:
 
 - prefer compatibility-export semantics over permanent dual-write ownership;
 - do not remove runtime writes until the compatibility contract is explicitly documented.
+
+## Stage 3 focus after Stage 4
+
+Stage 4 has reduced the persistence hotspot enough that the next best low-risk architecture work is no longer another repository split.
+
+Current recommended Stage 3 target:
+
+- `coins.py`
+  - extract pygame draw helpers only
+- `blocks.py`
+  - extract pygame draw helpers only
+
+What should wait:
+
+- full `maze_game.py` renderer extraction
+- `ui.py` cleanup in the same pass
+- broad `presentation/` package moves
 
 ## Safe extraction candidates
 

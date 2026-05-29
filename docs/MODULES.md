@@ -842,7 +842,7 @@ Priority C: high risk
 - Future fit:
   `presentation/palette.py` or `gameplay/visual_palette.py`.
 - Notes:
-  tiny module; current root placement is unnecessary.
+  tiny presentation-oriented module; current root placement is unnecessary, but there is no meaningful domain/rendering split to perform here.
 
 ### `effects.py`
 
@@ -859,7 +859,7 @@ Priority C: high risk
 - Future fit:
   `presentation/effects.py`.
 - Notes:
-  rendering-only concern.
+  presentation-only concern; no meaningful domain split is visible in the current code.
 
 ### `blocks.py`
 
@@ -878,6 +878,53 @@ Priority C: high risk
 - Notes:
   mixes gameplay placement logic with pygame drawing.
 
+#### `blocks.py` responsibility map
+
+- `Block`
+  - classification:
+    domain/runtime data object
+  - used by:
+    `maze_game.py`, `spawn_blocks(...)`, `respawn_block(...)`
+  - depends on:
+    stdlib only
+- `spawn_blocks(...)`
+  - classification:
+    domain/runtime spawn logic
+  - used by:
+    `maze_game.py`
+  - depends on:
+    maze layout data, forbidden-cell input, stdlib randomness
+- `respawn_block(...)`
+  - classification:
+    domain/runtime respawn logic
+  - used by:
+    `maze_game.py`
+  - depends on:
+    `Block`, maze layout data, forbidden-cell input, stdlib randomness
+- `_pulse_color(...)`
+  - classification:
+    rendering helper
+  - used by:
+    `draw_block_cell(...)`
+  - depends on:
+    stdlib math only
+- `draw_block_cell(...)`
+  - classification:
+    pygame rendering logic
+  - used by:
+    `maze_game.py`
+  - depends on:
+    `pygame`, `_pulse_color(...)`
+
+#### `blocks.py` Stage 3 analysis
+
+- Safe future split candidate:
+  move only `_pulse_color(...)` and `draw_block_cell(...)` behind a presentation helper while keeping `Block`, `spawn_blocks(...)`, and `respawn_block(...)` together.
+- Why this is the narrowest useful step:
+  rendering has a small explicit API, while spawn/respawn behavior stays tightly coupled to maze data and forbidden-cell rules.
+- Risk:
+  medium if done narrowly, because `maze_game.py` still owns timing and positioning inputs but the draw path itself is isolated.
+
 ### `coins.py`
 
 - Role:
@@ -894,6 +941,83 @@ Priority C: high risk
   split between `domain/coins.py` and `presentation/coin_rendering.py`, or keep together under `gameplay/coins.py` until rendering split is justified.
 - Notes:
   another mixed domain/rendering module.
+
+#### `coins.py` responsibility map
+
+- `CoinRarity`
+  - classification:
+    domain enum
+  - used by:
+    `coins.py`, `maze_game.py`, `gameplay/result_text.py`
+  - depends on:
+    stdlib enum only
+- `RarityConfig`
+  - classification:
+    domain configuration object
+  - used by:
+    `coins.py`
+  - depends on:
+    stdlib dataclasses only
+- `RARITY_CONFIG`
+  - classification:
+    domain/static configuration
+  - used by:
+    spawn and rendering paths inside `coins.py`
+  - depends on:
+    `CoinRarity`, `RarityConfig`
+- `Coin`
+  - classification:
+    domain/runtime data object
+  - used by:
+    `maze_game.py`, `spawn_coins(...)`, `draw_coin(...)`
+  - depends on:
+    `CoinRarity`
+- `_choose_rarity(...)`
+  - classification:
+    domain helper
+  - used by:
+    `spawn_coins(...)`
+  - depends on:
+    `RARITY_CONFIG`
+- `spawn_coins(...)`
+  - classification:
+    domain/runtime spawn logic
+  - used by:
+    `maze_game.py`
+  - depends on:
+    maze layout data, forbidden-cell input, `Coin`, `CoinRarity`, `RARITY_CONFIG`, stdlib randomness
+- `rarity_icon(...)`
+  - classification:
+    presentation-adjacent text helper
+  - used by:
+    `maze_game.py`, `gameplay/result_text.py`
+  - depends on:
+    `CoinRarity`
+- `_draw_diamond(...)`
+  - classification:
+    pygame rendering helper
+  - used by:
+    `draw_coin(...)`
+  - depends on:
+    `pygame`
+- `draw_coin(...)`
+  - classification:
+    pygame rendering logic
+  - used by:
+    `maze_game.py`
+  - depends on:
+    `pygame`, `RARITY_CONFIG`, `_draw_diamond(...)`
+
+#### `coins.py` Stage 3 analysis
+
+- Safe future split candidate:
+  move only `_draw_diamond(...)` and `draw_coin(...)` behind a presentation helper first.
+- Keep in place for now:
+  `CoinRarity`, `RarityConfig`, `RARITY_CONFIG`, `Coin`, `_choose_rarity(...)`, `spawn_coins(...)`, `rarity_icon(...)`.
+- Why `rarity_icon(...)` is not grouped with draw helpers:
+  it is used by deterministic result-summary text builders and does not depend on `pygame`.
+- Risk:
+  medium if limited to draw-path extraction, because gameplay spawn rules and HUD/end-summary text can stay untouched.
 
 ### `enemies.py`
 
@@ -1243,6 +1367,45 @@ Priority C: high risk
 
 - Role:
   tests package marker.
+
+## Stage 3 Domain/Rendering Boundary Analysis
+
+Current mixed-support conclusions:
+
+- `coins.py`
+  - real mixed module:
+    domain spawn/data + pygame drawing
+  - safest next extraction:
+    move draw helpers only
+- `blocks.py`
+  - real mixed module:
+    runtime spawn/respawn + pygame drawing
+  - safest next extraction:
+    move draw helpers only
+- `effects.py`
+  - presentation-only today
+  - not an immediate Stage 3 split target
+- `palette.py`
+  - presentation-only today
+  - not an immediate Stage 3 split target
+
+Option assessment for Stage 3:
+
+- Option A: keep mixed modules as-is
+  - lowest immediate risk
+  - lowest architectural value
+- Option B: extract narrow presentation helpers for `draw_*`
+  - best near-term value/risk ratio
+  - does not force package-wide moves
+- Option C: full domain/presentation split into new packages
+  - architecturally cleaner long-term
+  - too wide for the current test surface and runtime coupling
+
+Recommended next code-pass:
+
+- choose Option B;
+- start with `coins.py` and `blocks.py` draw-path extraction only;
+- do not combine that step with `maze_game.py` renderer extraction or `ui.py` cleanup in the same pass.
 
 ## Dependency map
 

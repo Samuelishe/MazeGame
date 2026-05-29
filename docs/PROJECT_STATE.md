@@ -25,6 +25,11 @@ The project also now has an explicit governance baseline for future agents:
 - mandatory module visibility in docs
 - staged refactoring instead of large rewrites
 
+Current refactoring phase reality:
+
+- Stage 4 persistence-boundary work is largely completed at the narrow-boundary level;
+- Stage 3 has now started with domain/rendering boundary analysis for mixed support modules.
+
 ## Current entrypoints
 
 - Main entrypoint in use: `game_app.py`
@@ -200,7 +205,8 @@ The architecture inspection confirms that the main structural issue is not broke
 - some modules still mix domain and rendering concerns
 - `players.py` has been removed after the compatibility cleanup
 - repeated state-screen UI patterns are present but not yet centralized
-- persistence boundaries are clearer than before, but the end-of-run persistence branching in `maze_game.py` and the active JSON/SQLite split still remain architectural hotspots
+- persistence boundaries are clearer than before, but active JSON compatibility ownership still remains a policy hotspot
+- `coins.py` and `blocks.py` are now the clearest Stage 3 mixed domain/rendering modules
 
 ## Stabilization notes
 
@@ -217,6 +223,8 @@ The architecture inspection confirms that the main structural issue is not broke
 - `persistence/player_repository.py` now has minimal disposable-DB smoke coverage that uses temporary SQLite files and does not touch the working `maze_stats.db`.
 - `GameSessionController.record_run(...)` now also has disposable-DB safety coverage that uses temporary SQLite files and does not touch the working `maze_stats.db`.
 - Documentation and environment assumptions now point to `.venv`, `pygame-ce`, and the current pytest workflow.
+- Stage 3 analysis has now identified a narrow next step:
+  extract only the pygame draw-path helpers from `coins.py` and `blocks.py` before attempting broader presentation work.
 
 ## Inspection notes
 

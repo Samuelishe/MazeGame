@@ -146,8 +146,9 @@ Flow:
 
 1. `game_app.init_environment()` calls `init_db(db_path)`
 2. `GameSessionController.from_db(...)` loads or creates players
-3. At end of a run, `maze_game.play_maze()` creates `RunResult`
-4. `session_controller.record_run(...)` updates:
+3. At end of a run, `maze_game.play_maze()` delegates save branching to `runtime.run_persistence.handle_run_persistence(...)`
+4. In controller-present mode, that helper creates `RunResult` and calls `session_controller.record_run(...)`
+5. `session_controller.record_run(...)` updates:
    - in-memory `SessionStats`
    - delegates SQL writes to `persistence.run_repository`
    - disposable-DB safety coverage now exists for this controller-level contract
@@ -353,8 +354,8 @@ Recommended direction:
 - `enemies.py`: enemy models, schemes, movement strategies
 - `coins.py`: mixed module with coin spawning plus coin rendering
 - `blocks.py`: mixed module with block spawn/respawn plus block rendering
-- `effects.py`: visual effects
-- `palette.py`: color palette generation
+- `effects.py`: presentation-only visual effects
+- `palette.py`: presentation-only color palette generation
 - `sprites.py`: sprite sheet helpers
 - `sounds.py`: audio loading/fallback generation
 - `ui.py`: text rendering and pause/end overlays; its mixed-text renderer is now also reused by gameplay HUD surface rendering
@@ -396,6 +397,77 @@ Notable dependency smell:
 - `maze_game.py` still remains the main gameplay concentration point, but pure formatting/scoring logic has been extracted into `gameplay/` to reduce incidental coupling.
 - `ui.py` is shared by both gameplay runtime and state-machine screens, so presentation concerns are still centralized in one broad helper module.
 - `coins.py` and `blocks.py` mix gameplay-domain spawning with pygame rendering helpers.
+
+## Stage 3 Domain/Rendering Boundary Analysis
+
+### `coins.py`
+
+Current internal responsibility split:
+
+- domain/data:
+  - `CoinRarity`
+  - `RarityConfig`
+  - `RARITY_CONFIG`
+  - `Coin`
+  - `_choose_rarity(...)`
+  - `spawn_coins(...)`
+- presentation-adjacent text helper:
+  - `rarity_icon(...)`
+- pygame rendering:
+  - `_draw_diamond(...)`
+  - `draw_coin(...)`
+
+Interpretation:
+
+- the module is genuinely mixed;
+- the narrowest safe split is the draw path only;
+- `rarity_icon(...)` should not move with rendering by default because deterministic text builders already use it without `pygame`.
+
+### `blocks.py`
+
+Current internal responsibility split:
+
+- domain/runtime data:
+  - `Block`
+- domain/runtime placement logic:
+  - `spawn_blocks(...)`
+  - `respawn_block(...)`
+- rendering:
+  - `_pulse_color(...)`
+  - `draw_block_cell(...)`
+
+Interpretation:
+
+- the module is also genuinely mixed;
+- the narrowest safe split is the draw path only;
+- spawn/respawn logic should stay together because it is shaped by maze layout and forbidden-cell rules rather than by presentation concerns.
+
+### `effects.py` and `palette.py`
+
+- `effects.py`
+  - currently presentation-only;
+  - no meaningful domain/rendering split is visible in the current code.
+- `palette.py`
+  - currently presentation-only;
+  - no meaningful split is justified before broader package cleanup.
+
+### Stage 3 option assessment
+
+- Option A: keep mixed support modules as-is
+  - lowest immediate risk
+  - lowest architectural benefit
+- Option B: extract narrow presentation helpers for `draw_*` functions
+  - best value/risk ratio
+  - does not require broad package moves
+- Option C: full domain/presentation package split
+  - strongest long-term shape
+  - too wide for the current safety surface
+
+### Recommended next Stage 3 code-pass
+
+- choose Option B;
+- extract only the draw path from `coins.py` and `blocks.py`;
+- do not combine that pass with `maze_game.py` world-render extraction or `ui.py` cleanup.
 
 ## Cyclic imports
 

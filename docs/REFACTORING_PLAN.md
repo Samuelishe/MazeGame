@@ -75,6 +75,20 @@ Concrete `maze_game.py`-adjacent steps inside Stage 3:
 3. extract HUD background/surface composition into a presentation helper
 4. separate presentation pieces from mixed support modules such as `coins.py` and `blocks.py`
 
+Stage 3 analysis status:
+
+- completed: mixed domain/rendering boundary analysis for `coins.py`, `blocks.py`, `effects.py`, and `palette.py`
+- confirmed:
+  - `coins.py` and `blocks.py` are the real mixed modules
+  - `effects.py` and `palette.py` are presentation-only enough to leave alone for now
+
+Recommended first Stage 3 code-pass:
+
+1. extract only `draw_coin(...)` and its tiny rendering helper(s) from `coins.py`
+2. extract only `draw_block_cell(...)` and its tiny rendering helper(s) from `blocks.py`
+3. leave spawn/data helpers in place
+4. do not combine this with `maze_game.py` world-render extraction or `ui.py` cleanup
+
 ## Stage 4
 
 - Goal:
@@ -212,7 +226,9 @@ Stage 4 Step 1 status:
 - completed: Stage 4 Step 2B run-write extraction into `persistence/run_repository.py`
 - completed: remove the now-unused `players.py` compatibility shim from the production import graph
 - completed: extract a narrow gameplay persistence handoff helper around JSON highscore update and controller/standalone result recording
-- next sensible candidate: clarify `highscore.json` ownership policy or find a smaller post-handoff persistence slice around gameplay result reporting
+- completed: define the legacy highscore compatibility contract
+- next sensible candidate:
+  optional future Stage 4 policy work around explicit legacy highscore export ownership, but this is no longer the default next implementation target
 
 Gameplay Persistence Boundary recommendation after analysis:
 
@@ -296,20 +312,20 @@ Concrete `maze_game.py` caution for Stage 5:
 
 Recommended next implementation order:
 
-1. Stage 4
+1. Stage 3
 2. Stage 5
-3. Stage 3
+3. Stage 4 policy follow-up
 4. Stage 6
 5. Stage 7
 6. Stage 8
 
 Reason:
 
-- `maze_game.py` remains the highest leverage extraction target.
-- persistence boundaries are the next most important architectural clarity problem.
+- `maze_game.py` remains the highest leverage extraction target, but the narrowest safe next work now sits in mixed support modules.
+- Stage 4 boundary work has already removed the largest persistence-ownership confusion without changing runtime behavior.
 - state-machine duplication matters, but it is less urgent than reducing runtime concentration.
 - physical file moves should be delayed until boundary work is already done.
-- Stage 3 presentation extraction remains a valid alternative next step, but Stage 4 persistence-boundary analysis is the recommended default after Stage 2 completion.
+- Stage 3 mixed domain/rendering extraction is now the recommended default after the completed Stage 4 boundary passes.
 
 ## `maze_game.py` extraction priority
 

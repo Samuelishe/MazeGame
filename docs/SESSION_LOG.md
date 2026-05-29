@@ -991,3 +991,50 @@ Documentation changes:
 - Updated `docs/REFACTORING_PLAN.md`
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
+
+## 2026-05-29 - Stage 3 Step 1: Mixed Domain/Rendering Boundary Analysis
+
+Scope:
+
+- inspect mixed support modules before any Stage 3 code extraction
+- analyze `coins.py`, `blocks.py`, `effects.py`, `palette.py`
+- sync high-level planning docs with the completed Stage 4 boundary work
+
+Observed:
+
+- `coins.py` is a real mixed module:
+  - domain/data:
+    `CoinRarity`, `RarityConfig`, `RARITY_CONFIG`, `Coin`, `_choose_rarity(...)`, `spawn_coins(...)`
+  - presentation-adjacent text:
+    `rarity_icon(...)`
+  - pygame rendering:
+    `_draw_diamond(...)`, `draw_coin(...)`
+- `blocks.py` is also a real mixed module:
+  - domain/runtime data:
+    `Block`
+  - domain/runtime placement logic:
+    `spawn_blocks(...)`, `respawn_block(...)`
+  - rendering:
+    `_pulse_color(...)`, `draw_block_cell(...)`
+- `effects.py` is presentation-only enough to leave alone for now.
+- `palette.py` is presentation-only enough to leave alone for now.
+
+Conclusions:
+
+- the narrowest useful Stage 3 split is not a broad package move;
+- the safest next code-pass is:
+  - extract only coin draw helpers;
+  - extract only block draw helpers;
+  - keep spawn/data/runtime logic in place;
+  - avoid combining this with `maze_game.py` world-render extraction or `ui.py` cleanup.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`

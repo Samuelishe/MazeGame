@@ -2,58 +2,66 @@
 
 ## Goal
 
-Stabilize the codebase for future agent-driven work without breaking gameplay.
+Keep gameplay stable while continuing small, testable architectural improvements.
 
-## Phase 1: Safe stabilization
+## Current status
 
-1. Replace recursive replay flow in `GameplayWrapper.start_level()` with an explicit loop.
-2. Extract pure utility functions from `maze_game.py` only when they have no pygame side effects.
-3. Move shared formatting helpers like time formatting out of `maze_game.py` into a neutral utility module.
-4. Add narrow tests for:
-   - `compute_score()`
-   - `format_time()`
-   - `GameSessionController.advance_after_run()`
-   - `record_run()` DB effects
-   - highscore migration behavior
+- Stage 2 `maze_game.py` Priority A extractions are completed.
+- Stage 4 persistence boundary work is largely completed:
+  - `domain/player_models.py`
+  - `persistence/player_repository.py`
+  - `persistence/run_repository.py`
+  - `runtime/session_stats.py`
+  - `runtime/run_persistence.py`
+  - `players.py` removed
+  - `highscore.json` compatibility contract documented
+- Stage 3 has now started with mixed domain/rendering boundary analysis.
 
-## Phase 2: Runtime boundary cleanup
+## Next recommended implementation step
 
-1. Introduce a small `RunState` dataclass for active round variables.
-2. Separate end-of-run persistence from render/input logic.
-3. Isolate resource loading paths for:
-   - audio
-   - enemy sprite sheets
-   - fonts
+Stage 3 Step 1 code-pass:
 
-## Phase 3: Gameplay decomposition
+1. extract only the pygame draw path from `coins.py`
+2. extract only the pygame draw path from `blocks.py`
+3. keep spawn/data/runtime logic in place
+4. do not combine that pass with `maze_game.py` renderer extraction or `ui.py` cleanup
 
-1. Split `maze_game.py` by responsibility, not by arbitrary size:
-   - scoring
-   - runtime model
-   - gameplay loop
-   - HUD/end screen integration
-2. Keep public behavior unchanged while moving code.
-3. Avoid package/module renames unless there is a concrete migration plan.
+Why this next:
 
-## Phase 4: Persistence simplification
+- it reduces mixed responsibilities in smaller modules first;
+- it is safer than a broad `maze_game.py` rendering move;
+- it builds a cleaner presentation boundary without changing gameplay rules.
 
-1. Decide whether `highscore.json` should remain runtime-active or become read-only legacy data.
-2. If SQLite becomes sole source of truth, deprecate JSON writes behind a deliberate migration step.
-3. Document the final authoritative record source in `README.md` and `AGENTS.md`.
+## Near-term roadmap
 
-## Improvements with low gameplay risk
+### Phase A: Stage 3 mixed support cleanup
 
-- Add tests for pure/data modules
-- Centralize formatting helpers
-- Remove duplicate UI boilerplate
-- Add small asset-path helpers
-- Clean up repeated attribute declarations
-- Add structured logging notes to `SESSION_LOG.md`
+1. Narrow draw-helper extraction from `coins.py`
+2. Narrow draw-helper extraction from `blocks.py`
+3. Re-evaluate whether `ui.py` has a similarly small presentation-only split
 
-## Changes that should wait for explicit approval
+### Phase B: Stage 5 state-screen duplication cleanup
 
-- turning gameplay into a full FSM state class
-- changing save-file format ownership
-- renaming modules
-- changing package layout
+1. Compare `player_select_state.py` and `multiplayer_setup_state.py`
+2. Extract only shared input/list boilerplate if behavior can stay identical
+3. Keep screen flow and UX unchanged
+
+### Phase C: Stage 3 deeper presentation work
+
+1. Reassess `maze_game.py` world-render helper extraction
+2. Reassess HUD surface/background extraction
+3. Keep pause/end-screen flow out of scope unless there is a narrower boundary
+
+### Phase D: Stage 4 policy follow-up
+
+1. Keep `highscore.json` behavior unchanged for now
+2. Only later decide whether legacy JSON stays as explicit compatibility export or is retired
+
+## Work that should remain deferred
+
+- broad runtime package moves
+- full `maze_game.py` decomposition in one pass
+- `highscore.json` behavior changes
+- schema changes without a migration plan
+- package-wide presentation moves
 - broad UI rewrites

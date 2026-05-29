@@ -44,6 +44,7 @@ Supporting file:
 - `record_run(...)` safety tests: `tests/test_session_controller_record_run.py`
 - SessionStats tests: `tests/test_session_stats.py`
 - Gameplay persistence handoff tests: `tests/test_run_persistence.py`
+- Current Stage 3 mixed support hotspots: `coins.py`, `blocks.py`
 - Module map: `docs/MODULES.md`
 - Staged restructure plan: `docs/REFACTORING_PLAN.md`
 - State screens: `state_machine/`
