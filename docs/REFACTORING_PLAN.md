@@ -181,7 +181,7 @@ Stage 4 Step 1 status:
    - expected result:
      the player repository can move without bringing `SessionStats` with it.
    - files:
-     future: `players.py`, `session_controller.py`, `highscore_adapter.py`
+     completed: `players.py`, `session_controller.py`, `highscore_adapter.py`, `persistence/player_repository.py`
 
 3. Step 1C: move `SessionStats` only after runtime call sites are narrowed
    - goal:
@@ -192,6 +192,12 @@ Stage 4 Step 1 status:
      session-only memory state leaves `players.py` last, after repository and model boundaries are already stable.
    - files:
      future: `players.py`, `maze_game.py`, `session_controller.py`
+
+Stage 4 Step 1 status:
+
+- completed: Step 1A model split into `domain/player_models.py`
+- completed: Step 1B repository split into `persistence/player_repository.py`
+- next sensitive candidate: Step 1C `SessionStats` relocation
 
 ## Stage 5
 

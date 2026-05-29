@@ -135,7 +135,8 @@ Primary persistent store today is `maze_stats.db`.
 Main modules:
 
 - `db_manager.py`: schema creation and connections
-- `players.py`: player CRUD and profile loading
+- `persistence/player_repository.py`: player CRUD and profile loading
+- `players.py`: in-memory `SessionStats` plus transitional repository re-export
 - `session_controller.py`: in-memory session plus run recording
 - `leaderboard.py`: read queries for leaderboard screens
 
@@ -167,8 +168,10 @@ Result: runtime persistence is split between SQLite and legacy JSON.
 
 - `db_manager.py`
   - SQLite infrastructure only: connection setup, PRAGMA, schema bootstrap, `meta` flags.
+- `persistence/player_repository.py`
+  - dedicated player CRUD/profile-loading repository over SQLite.
 - `players.py`
-  - mixed module: player repository operations and in-memory `SessionStats`.
+  - `SessionStats` plus transitional compatibility re-export for repository imports.
 - `session_controller.py`
   - mixed module: session orchestration plus SQLite write path for completed runs.
 - `leaderboard.py`
@@ -186,8 +189,8 @@ Result: runtime persistence is split between SQLite and legacy JSON.
    - calls `migrate_highscore_if_needed(db_path, legacy_player_name="Игрок 1")`.
 2. `GameSessionController.from_db(db_path)`:
    - calls `init_db(db_path)` again defensively;
-   - loads players through `load_players(db_path)`;
-   - creates a default player through `get_or_create_player(...)` when needed.
+   - loads players through `persistence.player_repository.load_players(db_path)`;
+   - creates a default player through `persistence.player_repository.get_or_create_player(...)` when needed.
 3. State-machine screens mutate persistent player state indirectly:
    - `PlayerSelectState` -> `session.create_player(...)`, `session.delete_player_from_session(...)`, `session.choose_player(...)`;
    - `MultiplayerSetupState` -> `session.create_player(...)`, `session.delete_player_from_session(...)`, `session.configure_rotation_players(...)`, `session.set_mode(...)`;
@@ -209,7 +212,7 @@ Result: runtime persistence is split between SQLite and legacy JSON.
 - `highscores.py` is internally coherent, but it keeps a second active persistence path alive.
 - `highscore_adapter.py` is coherent as a migration module, but it encodes transitional persistence policy.
 - `players.py` and `session_controller.py` are the main persistence-boundary problems:
-  - `players.py` now has its domain models extracted, but still mixes repository functions and session-only in-memory state;
+  - `players.py` now mostly holds `SessionStats`, but still exposes temporary repository re-exports for compatibility;
   - `session_controller.py` mixes application/session orchestration with direct SQL write logic.
 
 ### Target persistence shape
@@ -239,33 +242,30 @@ This is a target ownership map only. No file moves are implied yet.
 
 ### `players.py` decomposition analysis
 
-`players.py` currently contains three direct responsibility slices plus imported domain models:
+`players.py` currently contains two direct responsibility slices:
 
-1. repository row-mapping helper
-   - `_row_to_aggregate_stats(...)`
-2. repository API over `players` / `player_stats`
+1. runtime-only session state
+   - `SessionStats`
+2. transitional compatibility re-export
    - `load_players(...)`
    - `create_player(...)`
    - `delete_player(...)`
    - `get_player_by_name(...)`
    - `get_or_create_player(...)`
-3. runtime-only session state
-   - `SessionStats`
 
-The pure player models now live separately in `domain/player_models.py`.
+The pure player models now live separately in `domain/player_models.py`, and the repository implementation now lives in `persistence/player_repository.py`.
 
 This means the file is still mixed, but the cleanest domain-model slice has already been removed. What remains is:
 
-- repository code
-- repository convenience bootstrap
 - runtime in-memory state
+- compatibility imports for old call sites
 
 Dependency pressure inside the project:
 
 - `session_controller.py` depends on:
   - `PlayerProfile`
   - `SessionStats`
-  - all major player CRUD/bootstrap functions
+  - repository CRUD/bootstrap functions
 - `maze_game.py` depends on:
   - `SessionStats` only
 - `state_machine/player_select_state.py` and `state_machine/multiplayer_setup_state.py` depend on:
@@ -275,7 +275,7 @@ Dependency pressure inside the project:
 
 The next clean future cut is:
 
-- move repository functions plus row-mapping helper together;
+- remove the temporary re-export from `players.py` after imports are fully narrowed;
 - move `SessionStats` separately only after call sites are narrowed, because it currently bridges standalone gameplay and `GameSessionController`.
 
 ## Module responsibilities
@@ -295,7 +295,7 @@ The next clean future cut is:
 - Presentation/media:
   `ui.py`, `sounds.py`, `sprites.py`, `effects.py`, `palette.py`
 - Persistence/data:
-  `db_manager.py`, `players.py`, `session_controller.py`, `leaderboard.py`,
+  `db_manager.py`, `persistence/player_repository.py`, `players.py`, `session_controller.py`, `leaderboard.py`,
   `highscores.py`, `highscore_adapter.py`
 
 ### App shell
@@ -331,7 +331,8 @@ The next clean future cut is:
 ### Data/persistence
 
 - `db_manager.py`: SQLite schema and connection setup
-- `players.py`: player repository functions and in-memory `SessionStats`
+- `persistence/player_repository.py`: player repository CRUD/profile loading
+- `players.py`: in-memory `SessionStats` plus transitional repository re-export
 - `session_controller.py`: current session coordination plus SQLite run recording
 - `leaderboard.py`: leaderboard queries
 - `highscores.py`: legacy JSON highscore read/write
@@ -350,8 +351,8 @@ Main dependency spine:
 - `game_app.py` -> `maze_game.py`
 - `maze_game.py` -> gameplay helpers (`coins`, `enemies`, `blocks`, `ui`, `sounds`, `sprites`, `maze_gen`)
 - `maze_game.py` -> `session_controller.py`
-- `session_controller.py` -> `players.py`, `db_manager.py`
-- `players.py` -> `db_manager.py`
+- `session_controller.py` -> `persistence/player_repository.py`, `players.py`, `db_manager.py`
+- `persistence/player_repository.py` -> `db_manager.py`
 - `leaderboard.py` -> `db_manager.py`
 - `state_machine/leaderboard_state.py` -> `leaderboard.py`
 
@@ -359,7 +360,7 @@ Notable dependency smell:
 
 - `maze_game.py` still remains the main gameplay concentration point, but pure formatting/scoring logic has been extracted into `gameplay/` to reduce incidental coupling.
 - `ui.py` is shared by both gameplay runtime and state-machine screens, so presentation concerns are still centralized in one broad helper module.
-- `players.py` now delegates domain dataclasses to `domain.player_models`, but still mixes repository-style DB access with session aggregate logic.
+- `players.py` now mainly holds `SessionStats`, but still temporarily re-exports repository APIs while imports are being narrowed.
 - `coins.py` and `blocks.py` mix gameplay-domain spawning with pygame rendering helpers.
 
 ## Cyclic imports

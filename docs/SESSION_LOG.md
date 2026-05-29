@@ -489,3 +489,45 @@ Documentation changes:
 - Updated `docs/TECH_DEBT.md`
 - Updated `docs/REFACTORING_PLAN.md`
 - Updated `docs/INDEX.md`
+
+## 2026-05-29 - Stage 4 Step 1B: isolate player repository boundary
+
+Scope:
+
+- move player repository implementation out of `players.py`
+- keep `SessionStats` untouched
+- preserve compatibility while narrowing obvious imports
+
+Code changes:
+
+- Added `persistence/__init__.py`.
+- Added `persistence/player_repository.py` with `_row_to_aggregate_stats(...)`, `load_players(...)`, `create_player(...)`, `delete_player(...)`, `get_player_by_name(...)`, and `get_or_create_player(...)`.
+- Updated `players.py` to keep `SessionStats` plus a transitional re-export of repository functions.
+- Updated `session_controller.py` to import repository functions from `persistence.player_repository`.
+- Updated `highscore_adapter.py` to import `get_or_create_player(...)` from `persistence.player_repository`.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No DB schema changes.
+- No repository logic changes.
+- No migration behavior changes.
+
+Database notes:
+
+- `maze_stats.db` was not deleted or recreated in this step.
+
+Testing notes:
+
+- No new repository tests were added in this pass.
+- The step is a boundary-preserving move of existing SQLite code, and the current test suite still does not contain isolated disposable-DB fixtures for repository behavior.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`

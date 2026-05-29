@@ -19,7 +19,7 @@ from typing import Optional
 
 from db_manager import init_db, get_connection, get_meta_flag, set_meta_flag, PathType
 from highscores import Highscore, load_highscore, default_path as highscore_default_path
-from players import get_or_create_player
+from persistence.player_repository import get_or_create_player
 
 
 MIGRATION_FLAG_KEY = "highscore_migrated"

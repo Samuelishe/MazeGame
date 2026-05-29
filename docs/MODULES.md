@@ -54,6 +54,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 
 ### Persistence / session / leaderboard data
 
+- `persistence/player_repository.py`
 - `db_manager.py`
 - `players.py`
 - `session_controller.py`
@@ -88,6 +89,23 @@ This is an inspection document only. It does not imply any immediate file moves.
   keep in `domain/`.
 - Notes:
   first safe Stage 4 split from `players.py`; this module contains no repository or runtime-session behavior.
+
+### `persistence/player_repository.py`
+
+- Role:
+  SQLite-backed player repository API.
+- Main classes:
+  none.
+- Main functions:
+  `load_players`, `create_player`, `delete_player`, `get_player_by_name`, `get_or_create_player`.
+- Used by:
+  `session_controller.py`, `highscore_adapter.py`, transitional compatibility re-export in `players.py`.
+- Depends on:
+  `db_manager`, `domain.player_models`.
+- Future fit:
+  keep in `persistence/`.
+- Notes:
+  owns player CRUD/profile-loading after Stage 4 Step 1B; bootstrap-sensitive behavior stays unchanged.
 
 ### `game_app.py`
 
@@ -442,31 +460,27 @@ Priority C: high risk
 ### `players.py`
 
 - Role:
-  player repository functions plus in-memory `SessionStats`.
+  in-memory `SessionStats` plus transitional repository re-export.
 - Main classes:
   `SessionStats`.
 - Main functions:
-  `load_players`, `create_player`, `delete_player`, `get_player_by_name`, `get_or_create_player`.
+  transitional re-export of `load_players`, `create_player`, `delete_player`, `get_player_by_name`, `get_or_create_player`.
 - Used by:
-  `maze_game.py`, `session_controller.py`, `highscore_adapter.py`, `state_machine/player_select_state.py`, `state_machine/multiplayer_setup_state.py`.
+  `maze_game.py`, `session_controller.py`.
 - Depends on:
-  `db_manager`, `domain.player_models`.
+  `persistence.player_repository`.
 - Future fit:
-  split between `domain/player_models.py`, `persistence/player_repository.py`, and a later home for `SessionStats`.
+  keep only `SessionStats` until a later runtime-state home is chosen.
 - Notes:
-  the pure player models have already been extracted, but repository functions and in-memory `SessionStats` still share one file; this split is incomplete by design.
+  player models and repository functions have already moved out; the remaining re-export is a deliberate compatibility shim for Stage 4.
 
 #### `players.py` decomposition analysis
 
 - Approximate internal groups:
-  - imported domain/player read models:
-    `PlayerAggregateStats`, `PlayerProfile` from `domain.player_models`
-  - repository helper:
-    `_row_to_aggregate_stats(...)`
-  - repository API:
-    `load_players(...)`, `create_player(...)`, `delete_player(...)`, `get_player_by_name(...)`, `get_or_create_player(...)`
   - runtime/session state:
     `SessionStats`
+  - transitional compatibility layer:
+    re-export of repository API from `persistence.player_repository`
 
 - Entity classification:
   - `PlayerAggregateStats`
@@ -487,48 +501,6 @@ Priority C: high risk
       `PlayerAggregateStats`
     - location:
       `domain.player_models`
-  - `_row_to_aggregate_stats(...)`
-    - type:
-      repository mapping utility
-    - used by:
-      `load_players(...)`, `get_player_by_name(...)`
-    - dependencies:
-      `sqlite3.Row`, `PlayerAggregateStats`
-  - `load_players(...)`
-    - type:
-      repository read API
-    - used by:
-      `GameSessionController.from_db(...)`
-    - dependencies:
-      `db_manager.get_connection`, `_row_to_aggregate_stats`, `PlayerProfile`
-  - `create_player(...)`
-    - type:
-      repository write API
-    - used by:
-      `GameSessionController.create_player(...)`
-    - dependencies:
-      `db_manager.get_connection`, `PlayerProfile`, `PlayerAggregateStats`
-  - `delete_player(...)`
-    - type:
-      repository delete API
-    - used by:
-      `GameSessionController.delete_player_from_session(...)`
-    - dependencies:
-      `db_manager.get_connection`
-  - `get_player_by_name(...)`
-    - type:
-      repository read API
-    - used by:
-      `get_or_create_player(...)`
-    - dependencies:
-      `db_manager.get_connection`, `_row_to_aggregate_stats`, `PlayerProfile`
-  - `get_or_create_player(...)`
-    - type:
-      repository convenience API
-    - used by:
-      `GameSessionController.from_db(...)`, `GameSessionController.__post_init__()`, `highscore_adapter.py`
-    - dependencies:
-      `get_player_by_name(...)`, `create_player(...)`
   - `SessionStats`
     - type:
       runtime session state, not a persistence model
@@ -538,9 +510,9 @@ Priority C: high risk
       stdlib only
 
 - Highest-risk dependencies:
-  - `GameSessionController` depends on both repository functions and `SessionStats` from the same module.
+  - `GameSessionController` still depends on both repository functions and `SessionStats`, though repository ownership now lives in different modules.
   - `maze_game.py` imports `SessionStats` directly for no-controller runtime mode.
-  - `highscore_adapter.py` depends on `get_or_create_player(...)`, which keeps migration logic tied to the mixed module.
+  - `get_or_create_player(...)` still sits on both controller bootstrap and migration bootstrap paths.
 
 - Safe future split candidates:
   - completed: `PlayerAggregateStats` and `PlayerProfile` into a pure models module
@@ -610,8 +582,8 @@ Priority C: high risk
    - calls `highscore_adapter.migrate_highscore_if_needed(...)`
    - creates `GameSessionController.from_db(...)`
 2. `GameSessionController.from_db(...)`
-   - reads players via `players.load_players(...)`
-   - may create a default player via `players.get_or_create_player(...)`
+   - reads players via `persistence.player_repository.load_players(...)`
+   - may create a default player via `persistence.player_repository.get_or_create_player(...)`
 3. `state_machine/player_select_state.py`
    - uses `GameSessionController` to create, delete, choose players
 4. `state_machine/multiplayer_setup_state.py`
@@ -635,13 +607,21 @@ Priority C: high risk
   - mixed incorrectly:
     no.
 
+- `persistence/player_repository.py`
+  - domain logic:
+    none beyond typed return shapes from `domain.player_models`.
+  - persistence logic:
+    all of it.
+  - mixed incorrectly:
+    no; this is now the dedicated player CRUD/profile-loading slice.
+
 - `players.py`
   - domain logic:
-    parts of `SessionStats`.
+    `SessionStats`.
   - persistence logic:
-    `load_players`, `create_player`, `delete_player`, `get_player_by_name`, `get_or_create_player`, row mapping.
+    only transitional re-export, not ownership.
   - mixed incorrectly:
-    yes; repository code and session-only memory state are still combined, while domain models now live in `domain.player_models`.
+    mildly; runtime session state remains in a legacy root module and compatibility imports still exist temporarily.
 
 - `session_controller.py`
   - domain logic:
@@ -679,7 +659,7 @@ Priority C: high risk
 
 - `players.py` split candidate
   - target:
-    separate player data models from player repository functions and session-only stats.
+    remove transitional re-export and later relocate `SessionStats`.
   - risk:
     medium.
 
@@ -1143,13 +1123,14 @@ Priority C: high risk
 
 - `session_controller.py` -> `domain.player_models`
 - `session_controller.py` -> `db_manager.py`
+- `session_controller.py` -> `persistence.player_repository.py`
 - `session_controller.py` -> `players.py`
-- `players.py` -> `db_manager.py`
-- `players.py` -> `domain.player_models`
+- `persistence/player_repository.py` -> `db_manager.py`
+- `persistence/player_repository.py` -> `domain.player_models`
 - `leaderboard.py` -> `db_manager.py`
 - `highscore_adapter.py` -> `db_manager.py`
 - `highscore_adapter.py` -> `highscores.py`
-- `highscore_adapter.py` -> `players.py`
+- `highscore_adapter.py` -> `persistence.player_repository.py`
 
 ### UI / screen spine
 
@@ -1171,7 +1152,7 @@ Priority C: high risk
 
 - `coins.py`: spawn/domain + rendering.
 - `blocks.py`: spawn/domain + rendering.
-- `players.py`: repository operations + session aggregate object.
+- `players.py`: session aggregate object + transitional repository re-export.
 - `ui.py`: text/font helpers + overlay rendering + blocking choice loops.
 
 ### State modules with repeated patterns

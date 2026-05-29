@@ -21,13 +21,13 @@ from typing import Dict
 
 from db_manager import PathType, get_connection, init_db
 from domain.player_models import PlayerProfile
-from players import (
-    SessionStats,
+from persistence.player_repository import (
     load_players,
     get_or_create_player,
     create_player,
     delete_player,
 )
+from players import SessionStats
 
 
 class RoundMode(str, Enum):
