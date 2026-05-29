@@ -695,6 +695,78 @@ Cheapest later candidate after that:
 - enemy update extraction is still more behavior-sensitive
 - world-render extraction is still broader
 
+## Block Timer Boundary Analysis
+
+Current block timer flow in `maze_game.py`:
+
+1. initial block spawn uses `spawn_blocks(...)`
+2. each spawned block gets `block.expires_at = base_now_ms + block_lifetime_ms`
+3. local `blocked_set` is rebuilt from current block positions
+4. each frame checks `now_ms >= block.expires_at`
+5. expired blocks rebuild a local forbidden set from:
+   - player position
+   - goal position
+   - enemy positions
+   - all other block positions
+6. respawn uses `respawn_block(block, maze, rng, forbidden_dynamic)`
+7. timer resets through `block.expires_at = now_ms + block_lifetime_ms`
+8. `blocked_set` is refreshed again after respawn
+
+Important current-code note:
+
+- there is no standalone `next_block_respawn_at`
+- there is no standalone `BLOCK_RESPAWN_MS`
+- current timing ownership is per-block through `expires_at` and shared `block_lifetime_ms`
+
+Responsibility zones:
+
+- initial block spawn/setup
+  - runtime/domain-support concern
+- blocked-set projection
+  - runtime concern
+- expiration handling
+  - runtime concern
+- forbidden-cell recomputation
+  - runtime concern
+- mutation of local runtime collections
+  - runtime concern
+
+Option assessment:
+
+- Option A: keep block timer logic inline
+  - lowest risk
+- Option B: extract only `update_block_timers(...)`
+  - narrowest useful next move
+  - keeps spawn, movement flow, and rendering in place
+  - needs explicit mutable arguments
+- Option C: widen into a block runtime manager/state object
+  - too broad for the current safe surface
+
+Recommended next Stage 3 code-pass:
+
+- prefer Option B
+- move only:
+  - blocked-set rebuild
+  - expiration checks
+  - forbidden-cell recomputation
+  - `respawn_block(...)`
+  - `expires_at` reset
+- keep in `maze_game.py`:
+  - initial spawn
+  - pause-time timer shifting
+  - movement flow
+  - enemy updates
+  - rendering
+
+Testability:
+
+- strong candidate for non-pygame tests
+- disposable pure-ish scenarios can cover:
+  - no expiration
+  - expiration and respawn
+  - forbidden cells including player/goal/enemies
+  - blocked-set projection correctness
+
 ## Cyclic imports
 
 Based on the current import structure, no direct Python cyclic import was found among project modules.

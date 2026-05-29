@@ -577,6 +577,39 @@ Recommended next move:
 - `runtime/coin_collection.py` now owns lookup/removal, rarity/value accounting, and sound/effect triggers;
 - movement branches, goal checks, enemy updates, and block timers remain in `maze_game.py`.
 
+### Block timer update slice after the coin collection split
+
+Current code facts:
+
+- block timing still lives inline in `maze_game.py`;
+- every block owns its own `expires_at`;
+- `blocked_set` is rebuilt from active block positions;
+- expiration recomputes forbidden cells from:
+  - player
+  - goal
+  - enemies
+  - other blocks
+- respawn uses existing `respawn_block(...)` from `blocks.py`;
+- timer reset is `block.expires_at = now_ms + block_lifetime_ms`.
+
+Important clarification:
+
+- there is no separate `next_block_respawn_at`;
+- there is no separate `BLOCK_RESPAWN_MS`;
+- the real timing model is per-block expiration plus shared lifetime.
+
+Why it matters:
+
+- this is now the cheapest remaining narrow runtime-support extraction target in `maze_game.py`;
+- it is more local and more testable than enemy update extraction;
+- it is still smaller than world-render extraction.
+
+Recommended next move:
+
+- prefer a narrow `update_block_timers(...)` helper only;
+- keep initial spawn, pause-time shifts, movement flow, enemy updates, and rendering in `maze_game.py`;
+- use explicit mutable arguments rather than a broader manager object.
+
 What should wait:
 
 - full `maze_game.py` renderer extraction

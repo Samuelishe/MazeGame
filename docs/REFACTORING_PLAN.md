@@ -98,6 +98,7 @@ Next recommended Stage 3 code-pass:
 5. completed: extract the coin collection handler with explicit runtime arguments
 6. keep world-render extraction for a separate later step
 7. next likely narrow runtime-support candidate: block timer helper
+8. block timer helper should stay a narrow update-step extraction, not a broader runtime manager
 
 ## Stage 4
 

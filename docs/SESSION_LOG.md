@@ -1115,6 +1115,41 @@ Documentation changes:
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
 
+## 2026-05-29 - Stage 3 Step 9: Block timer boundary analysis
+
+Scope:
+
+- inspect the inline block timer and respawn update slice in `maze_game.py`
+- determine whether it is the next realistic narrow runtime-support extraction target
+
+Findings:
+
+- block timing is currently per-block through `block.expires_at`;
+- there is no separate `next_block_respawn_at` or `BLOCK_RESPAWN_MS`;
+- local update logic owns:
+  - `blocked_set` rebuild
+  - expiration checks
+  - forbidden-cell recomputation
+  - `respawn_block(...)`
+  - `expires_at` reset
+- the slice is more local and more testable than enemy update extraction.
+
+Decision:
+
+- the next sensible Stage 3 code-pass is a narrow `update_block_timers(...)` helper extraction;
+- initial block spawn, pause-time shifts, movement flow, enemy updates, and rendering should stay in `maze_game.py` in that pass.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`
+
 ## 2026-05-29 - Stage 3 Step 2: Extract coin and block rendering helpers
 
 Scope:

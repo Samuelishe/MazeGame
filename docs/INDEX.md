@@ -49,6 +49,7 @@ Supporting file:
 - Current Stage 3 mixed support hotspots: `coins.py`, `blocks.py`
 - Current narrow Stage 3 gameplay presentation status: enemy sprite loading and HUD composition completed
 - Current likely Stage 3 runtime-support hotspot in `maze_game.py`: block timer helper
+- Current Stage 3 runtime-support analysis status: coin collection completed, block timer analyzed
 - Module map: `docs/MODULES.md`
 - Staged restructure plan: `docs/REFACTORING_PLAN.md`
 - State screens: `state_machine/`

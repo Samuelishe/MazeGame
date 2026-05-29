@@ -238,6 +238,8 @@ The architecture inspection confirms that the main structural issue is not broke
   the coin collection handler was documented before extraction as a narrow runtime-support candidate inside `maze_game.py`.
 - Stage 3 Step 8 completed:
   coin collection logic now lives in `runtime/coin_collection.py`.
+- Stage 3 Step 9 analysis completed:
+  block timer updates are now documented as the next likely narrow runtime-support extraction candidate inside `maze_game.py`.
 - World-render extraction and broader presentation cleanup have not started.
 - Runtime animation setup (`AnimatedSprite`, per-enemy phase staggering) was intentionally not moved.
 - HUD fonts, HUD text assembly, and final HUD positioning intentionally remain in `maze_game.py`.

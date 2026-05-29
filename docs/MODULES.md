@@ -1612,59 +1612,6 @@ Best narrow future split:
 
 ## Coin Collection Handler Boundary Analysis
 
-Current coin collection flow in `maze_game.py`:
-
-- coin pickup check happens through local `try_collect_at(position, current_ms)`
-- the helper scans `coins[:]` linearly and matches by `coin_.pos == position`
-- on match it:
-  - increments `coins_collected` by `coin_.value`
-  - increments one rarity counter:
-    - `bronze_count`
-    - `silver_count`
-    - `gold_count`
-    - `diamond_count`
-  - triggers sound:
-    - `sound.play_coin()` for bronze/silver/gold
-    - `sound.play_diamond()` for diamond
-  - triggers visual feedback:
-    - `effects.add_coin_flash(position, current_ms)`
-  - removes the collected coin from `coins`
-- the helper returns nothing; it mutates outer runtime locals only
-- call sites:
-  - immediate keydown movement branch
-  - auto-movement branch
-
-Responsibility zones:
-
-- coin lookup by cell
-  - runtime/domain-support concern
-  - medium extraction risk
-- coin list mutation
-  - runtime concern
-  - medium extraction risk
-- rarity accounting
-  - runtime concern with lightweight domain knowledge
-  - medium extraction risk
-- sound trigger
-  - presentation concern
-  - low to medium extraction risk if passed explicitly
-- visual effect trigger
-  - presentation concern
-  - low to medium extraction risk if passed explicitly
-
-Option assessment:
-
-- Option A: keep the whole handler in `maze_game.py`
-  - lowest immediate risk
-  - keeps runtime and presentation side effects interleaved inline
-- Option B: extract only the coin collection helper with explicit arguments
-  - best value/risk ratio
-  - keeps movement flow in `maze_game.py`
-  - requires an honest signature for coin list, counters, sound, and effects
-- Option C: widen into a larger runtime interaction module
-  - too broad for the current safe surface
-  - risks coupling coin pickup with other update-step systems
-
 Completed in Stage 3 Step 8:
 
 - `runtime/coin_collection.py` now owns:
@@ -1685,6 +1632,105 @@ Cheapest later candidate after that:
 - world rendering remains broader and higher-blast-radius
 - enemy update helper is still more behavior-sensitive
 - block timer helper is now the cheapest plausible next candidate
+
+## Block Timer Boundary Analysis
+
+Current block timer flow in `maze_game.py`:
+
+- initial block setup:
+  - `blocks = spawn_blocks(maze, blocks_count, rng, forbidden_dynamic)`
+  - each `block.expires_at` is set to `base_now_ms + block_lifetime_ms`
+- active blocked projection:
+  - `blocked_set` is a local `set[Coord]`
+  - each frame it is rebuilt from current `block.pos`
+- expiration handling:
+  - inside the main loop:
+    - `if now_ms >= block.expires_at:`
+- forbidden-cell recomputation for respawn:
+  - local `forbidden_dynamic` is rebuilt from:
+    - `player`
+    - `goal`
+    - all enemy positions
+    - all other block positions except the current block
+- respawn action:
+  - `respawn_block(block, maze, rng, forbidden_dynamic)`
+- timer reset:
+  - `block.expires_at = now_ms + block_lifetime_ms`
+- blocked-set refresh:
+  - after each respawn the local `blocked_set` is cleared and rebuilt
+
+Important current-code note:
+
+- there is no separate `next_block_respawn_at`
+- there is no separate `BLOCK_RESPAWN_MS`
+- actual timing is per-block through `block.expires_at` plus shared `block_lifetime_ms`
+
+Responsibility zones:
+
+- initial block spawn/setup
+  - runtime/domain-support concern
+  - medium extraction risk
+- active blocked-set projection
+  - runtime concern
+  - medium extraction risk
+- expiration handling
+  - runtime concern
+  - medium extraction risk
+- forbidden-cell recomputation
+  - runtime concern
+  - medium extraction risk
+- mutation of `blocks` / `blocked_set`
+  - runtime concern
+  - medium to high extraction risk if hidden behind a broader object
+
+Option assessment:
+
+- Option A: keep block timer logic in `maze_game.py`
+  - lowest immediate risk
+  - keeps mutable update flow fully local
+- Option B: extract only `update_block_timers(...)`
+  - best value/risk ratio
+  - keeps spawn, movement, and rendering ownership where they are
+  - requires an explicit signature for `blocks`, `blocked_set`, `player`, `goal`, `enemies`, `maze`, `rng`, `now_ms`, and `block_lifetime_ms`
+- Option C: introduce a broader block runtime manager/state object
+  - too wide for the current safe surface
+  - risks coupling timer updates with rendering and movement concerns
+
+Recommended next Stage 3 code-pass:
+
+- prefer Option B
+- move only:
+  - blocked-set rebuild
+  - expiration check
+  - forbidden-cell recomputation
+  - `respawn_block(...)` call
+  - `expires_at` reset
+- keep in `maze_game.py`:
+  - initial block spawn
+  - pause-time timer shifting
+  - movement flow
+  - enemy updates
+  - rendering
+
+Testability assessment:
+
+- this helper is testable without `pygame`
+- simple inputs are enough:
+  - small maze matrix
+  - `Block` instances
+  - fake/stub enemy objects with `pos`
+  - deterministic `random.Random`
+- useful scenarios:
+  - no expiration
+  - block expiration
+  - forbidden cells include player/goal/enemy positions
+  - blocked set matches current active blocks
+
+Cheapest later candidate after that:
+
+- block timer helper is now the cheapest next candidate
+- enemy update helper remains more behavior-sensitive
+- world rendering helper remains broader
 
 ## Dependency map
 
