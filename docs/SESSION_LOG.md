@@ -1119,3 +1119,50 @@ Documentation changes:
 - Updated `docs/REFACTORING_PLAN.md`
 - Updated `docs/ROADMAP.md`
 - Updated `docs/SESSION_LOG.md`
+
+## 2026-05-29 - Stage 3 Step 4: Extract enemy sprite loading helper
+
+Scope:
+
+- move only enemy sprite paths, sheet loading, fallback, and `EnemyType` mapping
+- keep runtime animation setup in `maze_game.py`
+
+Code changes:
+
+- Added `presentation/enemy_sprites.py`.
+- Moved from `maze_game.py`:
+  - enemy sprite path list
+  - `SpriteSheet.from_file(...)` batch loading
+  - missing-file skip behavior via `pygame.error`
+  - fallback-to-red behavior when no sheets load
+  - `EnemyType -> SpriteSheet` mapping
+- Updated `maze_game.py` to call `load_enemy_sheets_by_type()`.
+- Kept in `maze_game.py`:
+  - `AnimatedSprite(...)` creation
+  - `frame_count=8`
+  - `fps=6`
+  - per-enemy animation phase staggering
+  - enemy spawn logic and runtime behavior
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No enemy AI or spawn changes.
+- No asset filename or sprite-sheet geometry changes.
+
+Testing notes:
+
+- No dedicated asset-loading tests were added.
+- This is a pygame/resource-loading extraction.
+- Validation relies on `py_compile`, the existing `pytest` suite, and future manual visual verification if needed.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`

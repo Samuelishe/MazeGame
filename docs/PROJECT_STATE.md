@@ -176,6 +176,7 @@ Current structure reality is still root-heavy:
 - `persistence/` now exists and currently hosts the player repository boundary
 - `runtime/` now exists and now contains `SessionStats` plus the gameplay persistence handoff helper
 - `presentation/` now exists and currently hosts coin/block rendering helpers
+- `presentation/` now also hosts enemy sprite loading/type mapping
 
 ## External dependencies actually used
 
@@ -227,8 +228,10 @@ The architecture inspection confirms that the main structural issue is not broke
 - Documentation and environment assumptions now point to `.venv`, `pygame-ce`, and the current pytest workflow.
 - Stage 3 Step 2 completed:
   coin/block pygame draw helpers now live in `presentation/`.
+- Stage 3 Step 4 completed:
+  enemy sprite loading and `EnemyType` mapping now live in `presentation/enemy_sprites.py`.
 - World-render extraction and broader presentation cleanup have not started.
-- Enemy sprite loading and type mapping are now documented as the next narrow presentation-oriented analysis target.
+- Runtime animation setup (`AnimatedSprite`, per-enemy phase staggering) was intentionally not moved.
 
 ## Inspection notes
 

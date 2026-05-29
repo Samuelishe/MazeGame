@@ -31,8 +31,9 @@ from highscores import (
     load_highscore,
     default_path as highscore_path,
 )
+from presentation.enemy_sprites import load_enemy_sheets_by_type
 from sounds import SoundBank
-from sprites import SpriteSheet, AnimatedSprite
+from sprites import AnimatedSprite
 
 from runtime.run_persistence import handle_run_persistence
 from runtime.session_stats import SessionStats
@@ -239,65 +240,7 @@ def play_maze(
         pygame.display.set_caption("Maze Walker")
         clock = pygame.time.Clock()
 
-        # --- спрайт-листы врагов (загружаем один раз) ---
-        sprite_paths: list[str] = [
-            "resources/images/enemies/Tiny_Slime Red.png",
-            "resources/images/enemies/Tiny_Slime Green.png",
-            "resources/images/enemies/Tiny_Slime Purple.png",
-            "resources/images/enemies/Tiny_Slime Yellow.png",
-        ]
-
-        enemy_sheets: list[SpriteSheet] = []
-        for path in sprite_paths:
-            try:
-                enemy_sheets.append(
-                    SpriteSheet.from_file(
-                        path,
-                        (16, 16),
-                        spacing=(8, 8),  # у этих ассетов 8px между кадрами
-                        margin=(4, 4),  # и 8px внешний паддинг
-                    )
-                )
-            except pygame.error:
-                # если какого-то файла нет — просто пропускаем
-                continue
-
-        # страховка: хотя бы красный должен быть
-        if not enemy_sheets:
-            enemy_sheets.append(
-                SpriteSheet.from_file(
-                    "resources/images/enemies/Tiny_Slime Red.png",
-                    (16, 16),
-                    spacing=(8, 8),
-                    margin=(4, 4),
-                )
-            )
-
-        def sheet_or_default(index: int) -> SpriteSheet:
-            """
-            Возвращает спрайт-лист по индексу либо первый,
-            если нужного индекса нет.
-            """
-            return enemy_sheets[index] if index < len(enemy_sheets) else enemy_sheets[0]
-
-        enemy_sheets_by_type: dict[EnemyType, list[SpriteSheet]] = {
-            # SLIME: зелёные — самые медленные
-            EnemyType.SLIME: [
-                sheet_or_default(1),  # Green
-            ],
-            # MEDIUM: жёлтые — средняя скорость
-            EnemyType.MEDIUM: [
-                sheet_or_default(3),  # Yellow
-            ],
-            # HUNTER: красные — самые быстрые и умные
-            EnemyType.HUNTER: [
-                sheet_or_default(0),  # Red
-            ],
-            # PATROLLER: фиолетовые — зарезервировано под патрульных
-            EnemyType.PATROLLER: [
-                sheet_or_default(2),  # Purple
-            ],
-        }
+        enemy_sheets_by_type = load_enemy_sheets_by_type()
 
 
         hud_font_size = max(14, cell_px // 2)
@@ -381,11 +324,7 @@ def play_maze(
         # --- каждому врагу — спрайт по типу и своя фаза анимации ---
         enemy_anims: list[AnimatedSprite] = []
         for enemy in enemies:
-            sheets_for_type = enemy_sheets_by_type.get(enemy.type, enemy_sheets)
-            # защита: если вдруг список пуст — используем весь пул
-            if not sheets_for_type:
-                sheets_for_type = enemy_sheets
-            sheet = rng.choice(sheets_for_type)
+            sheet = enemy_sheets_by_type.get(enemy.type, enemy_sheets_by_type[EnemyType.HUNTER])
 
             anim = AnimatedSprite(sheet, frame_count=8, fps=6)
             # немного сдвигаем старт, чтобы не было синхронной «жвачки»

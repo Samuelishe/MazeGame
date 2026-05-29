@@ -141,6 +141,7 @@ Main modules:
 - `runtime/session_stats.py`: in-memory `SessionStats`
 - `presentation/coin_rendering.py`: coin draw helpers
 - `presentation/block_rendering.py`: temporary block draw helpers
+- `presentation/enemy_sprites.py`: enemy sprite-sheet loading and type mapping
 - `session_controller.py`: in-memory session plus run recording
 - `leaderboard.py`: read queries for leaderboard screens
 
@@ -356,6 +357,7 @@ Recommended direction:
 - `enemies.py`: enemy models, schemes, movement strategies
 - `coins.py`: coin domain/runtime support; coin drawing now lives in `presentation/coin_rendering.py`
 - `blocks.py`: block domain/runtime support; block drawing now lives in `presentation/block_rendering.py`
+- `presentation/enemy_sprites.py`: enemy sprite paths, `SpriteSheet` loading, fallback-to-red policy, and `EnemyType` mapping
 - `effects.py`: presentation-only visual effects
 - `palette.py`: presentation-only color palette generation
 - `sprites.py`: sprite sheet helpers
@@ -472,7 +474,7 @@ Interpretation:
 
 ## Enemy Asset Loading Boundary Analysis
 
-### Current flow in `maze_game.py`
+### Current flow
 
 Enemy presentation setup currently happens in two adjacent slices:
 
@@ -528,18 +530,18 @@ Enemy presentation setup currently happens in two adjacent slices:
 
 Recommend Option B.
 
-Best next Stage 3 code-pass after the completed coin/block draw split:
+Stage 3 Step 4 is now completed:
 
-- create one narrow presentation helper for:
+- `presentation/enemy_sprites.py` owns:
   - enemy sprite path list
   - `SpriteSheet.from_file(...)` loading
   - fallback-to-red behavior
-  - `EnemyType -> list[SpriteSheet]` mapping
-- do not move:
+  - `EnemyType -> SpriteSheet` mapping
+- `maze_game.py` still owns:
   - `AnimatedSprite`
   - per-enemy random phase shifting
   - enemy spawn logic
-  - enemy AI or runtime timers
+  - enemy AI and runtime timers
 
 ## Cyclic imports
 

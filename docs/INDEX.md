@@ -34,7 +34,7 @@ Supporting file:
 - Run repository boundary: `persistence/run_repository.py`
 - Runtime session aggregate: `runtime/session_stats.py`
 - Gameplay persistence handoff helper: `runtime/run_persistence.py`
-- Presentation helpers: `presentation/coin_rendering.py`, `presentation/block_rendering.py`
+- Presentation helpers: `presentation/coin_rendering.py`, `presentation/block_rendering.py`, `presentation/enemy_sprites.py`
 - Maze position helper: `gameplay/maze_positions.py`
 - Score preparation helper: `gameplay/scoring.py`
 - HUD text helpers: `gameplay/hud_text.py`

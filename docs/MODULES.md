@@ -53,6 +53,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `presentation/__init__.py`
 - `presentation/coin_rendering.py`
 - `presentation/block_rendering.py`
+- `presentation/enemy_sprites.py`
 - `ui.py`
 - `sounds.py`
 - `sprites.py`
@@ -201,6 +202,23 @@ This is an inspection document only. It does not imply any immediate file moves.
 - Notes:
   Stage 3 Step 2 extracted the block draw path here without changing block spawn/respawn ownership.
 
+### `presentation/enemy_sprites.py`
+
+- Role:
+  pygame-facing enemy sprite-sheet loading and `EnemyType` mapping helpers.
+- Main classes:
+  none.
+- Main functions:
+  `load_enemy_sheets_by_type`.
+- Used by:
+  `maze_game.py`.
+- Depends on:
+  `pygame`, `enemies`, `sprites`.
+- Future fit:
+  keep in `presentation/`.
+- Notes:
+  Stage 3 Step 4 extracted enemy asset paths, sheet loading, fallback-to-red behavior, and type mapping here without moving runtime animation setup.
+
 ### `persistence/run_repository.py`
 
 - Role:
@@ -328,7 +346,7 @@ Approximate size: 799 lines total.
 
 #### Enemy asset loading boundary analysis
 
-Current asset-loading path inside `maze_game.py`:
+Current asset-loading path:
 
 - asset path definition
   - four hardcoded files:
@@ -348,7 +366,7 @@ Current asset-loading path inside `maze_game.py`:
   - local `sheet_or_default(...)`
   - local `enemy_sheets_by_type: dict[EnemyType, list[SpriteSheet]]`
 - runtime usage after loading
-  - later loop chooses a sheet per enemy from `enemy_sheets_by_type`
+  - `maze_game.py` later chooses a sheet per enemy from `enemy_sheets_by_type`
   - then creates `AnimatedSprite(...)`
   - then shifts `anim.start_time` for desynchronization
 
@@ -367,12 +385,13 @@ Responsibility split:
 
 Recommended narrow future split:
 
-- move only:
+- completed:
   - asset path definition
   - `SpriteSheet.from_file(...)` loop
   - `sheet_or_default(...)`
   - `enemy_sheets_by_type` construction
-- keep in `maze_game.py`:
+  moved to `presentation.enemy_sprites`
+- kept in `maze_game.py`:
   - per-enemy `AnimatedSprite(...)` creation
   - `anim.start_time` staggering
   - all enemy spawn/runtime behavior
@@ -1530,6 +1549,7 @@ Recommended next code-pass:
 - `maze_game.py` -> `presentation.coin_rendering.py`
 - `maze_game.py` -> `presentation.block_rendering.py`
 - `maze_game.py` -> `effects.py`
+- `maze_game.py` -> `presentation.enemy_sprites.py`
 - `maze_game.py` -> `ui.py`
 - `maze_game.py` -> `sounds.py`
 - `maze_game.py` -> `sprites.py`

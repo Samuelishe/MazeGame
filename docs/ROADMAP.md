@@ -19,13 +19,15 @@ Keep gameplay stable while continuing small, testable architectural improvements
 - Stage 3 Step 2 narrow draw-path extraction is completed:
   - `presentation/coin_rendering.py`
   - `presentation/block_rendering.py`
+- Stage 3 Step 4 enemy asset-loading extraction is completed:
+  - `presentation/enemy_sprites.py`
 
 ## Next recommended implementation step
 
 Next Stage 3 follow-up:
 
 1. keep `coins.py` and `blocks.py` stable after the narrow draw split
-2. extract enemy sprite loading and type mapping before any world-render pass
+2. keep `presentation/enemy_sprites.py` narrow and runtime-neutral
 3. reassess `maze_game.py` world-render extraction separately
 4. do not combine that future pass with `ui.py` cleanup
 
@@ -41,7 +43,7 @@ Why this next:
 
 1. Completed: narrow draw-helper extraction from `coins.py`
 2. Completed: narrow draw-helper extraction from `blocks.py`
-3. Analyze and then extract enemy sprite loading/type mapping as a narrow presentation helper
+3. Completed: analyze and then extract enemy sprite loading/type mapping as a narrow presentation helper
 4. Re-evaluate whether `maze_game.py` world rendering or `ui.py` has a similarly safe later split
 
 ### Phase B: Stage 5 state-screen duplication cleanup

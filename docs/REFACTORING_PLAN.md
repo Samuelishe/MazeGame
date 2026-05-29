@@ -91,9 +91,9 @@ Recommended first Stage 3 code-pass:
 
 Next recommended Stage 3 code-pass:
 
-1. extract enemy sprite loading and type mapping only
-2. keep `AnimatedSprite(...)` creation in `maze_game.py`
-3. keep enemy spawn logic, AI, and runtime timers unchanged
+1. completed: extract enemy sprite loading and type mapping only
+2. completed: keep `AnimatedSprite(...)` creation in `maze_game.py`
+3. completed: keep enemy spawn logic, AI, and runtime timers unchanged
 4. keep world-render extraction for a separate later step
 
 ## Stage 4

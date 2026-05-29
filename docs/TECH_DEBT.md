@@ -509,10 +509,10 @@ Next recommended Stage 3 target:
 
 Current code facts:
 
-- `maze_game.py` still hardcodes enemy sprite paths;
-- `maze_game.py` still performs `SpriteSheet.from_file(...)` calls directly;
-- `maze_game.py` still owns fallback-to-red loading behavior;
-- `maze_game.py` still builds the `EnemyType -> SpriteSheet` mapping inline;
+- `maze_game.py` no longer hardcodes enemy sprite paths inline;
+- `maze_game.py` no longer performs `SpriteSheet.from_file(...)` calls directly;
+- fallback-to-red loading behavior now lives in `presentation/enemy_sprites.py`;
+- `EnemyType -> SpriteSheet` mapping now lives in `presentation/enemy_sprites.py`;
 - per-enemy `AnimatedSprite(...)` creation happens immediately afterward.
 
 Why it matters:
@@ -523,7 +523,7 @@ Why it matters:
 
 Recommended next move:
 
-- extract enemy sprite loading and type mapping only;
+- completed: extract enemy sprite loading and type mapping only;
 - keep `AnimatedSprite(...)` creation and runtime randomization in `maze_game.py`.
 
 What should wait:
