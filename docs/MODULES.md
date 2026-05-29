@@ -21,6 +21,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `game_app.py`
 - `maze_game.py`
 - `runtime/coin_collection.py`
+- `runtime/block_timers.py`
 - `runtime/session_stats.py`
 - `runtime/run_persistence.py`
 
@@ -169,6 +170,23 @@ This is an inspection document only. It does not imply any immediate file moves.
   keep in `runtime/`.
 - Notes:
   Stage 3 Step 8 extracted coin lookup/removal, rarity/value accounting, and sound/effect triggers here without moving player movement flow or other update-step systems.
+
+### `runtime/block_timers.py`
+
+- Role:
+  runtime-facing block expiration and respawn update helper.
+- Main classes:
+  none.
+- Main functions:
+  `update_block_timers`.
+- Used by:
+  `maze_game.py`, tests.
+- Depends on:
+  `blocks`.
+- Future fit:
+  keep in `runtime/`.
+- Notes:
+  Stage 3 Step 10 extracted blocked-set rebuild, expiration checks, forbidden-cell recomputation, respawn calls, and `expires_at` resets here without moving initial spawn, pause-time shifts, or rendering.
 
 ### `presentation/coin_rendering.py`
 
@@ -1726,11 +1744,25 @@ Testability assessment:
   - forbidden cells include player/goal/enemy positions
   - blocked set matches current active blocks
 
-Cheapest later candidate after that:
+Completed in Stage 3 Step 10:
 
-- block timer helper is now the cheapest next candidate
-- enemy update helper remains more behavior-sensitive
-- world rendering helper remains broader
+- `runtime/block_timers.py` now owns:
+  - blocked-set rebuild
+  - expiration checks
+  - forbidden-cell recomputation
+  - `respawn_block(...)`
+  - `expires_at` reset
+- `maze_game.py` still owns:
+  - initial block spawn
+  - pause-time timer shifting
+  - movement flow
+  - enemy updates
+  - rendering
+
+Likely next candidate after that:
+
+- enemy update helper
+- or a separate world-render analysis pass
 
 ## Dependency map
 

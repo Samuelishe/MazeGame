@@ -606,9 +606,9 @@ Why it matters:
 
 Recommended next move:
 
-- prefer a narrow `update_block_timers(...)` helper only;
-- keep initial spawn, pause-time shifts, movement flow, enemy updates, and rendering in `maze_game.py`;
-- use explicit mutable arguments rather than a broader manager object.
+- completed: narrow `update_block_timers(...)` extraction only;
+- `runtime/block_timers.py` now owns blocked-set rebuild, expiration checks, forbidden-cell recomputation, respawn calls, and `expires_at` resets;
+- initial spawn, pause-time shifts, movement flow, enemy updates, and rendering remain in `maze_game.py`.
 
 What should wait:
 

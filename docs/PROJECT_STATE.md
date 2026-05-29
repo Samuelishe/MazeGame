@@ -29,7 +29,7 @@ Current refactoring phase reality:
 
 - Stage 4 persistence-boundary work is largely completed at the narrow-boundary level;
 - Stage 3 has now started and completed its first narrow presentation-boundary extraction pass for mixed support modules.
-- the next likely Stage 3 runtime-support candidate is the block timer helper inside `maze_game.py`.
+- the next likely Stage 3 follow-up is either enemy update extraction analysis or a separate world-render analysis pass.
 
 ## Current entrypoints
 
@@ -176,6 +176,7 @@ Current structure reality is still root-heavy:
 - `persistence/` now exists and currently hosts the player repository boundary
 - `runtime/` now exists and now contains `SessionStats` plus the gameplay persistence handoff helper
 - `runtime/` now also contains the coin collection helper boundary
+- `runtime/` now also contains the block timer/respawn update helper
 - `presentation/` now exists and currently hosts coin/block rendering helpers
 - `presentation/` now also hosts enemy sprite loading/type mapping
 - `presentation/` now also hosts HUD surface/background composition
@@ -240,6 +241,8 @@ The architecture inspection confirms that the main structural issue is not broke
   coin collection logic now lives in `runtime/coin_collection.py`.
 - Stage 3 Step 9 analysis completed:
   block timer updates are now documented as the next likely narrow runtime-support extraction candidate inside `maze_game.py`.
+- Stage 3 Step 10 completed:
+  block timer/respawn updates now live in `runtime/block_timers.py`.
 - World-render extraction and broader presentation cleanup have not started.
 - Runtime animation setup (`AnimatedSprite`, per-enemy phase staggering) was intentionally not moved.
 - HUD fonts, HUD text assembly, and final HUD positioning intentionally remain in `maze_game.py`.

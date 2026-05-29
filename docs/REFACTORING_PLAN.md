@@ -97,8 +97,8 @@ Next recommended Stage 3 code-pass:
 4. completed: extract HUD surface/background composition only
 5. completed: extract the coin collection handler with explicit runtime arguments
 6. keep world-render extraction for a separate later step
-7. next likely narrow runtime-support candidate: block timer helper
-8. block timer helper should stay a narrow update-step extraction, not a broader runtime manager
+7. completed: extract the block timer helper with in-place mutation of `blocks` and `blocked_set`
+8. next likely follow-up: enemy update helper analysis or a separate world-render analysis pass
 
 ## Stage 4
 

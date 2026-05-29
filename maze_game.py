@@ -37,6 +37,7 @@ from sounds import SoundBank
 from sprites import AnimatedSprite
 
 from runtime.coin_collection import CoinCollectionStats, collect_coin_at
+from runtime.block_timers import update_block_timers
 from runtime.run_persistence import handle_run_persistence
 from runtime.session_stats import SessionStats
 
@@ -48,7 +49,7 @@ from enemies import (
     EnemyType,
     build_safe_zone,
 )
-from blocks import spawn_blocks, respawn_block
+from blocks import spawn_blocks
 from presentation.block_rendering import draw_block_cell
 from presentation.coin_rendering import draw_coin
 from palette import make_palette
@@ -522,21 +523,17 @@ def play_maze(
                         enemy.next_step_at = now_ms + enemy.step_interval_ms
 
             # ---- апдейт блоков (переезд по таймеру) ----
-            blocked_set.clear()
-            blocked_set.update(block.pos for block in blocks)
-
-            for block in blocks:
-                if now_ms >= block.expires_at:
-                    forbidden_dynamic = {
-                        player,
-                        goal,
-                        *(e.pos for e in enemies),
-                        *(x.pos for x in blocks if x is not block),
-                    }
-                    respawn_block(block, maze, rng, forbidden_dynamic)
-                    block.expires_at = now_ms + block_lifetime_ms
-                    blocked_set.clear()
-                    blocked_set.update(x.pos for x in blocks)
+            update_block_timers(
+                blocks=blocks,
+                blocked_set=blocked_set,
+                player_pos=player,
+                goal=goal,
+                enemies=enemies,
+                maze=maze,
+                rng=rng,
+                now_ms=now_ms,
+                block_lifetime_ms=block_lifetime_ms,
+            )
 
             # столкновения
             if not (won or lost):

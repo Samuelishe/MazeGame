@@ -742,21 +742,25 @@ Option assessment:
 - Option C: widen into a block runtime manager/state object
   - too broad for the current safe surface
 
-Recommended next Stage 3 code-pass:
+Stage 3 Step 10 is now completed:
 
-- prefer Option B
-- move only:
+- `runtime/block_timers.py` owns:
   - blocked-set rebuild
   - expiration checks
   - forbidden-cell recomputation
   - `respawn_block(...)`
   - `expires_at` reset
-- keep in `maze_game.py`:
+- `maze_game.py` still owns:
   - initial spawn
   - pause-time timer shifting
   - movement flow
   - enemy updates
   - rendering
+
+Likely next candidate after that:
+
+- enemy update helper
+- or a separate world-render analysis pass
 
 Testability:
 

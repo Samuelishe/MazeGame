@@ -1150,6 +1150,47 @@ Documentation changes:
 - Updated `docs/INDEX.md`
 - Updated `docs/SESSION_LOG.md`
 
+## 2026-05-29 - Stage 3 Step 10: Extract block timer helper
+
+Scope:
+
+- move only the block expiration and respawn update slice out of `maze_game.py`
+- keep initial block spawn, pause-time shifts, movement flow, enemy updates, and rendering inline
+
+Code changes:
+
+- Added `runtime/block_timers.py`.
+- Added `update_block_timers(...)`.
+- Removed inline blocked-set rebuild and respawn loop from `maze_game.py`.
+- Replaced it with a narrow runtime helper call.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- The per-block `expires_at` model remains unchanged.
+- Respawn timing remains `now_ms + block_lifetime_ms`.
+- Initial spawn, rendering, and pause-time timer shifts were not moved.
+
+Testing notes:
+
+- Added `tests/test_block_timers.py`.
+- Covered:
+  - no expiration
+  - expiration and respawn
+  - forbidden-cell exclusion
+  - multiple-block behavior
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/ROADMAP.md`
+- Updated `docs/INDEX.md`
+- Updated `docs/SESSION_LOG.md`
+
 ## 2026-05-29 - Stage 3 Step 2: Extract coin and block rendering helpers
 
 Scope:
