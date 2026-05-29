@@ -31,6 +31,19 @@ Why it matters:
 - the module is hard to reason about locally
 - it remains the single highest-risk edit surface in the project
 
+Detailed inspection confirms that the real problem is not only file size, but also dense internal clustering inside `play_maze()`:
+
+- session bootstrap
+- asset loading
+- entity spawning
+- event/pause flow
+- simulation updates
+- rendering
+- score and persistence hooks
+- end-screen blocking UI flow
+
+Most of these concerns still live inside one nested `run_once()` function.
+
 ### 2. Mixed runtime/render/gameplay responsibilities
 
 The main gameplay loop still owns multiple concerns at once:
@@ -73,6 +86,15 @@ Why it matters:
 
 - only pure helper slices can be extracted safely
 - renderer separation does not yet exist
+
+The detailed `maze_game.py` inspection shows three different pygame-coupling levels:
+
+- low:
+  score/value preparation and text/value summary composition
+- medium:
+  HUD surface preparation, asset loading, world rendering helpers
+- high:
+  event flow, pause menu timing offsets, end-screen blocking choice flow
 
 ## Medium-risk debt
 
@@ -188,7 +210,21 @@ Why it matters:
 
 These are realistic next targets for extract-only refactors.
 
-### 1. HUD text assembly helpers
+### 1. Entry/exit inner-cell helper
+
+Risk level: low
+
+Why safe:
+
+- pure coordinate conversion
+- no pygame dependency
+- no persistence coupling
+
+Dependencies/coupling:
+
+- border coordinate and side string only
+
+### 2. HUD text assembly helpers
 
 Risk level: low
 
@@ -201,7 +237,7 @@ Dependencies/coupling:
 
 - current counters and preformatted time values from `maze_game.py`
 
-### 2. HUD mixed-text rendering helper
+### 3. HUD mixed-text rendering helper
 
 Risk level: low to medium
 
@@ -215,7 +251,24 @@ Dependencies/coupling:
 - `pygame.font.Font`
 - `pygame.Surface`
 
-### 3. End-screen result summary text
+### 4. Score/result value preparation
+
+Risk level: low to medium
+
+Why relatively safe:
+
+- the score formula is already externalized
+- remaining work is mostly assembling explicit input values
+- can be separated from UI wait logic
+
+Dependencies/coupling:
+
+- elapsed time
+- coin counters
+- `ScoreParams`
+- local `won/lost` flags
+
+### 5. End-screen result summary text
 
 Risk level: low
 
@@ -228,7 +281,7 @@ Why it was safe:
 - pure string assembly
 - no event-flow or render-flow changes
 
-### 4. Highscore summary formatting
+### 6. Highscore summary formatting
 
 Risk level: low
 
@@ -242,7 +295,56 @@ Dependencies/coupling:
 - highscore values
 - preformatted time strings
 
-### 5. Lightweight result value container
+### 7. Enemy sprite loading and type mapping
+
+Risk level: medium
+
+Why not low-risk:
+
+- uses pygame image loading and asset paths
+- fallback behavior must remain identical
+
+Dependencies/coupling:
+
+- `pygame`
+- `SpriteSheet`
+- `EnemyType`
+- resource file paths
+
+### 8. Runtime spawn/setup cluster
+
+Risk level: medium
+
+Why not low-risk:
+
+- combines safe-zone computation, enemy spawn, animation setup, block spawn, coin spawn, timers, and counters
+- strongly tied to local mutable run state
+
+Dependencies/coupling:
+
+- `enemies`
+- `blocks`
+- `coins`
+- `sprites`
+- timer values and player/goal positions
+
+### 9. Coin collection handler
+
+Risk level: medium
+
+Why not low-risk:
+
+- mutates multiple counters and the `coins` collection
+- triggers sound and visual effects
+
+Dependencies/coupling:
+
+- `CoinRarity`
+- `SoundBank`
+- `Effects`
+- current coin list and counters
+
+### 10. Lightweight result value container
 
 Risk level: medium
 
@@ -257,7 +359,21 @@ Dependencies/coupling:
 - highscore update path
 - session stats/persistence hooks
 
-### 6. Pause/end-menu control-flow extraction
+### 11. World render helper
+
+Risk level: medium
+
+Why not low-risk:
+
+- presentation-only in spirit
+- but depends on a large live state surface: maze, blocks, coins, enemies, trail, effects, palette, cell size
+
+Dependencies/coupling:
+
+- `pygame`
+- almost all visual runtime collections
+
+### 12. Pause/end-menu control-flow extraction
 
 Risk level: medium to high
 
@@ -274,6 +390,33 @@ Dependencies/coupling:
 
 ## Analysis notes for `maze_game.py`
 
+### Internal zone map
+
+Approximate line map:
+
+- `1-66`: header + imports
+- `68-75`: type alias + constants
+- `78-154`: top-level helpers
+- `156-216`: `play_maze()` entry setup
+- `218-903`: nested `run_once()`
+- `907-933`: outer replay/new-level loop
+
+Within `run_once()`:
+
+- `228-240`: border-to-inner cell helper
+- `243-311`: enemy sprite asset loading
+- `314-396`: HUD font setup + mixed-text HUD renderer
+- `398-500`: enemy/block/coin spawn and initial state setup
+- `501-524`: coin collection handler
+- `526-592`: input and pause flow
+- `594-605`: auto-movement
+- `607-652`: enemy processing
+- `654-669`: block timer processing
+- `671-677`: collision detection
+- `679-746`: world rendering
+- `748-784`: HUD rendering
+- `786-897`: score, persistence, and end-screen flow
+
 ### Pure helper groups
 
 Already identified and/or extracted:
@@ -282,6 +425,12 @@ Already identified and/or extracted:
 - HUD text assembly
 - scoring
 - end-screen result text assembly
+
+Remaining low-coupling helper candidates:
+
+- inner-cell coordinate translation
+- score/result value preparation
+- highscore summary value preparation
 
 These remain the safest pattern for continued incremental cleanup.
 
@@ -305,6 +454,8 @@ Current UI-only slices inside `maze_game.py`:
 - pause-menu interaction
 - end-screen summary preparation
 - HUD line rendering helper
+- HUD surface/background composition
+- enemy sprite asset loading
 
 ### Runtime-only logic
 
@@ -315,7 +466,17 @@ Current runtime-only slices inside `maze_game.py`:
 - block respawn/timer updates
 - collision detection
 - pause timer offset handling
+- entity spawn/setup for enemies, blocks, and coins
 
 ### Low-coupling candidates
 
 The lowest-coupling candidates remain runtime-independent text/formatting helpers and similar deterministic value formatting. These are safe because they do not alter input flow, timing, mutable run state, or persistence behavior.
+
+Priority ranking after detailed inspection:
+
+- Priority A:
+  inner-cell helper, HUD mixed-text renderer, score/result value preparation, highscore summary value preparation
+- Priority B:
+  enemy sprite loading, spawn/setup cluster, coin collection handler, world render helper, update-step helpers
+- Priority C:
+  pause handling, event handling, end-screen blocking control flow, whole-`run_once()` extraction

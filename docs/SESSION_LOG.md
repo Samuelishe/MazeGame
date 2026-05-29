@@ -210,3 +210,43 @@ Behavior notes:
 - No runtime code changes.
 - No import changes.
 - No test changes.
+
+## 2026-05-29 - maze_game.py deep analysis pass
+
+Scope:
+
+- inspect `maze_game.py` only
+- map internal responsibility zones by actual code structure
+- assess extraction risk without changing behavior
+- update planning documents around future extraction work
+
+Observed:
+
+- `maze_game.py` is 799 lines and still dominated by one large `play_maze()` function.
+- the real concentration point is nested `run_once()`, which hosts most runtime behavior.
+- the file breaks into clear internal clusters:
+  - top-level helpers
+  - session/bootstrap setup
+  - asset loading
+  - spawn/setup
+  - event and pause flow
+  - movement/enemy/block updates
+  - rendering
+  - score/persistence/end-screen flow
+  - outer replay/new-level wrapper
+- the safest remaining extraction targets are small helper/value-preparation slices, not loop or event-flow slices.
+- the highest-risk slices remain pause handling, event flow, and end-screen blocking control flow.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+
+Behavior notes:
+
+- No gameplay behavior changes.
+- No runtime code changes.
+- No import changes.
+- No refactoring performed.

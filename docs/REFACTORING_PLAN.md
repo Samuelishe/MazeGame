@@ -35,6 +35,15 @@ It is intentionally conservative:
 - Estimated change size:
   small code changes across 2-5 files plus focused tests.
 
+Concrete `maze_game.py` steps inside Stage 2:
+
+1. extract inner-cell border translation helper from `run_once()`
+2. extract score/result value preparation from the end-of-run block
+3. extract highscore summary value preparation from the end-of-run block
+4. extract HUD mixed-text rendering helper out of nested local scope
+
+These are the current Priority A candidates from the detailed `maze_game.py` inspection.
+
 ## Stage 3
 
 - Goal:
@@ -47,6 +56,13 @@ It is intentionally conservative:
   medium.
 - Estimated change size:
   medium, several small passes instead of one rewrite.
+
+Concrete `maze_game.py`-adjacent steps inside Stage 3:
+
+1. extract enemy sprite loading and sprite-type mapping into a presentation helper
+2. extract world rendering block into a dedicated pygame render helper
+3. extract HUD background/surface composition into a presentation helper
+4. separate presentation pieces from mixed support modules such as `coins.py` and `blocks.py`
 
 ## Stage 4
 
@@ -65,6 +81,11 @@ It is intentionally conservative:
 - Estimated change size:
   medium, 3-6 files plus tests for non-pygame behavior.
 
+Concrete `maze_game.py`-adjacent steps inside Stage 4:
+
+1. isolate the value-preparation side of run persistence from the blocking end-screen UI flow
+2. reduce direct knowledge of SQLite write-path details at the gameplay-runtime boundary
+
 ## Stage 5
 
 - Goal:
@@ -77,6 +98,11 @@ It is intentionally conservative:
   medium.
 - Estimated change size:
   medium, but must be sliced into narrow passes because screen behavior is sensitive.
+
+Concrete `maze_game.py` caution for Stage 5:
+
+- do not combine state-screen cleanup with `maze_game.py` event-flow extraction in the same step
+- pause/end-screen control-flow changes should remain separate because they are higher risk than normal screen cleanup
 
 ## Stage 6
 
@@ -134,3 +160,27 @@ Reason:
 - persistence boundaries are the next most important architectural clarity problem.
 - state-machine duplication matters, but it is less urgent than reducing runtime concentration.
 - physical file moves should be delayed until boundary work is already done.
+
+## `maze_game.py` extraction priority
+
+### Priority A
+
+- inner-cell helper
+- HUD mixed-text renderer
+- score/result value preparation
+- highscore summary value preparation
+
+### Priority B
+
+- enemy sprite loading and type mapping
+- enemy/block/coin spawn setup cluster
+- coin collection handler
+- auto-movement / enemy update / block update helpers
+- world render helper
+
+### Priority C
+
+- pause handling
+- full event handling extraction
+- end-screen blocking control flow
+- whole `run_once()` extraction

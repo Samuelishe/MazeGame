@@ -102,6 +102,312 @@ This is an inspection document only. It does not imply any immediate file moves.
 - Notes:
   dominant god module; mixes gameplay rules, state mutation, rendering, pause/end overlays, persistence hooks, audio, assets, and level control.
 
+#### `maze_game.py` internal zones
+
+Approximate size: 799 lines total.
+
+- Lines `1-66`: stale module docstring and imports
+  - responsibility:
+    file header plus all external imports.
+  - coupling:
+    very high import fan-in.
+  - external dependencies:
+    14 project modules plus stdlib.
+  - extraction risk:
+    none as analysis, but the stale docstring is a maintenance smell.
+
+- Lines `68-75`: shared type alias and constants
+  - responsibility:
+    `Coord`, `MAZE_GRID_ROWS`, `MAZE_GRID_COLS`, `MAZE_CELL_PX`.
+  - coupling:
+    low.
+  - external dependencies:
+    typing only.
+  - extraction risk:
+    low, but not urgent.
+
+- Lines `78-154`: top-level helpers
+  - responsibility:
+    `compute_window_size`, passability helpers, coin-count sampling.
+  - coupling:
+    low to medium.
+  - external dependencies:
+    `grid_utils`, `random`.
+  - extraction risk:
+    low.
+
+- Lines `156-216`: `play_maze()` entry and session-level setup
+  - responsibility:
+    session/player resolution, local stats fallback, sound/effects/highscore initialization.
+  - coupling:
+    medium to high.
+  - external dependencies:
+    `SessionStats`, `SoundBank`, `Effects`, `highscores`, `session_controller`.
+  - extraction risk:
+    medium.
+
+- Lines `218-903`: `run_once()` nested runtime host
+  - responsibility:
+    one full round from maze entry setup through end-screen return code.
+  - coupling:
+    very high.
+  - external dependencies:
+    nearly every runtime-facing dependency in the file.
+  - extraction risk:
+    high unless split by narrow internal clusters.
+
+- Lines `228-240`: entry/exit border translation
+  - responsibility:
+    convert border cells to inner player/goal start cells.
+  - coupling:
+    low.
+  - external dependencies:
+    none beyond local values.
+  - extraction risk:
+    low.
+
+- Lines `243-311`: enemy sprite asset loading and sprite-type mapping
+  - responsibility:
+    load enemy sheets from disk, fallback if missing, map sheets to `EnemyType`.
+  - coupling:
+    medium.
+  - external dependencies:
+    `pygame`, `SpriteSheet`, `EnemyType`.
+  - extraction risk:
+    medium, because it is pygame- and asset-path-dependent but behaviorally isolated.
+
+- Lines `314-396`: HUD font setup and `render_hud_line()`
+  - responsibility:
+    create HUD fonts, define emoji set, render mixed text into one surface.
+  - coupling:
+    medium.
+  - external dependencies:
+    `pygame`, `ui` font helpers.
+  - extraction risk:
+    low to medium.
+
+- Lines `398-500`: runtime entity spawning and initial state setup
+  - responsibility:
+    safe zones, enemy spawn selection, enemy animation setup, block spawn, coin spawn, counters, timers, flags.
+  - coupling:
+    high.
+  - external dependencies:
+    `enemies`, `blocks`, `coins`, `sprites`, `palette`, `pygame`, `random`.
+  - extraction risk:
+    medium.
+
+- Lines `501-524`: `try_collect_at()`
+  - responsibility:
+    coin pickup handling, rarity counters, sound triggers, coin flash trigger, list mutation.
+  - coupling:
+    medium to high.
+  - external dependencies:
+    `CoinRarity`, `SoundBank`, `Effects`.
+  - extraction risk:
+    medium.
+
+- Lines `526-592`: event processing and pause control flow
+  - responsibility:
+    QUIT, ESC pause menu, manual movement, KEYUP direction reset.
+  - coupling:
+    very high.
+  - external dependencies:
+    `pygame`, `ui` pause helpers, mutable timing state.
+  - extraction risk:
+    high.
+
+- Lines `594-605`: auto-movement tick
+  - responsibility:
+    continue player motion while key direction is held.
+  - coupling:
+    high.
+  - external dependencies:
+    local mutable runtime state and `try_collect_at()`.
+  - extraction risk:
+    medium.
+
+- Lines `607-652`: enemy processing
+  - responsibility:
+    enemy AI step invocation, movement validation, oscillation update, step timing.
+  - coupling:
+    medium to high.
+  - external dependencies:
+    `enemies` runtime objects, local maze/player/blocked state.
+  - extraction risk:
+    medium.
+
+- Lines `654-669`: block timer processing
+  - responsibility:
+    blocked set refresh, timed block respawn, forbidden-cell recomputation.
+  - coupling:
+    medium.
+  - external dependencies:
+    `blocks`, local enemy/player/goal state.
+  - extraction risk:
+    medium.
+
+- Lines `671-677`: collision resolution
+  - responsibility:
+    detect player-enemy overlap and trigger defeat sound.
+  - coupling:
+    low to medium.
+  - external dependencies:
+    `SoundBank`, local state.
+  - extraction risk:
+    low to medium.
+
+- Lines `679-746`: world rendering
+  - responsibility:
+    maze background, blocks, coins, goal, trail, enemies, player, effects.
+  - coupling:
+    very high to pygame presentation, low to persistence.
+  - external dependencies:
+    `pygame`, `blocks`, `coins`, `sprites`, `effects`.
+  - extraction risk:
+    medium.
+
+- Lines `748-784`: HUD rendering
+  - responsibility:
+    build HUD text, render mixed HUD surface, build background surface, blit HUD.
+  - coupling:
+    medium.
+  - external dependencies:
+    `gameplay.hud_text`, `pygame`, local HUD renderer.
+  - extraction risk:
+    low to medium.
+
+- Lines `786-897`: score processing, persistence hooks, end-screen summary, end-menu control flow
+  - responsibility:
+    compute elapsed time, score params, final score, JSON highscore update, session/SQLite record, summary text, end overlay, blocking choice wait.
+  - coupling:
+    very high.
+  - external dependencies:
+    `gameplay.formatting`, `gameplay.scoring`, `gameplay.result_text`, `highscores`, `session_controller`, `players.SessionStats`, `ui`, `pygame`.
+  - extraction risk:
+    high as one block; medium if split into value preparation vs UI wait.
+
+- Lines `907-933`: outer replay/new-level wrapper
+  - responsibility:
+    repeat `run_once()`, return early for multiplayer, internal single-player restart/new-level handling.
+  - coupling:
+    medium.
+  - external dependencies:
+    `RoundMode`, `maze_gen`.
+  - extraction risk:
+    medium.
+
+#### `maze_game.py` extraction candidates
+
+Priority A: very safe
+
+- entry/exit inner-cell helper from lines `228-240`
+  - pygame dependency:
+    no.
+  - runtime-state dependency:
+    low.
+  - behavior-safe extraction:
+    yes.
+
+- HUD mixed-text renderer from lines `355-396`
+  - pygame dependency:
+    yes.
+  - runtime-state dependency:
+    low.
+  - behavior-safe extraction:
+    yes, if signature stays explicit and rendering order is preserved.
+
+- score parameter factory and result value preparation from lines `786-807`
+  - pygame dependency:
+    no.
+  - runtime-state dependency:
+    medium, but data-only.
+  - behavior-safe extraction:
+    yes.
+
+- highscore summary value preparation from lines `859-888`
+  - pygame dependency:
+    no.
+  - runtime-state dependency:
+    medium.
+  - behavior-safe extraction:
+    yes.
+
+Priority B: medium risk
+
+- enemy sprite loading and per-type mapping from lines `253-311`
+  - pygame dependency:
+    yes.
+  - runtime-state dependency:
+    low.
+  - behavior-safe extraction:
+    likely yes.
+
+- runtime spawn/setup block from lines `398-500`
+  - pygame dependency:
+    indirect via timing and later animation usage.
+  - runtime-state dependency:
+    high.
+  - behavior-safe extraction:
+    possible, but should stay extract-only and explicit.
+
+- coin collection handler from lines `501-524`
+  - pygame dependency:
+    indirect through sound/effects only.
+  - runtime-state dependency:
+    medium to high due to list and counter mutation.
+  - behavior-safe extraction:
+    possible with explicit mutable arguments.
+
+- player auto-movement and enemy/block/collision update slices from lines `594-677`
+  - pygame dependency:
+    no direct rendering dependency.
+  - runtime-state dependency:
+    high.
+  - behavior-safe extraction:
+    possible, but requires careful argument shaping.
+
+- world rendering block from lines `679-746`
+  - pygame dependency:
+    yes.
+  - runtime-state dependency:
+    medium.
+  - behavior-safe extraction:
+    possible as a dedicated render helper.
+
+Priority C: high risk
+
+- pause event flow from lines `526-566`
+  - pygame dependency:
+    yes.
+  - runtime-state dependency:
+    very high.
+  - behavior-safe extraction:
+    risky due to timing offsets and blocking UI flow.
+
+- full event handling block from lines `526-592`
+  - pygame dependency:
+    yes.
+  - runtime-state dependency:
+    very high.
+  - behavior-safe extraction:
+    risky.
+
+- full score/persistence/end-screen block from lines `786-897` as one unit
+  - pygame dependency:
+    partly.
+  - runtime-state dependency:
+    very high.
+  - behavior-safe extraction:
+    risky unless split first into value prep vs UI wait.
+
+- `run_once()` as a whole
+  - pygame dependency:
+    yes.
+  - runtime-state dependency:
+    maximal.
+  - behavior-safe extraction:
+    not a good near-term target.
+
 ### `session_controller.py`
 
 - Role:
