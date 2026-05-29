@@ -94,9 +94,15 @@ Current persistence flow is:
 Current persistence boundary reality:
 
 - `db_manager.py` and `leaderboard.py` are comparatively clean;
-- `players.py` still mixes player models, repository functions, and session-only memory stats;
+- `players.py` now imports player domain models from `domain.player_models`, but still mixes repository functions and session-only memory stats;
 - `session_controller.py` still mixes session orchestration and direct SQL writes;
 - runtime save behavior is still split between SQLite and legacy JSON.
+
+Database governance baseline:
+
+- `maze_stats.db` is treated as a disposable development/test artifact during architecture and persistence work.
+- Local `.db`, `.db-shm`, and `.db-wal` files remain ignored and must not be committed.
+- If future schema changes affect user data compatibility, they must be documented as migration concerns.
 
 ## File layout summary
 
@@ -113,6 +119,7 @@ Current structure reality is still root-heavy:
 - major runtime files remain root-level
 - support modules are only partially grouped
 - `gameplay/` exists, but currently covers only a small pure-logic slice
+- `domain/` now exists and currently hosts pure player domain models
 
 ## External dependencies actually used
 
@@ -142,6 +149,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - too many modules remain in the root directory
 - some modules still mix domain and rendering concerns
 - `players.py` still mixes data model and repository responsibilities
+- `players.py` has started to split safely: pure player models moved to `domain.player_models`, but repository and `SessionStats` are still together
 - repeated state-screen UI patterns are present but not yet centralized
 - persistence boundaries are clearer on paper than in code, especially around `players.py` and `session_controller.py`
 

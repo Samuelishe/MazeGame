@@ -173,7 +173,7 @@ The persistence layer is present, but ownership inside it is still uneven:
 
 - `db_manager.py` is infrastructure-only and clean;
 - `leaderboard.py` is a coherent read-only query module;
-- `players.py` mixes player models, repository functions, and session-only in-memory stats;
+- `players.py` now has its pure player models extracted, but repository functions and session-only in-memory stats are still combined;
 - `session_controller.py` mixes application/session orchestration with direct SQL write logic;
 - `highscores.py` keeps a second active persistence path alive during normal gameplay;
 - `highscore_adapter.py` is clean as a migration bridge, but it encodes transitional policy.
@@ -248,7 +248,6 @@ Why it matters:
 
 - runtime save behavior is split across SQLite and JSON in the same gameplay path;
 - `players.py` combines:
-  - player data models;
   - DB mapping/query/write functions;
   - session-only in-memory stats;
 - `session_controller.py` combines:
@@ -277,8 +276,6 @@ Target outcome:
 
 Actual responsibility groups inside `players.py`:
 
-- domain/player models:
-  `PlayerAggregateStats`, `PlayerProfile`
 - repository helper:
   `_row_to_aggregate_stats(...)`
 - repository API:
@@ -294,8 +291,8 @@ Why this matters:
 
 Safe separation candidates:
 
-- `PlayerAggregateStats`
-- `PlayerProfile`
+- completed: `PlayerAggregateStats`
+- completed: `PlayerProfile`
 - `_row_to_aggregate_stats(...)`
 - repository CRUD functions as one cohesive extraction unit
 
@@ -306,7 +303,7 @@ More dangerous separation candidates:
 
 Recommended order:
 
-1. separate player models conceptually;
+1. completed: separate player models;
 2. separate repository functions conceptually;
 3. only then move `SessionStats`;
 4. leave behavior of `get_or_create_player(...)` untouched until bootstrap paths are clearer.

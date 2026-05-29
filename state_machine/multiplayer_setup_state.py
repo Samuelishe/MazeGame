@@ -25,8 +25,8 @@ from typing import Callable, Optional
 import pygame
 
 from .state_base import BaseState, StateManager
+from domain.player_models import PlayerProfile
 from session_controller import GameSessionController, RoundMode
-from players import PlayerProfile
 
 from ui import get_text_font, get_emoji_font, render_mixed_text
 

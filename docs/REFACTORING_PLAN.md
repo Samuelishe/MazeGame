@@ -159,6 +159,7 @@ Concrete future Stage 4 steps:
 Stage 4 Step 1 status:
 
 - completed: `players.py` decomposition analysis
+- completed: first safe model split into `domain/player_models.py`
 
 `players.py` implementation-oriented follow-up after this analysis:
 
@@ -170,7 +171,7 @@ Stage 4 Step 1 status:
    - expected result:
      typed player objects stop depending on repository placement.
    - files:
-     future: `players.py`, `session_controller.py`, `state_machine/player_select_state.py`, `state_machine/multiplayer_setup_state.py`
+     completed: `players.py`, `session_controller.py`, `state_machine/player_select_state.py`, `state_machine/multiplayer_setup_state.py`, `domain/player_models.py`
 
 2. Step 1B: isolate repository helper and CRUD/read APIs
    - goal:

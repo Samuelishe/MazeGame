@@ -32,6 +32,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 
 ### Gameplay domain and gameplay support
 
+- `domain/player_models.py`
 - `maze_gen.py`
 - `grid_utils.py`
 - `enemies.py`
@@ -70,6 +71,23 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `tests/test_hud_text.py`
 
 ## Module catalogue
+
+### `domain/player_models.py`
+
+- Role:
+  pure player domain models.
+- Main classes:
+  `PlayerAggregateStats`, `PlayerProfile`.
+- Main functions:
+  none.
+- Used by:
+  `players.py`, `session_controller.py`, `state_machine/player_select_state.py`, `state_machine/multiplayer_setup_state.py`.
+- Depends on:
+  stdlib only.
+- Future fit:
+  keep in `domain/`.
+- Notes:
+  first safe Stage 4 split from `players.py`; this module contains no repository or runtime-session behavior.
 
 ### `game_app.py`
 
@@ -424,25 +442,25 @@ Priority C: high risk
 ### `players.py`
 
 - Role:
-  player profiles, aggregate stats model, CRUD for players, in-memory `SessionStats`.
+  player repository functions plus in-memory `SessionStats`.
 - Main classes:
-  `PlayerAggregateStats`, `PlayerProfile`, `SessionStats`.
+  `SessionStats`.
 - Main functions:
   `load_players`, `create_player`, `delete_player`, `get_player_by_name`, `get_or_create_player`.
 - Used by:
   `maze_game.py`, `session_controller.py`, `highscore_adapter.py`, `state_machine/player_select_state.py`, `state_machine/multiplayer_setup_state.py`.
 - Depends on:
-  `db_manager`.
+  `db_manager`, `domain.player_models`.
 - Future fit:
-  split between `domain/player_models.py` and `persistence/player_repository.py`.
+  split between `domain/player_models.py`, `persistence/player_repository.py`, and a later home for `SessionStats`.
 - Notes:
-  one file holds both domain dataclasses and DB access, and also owns in-memory `SessionStats`; this is a clear mixed-responsibility module and the second major Stage 4 hotspot.
+  the pure player models have already been extracted, but repository functions and in-memory `SessionStats` still share one file; this split is incomplete by design.
 
 #### `players.py` decomposition analysis
 
 - Approximate internal groups:
-  - domain/player read models:
-    `PlayerAggregateStats`, `PlayerProfile`
+  - imported domain/player read models:
+    `PlayerAggregateStats`, `PlayerProfile` from `domain.player_models`
   - repository helper:
     `_row_to_aggregate_stats(...)`
   - repository API:
@@ -458,6 +476,8 @@ Priority C: high risk
       `PlayerProfile`, `players.py` repository functions, state-machine player list rendering indirectly
     - dependencies:
       stdlib dataclass/types only
+    - location:
+      `domain.player_models`
   - `PlayerProfile`
     - type:
       domain model for active player identity plus optional aggregate stats
@@ -465,6 +485,8 @@ Priority C: high risk
       `session_controller.py`, `state_machine/player_select_state.py`, `state_machine/multiplayer_setup_state.py`
     - dependencies:
       `PlayerAggregateStats`
+    - location:
+      `domain.player_models`
   - `_row_to_aggregate_stats(...)`
     - type:
       repository mapping utility
@@ -521,7 +543,7 @@ Priority C: high risk
   - `highscore_adapter.py` depends on `get_or_create_player(...)`, which keeps migration logic tied to the mixed module.
 
 - Safe future split candidates:
-  - `PlayerAggregateStats` and `PlayerProfile` into a pure models module
+  - completed: `PlayerAggregateStats` and `PlayerProfile` into a pure models module
   - `_row_to_aggregate_stats(...)` plus CRUD functions into a repository-oriented module
 
 - Cautious future split candidates:
@@ -615,11 +637,11 @@ Priority C: high risk
 
 - `players.py`
   - domain logic:
-    `PlayerAggregateStats`, `PlayerProfile`, parts of `SessionStats`.
+    parts of `SessionStats`.
   - persistence logic:
     `load_players`, `create_player`, `delete_player`, `get_player_by_name`, `get_or_create_player`, row mapping.
   - mixed incorrectly:
-    yes; domain models, repository code, and session-only memory state are combined.
+    yes; repository code and session-only memory state are still combined, while domain models now live in `domain.player_models`.
 
 - `session_controller.py`
   - domain logic:
@@ -1119,9 +1141,11 @@ Priority C: high risk
 
 ### Persistence spine
 
+- `session_controller.py` -> `domain.player_models`
 - `session_controller.py` -> `db_manager.py`
 - `session_controller.py` -> `players.py`
 - `players.py` -> `db_manager.py`
+- `players.py` -> `domain.player_models`
 - `leaderboard.py` -> `db_manager.py`
 - `highscore_adapter.py` -> `db_manager.py`
 - `highscore_adapter.py` -> `highscores.py`
@@ -1130,9 +1154,9 @@ Priority C: high risk
 ### UI / screen spine
 
 - `state_machine/main_menu.py` -> `ui.py`
-- `state_machine/player_select_state.py` -> `session_controller.py`, `players.py`, `ui.py`
+- `state_machine/player_select_state.py` -> `domain.player_models`, `session_controller.py`, `ui.py`
 - `state_machine/mode_select_state.py` -> `session_controller.py`, `ui.py`
-- `state_machine/multiplayer_setup_state.py` -> `session_controller.py`, `players.py`, `ui.py`
+- `state_machine/multiplayer_setup_state.py` -> `domain.player_models`, `session_controller.py`, `ui.py`
 - `state_machine/leaderboard_state.py` -> `leaderboard.py`, `gameplay.formatting`, `ui.py`
 
 ## Structural findings
@@ -1147,7 +1171,7 @@ Priority C: high risk
 
 - `coins.py`: spawn/domain + rendering.
 - `blocks.py`: spawn/domain + rendering.
-- `players.py`: domain models + repository operations + session aggregate object.
+- `players.py`: repository operations + session aggregate object.
 - `ui.py`: text/font helpers + overlay rendering + blocking choice loops.
 
 ### State modules with repeated patterns

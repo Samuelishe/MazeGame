@@ -451,3 +451,41 @@ Behavior notes:
 - No runtime code changes.
 - No imports changed.
 - No tests changed.
+
+## 2026-05-29 - Stage 4 Step 2: rules update + first players.py safe split
+
+Scope:
+
+- formalize DB-development rules for future agents
+- perform the safest code split inside `players.py`
+- move only pure player models into a new `domain/` package
+
+Code changes:
+
+- Added `domain/__init__.py`.
+- Added `domain/player_models.py` with `PlayerAggregateStats` and `PlayerProfile`.
+- Updated `players.py` to import player models from `domain.player_models` while keeping repository functions and `SessionStats` in place.
+- Updated direct model imports in `session_controller.py`, `state_machine/player_select_state.py`, and `state_machine/multiplayer_setup_state.py`.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No repository behavior changes.
+- No migration behavior changes.
+- No DB schema or DB data changes.
+
+Database notes:
+
+- `maze_stats.db` was not deleted or recreated in this step.
+
+Documentation changes:
+
+- Updated `AGENTS.md`
+- Updated `docs/DEVELOPMENT_RULES.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/INDEX.md`

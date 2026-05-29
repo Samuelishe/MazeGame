@@ -29,6 +29,7 @@ Supporting file:
 - Runtime interpreter: `.\.venv\Scripts\python.exe`
 - Main gameplay loop: `maze_game.play_maze()`
 - Pure gameplay helpers: `gameplay/`
+- Player domain models: `domain/player_models.py`
 - Maze position helper: `gameplay/maze_positions.py`
 - Score preparation helper: `gameplay/scoring.py`
 - HUD text helpers: `gameplay/hud_text.py`

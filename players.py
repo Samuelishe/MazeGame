@@ -4,81 +4,22 @@ from __future__ import annotations
 players.py — модель игрока и сессионная статистика для Maze Game.
 
 Содержит:
-    - PlayerAggregateStats — агрегированная статистика по игроку из БД;
-    - PlayerProfile — профиль игрока (id, имя, агрегаты);
+    - импортируемые domain-модели PlayerAggregateStats / PlayerProfile;
     - функции работы с таблицами players / player_stats;
     - SessionStats — сессионная статистика в ОЗУ (за текущий запуск игры).
 
 Этот модуль НЕ знает ничего про Pygame и игровую логику — только данные.
 """
 
-from dataclasses import dataclass
 import os
 import sqlite3
 from typing import Optional
 
 from db_manager import get_connection
+from domain.player_models import PlayerAggregateStats, PlayerProfile
 
 
 PathType = str | os.PathLike[str]
-
-
-# ---------- Агрегаты игрока (из БД) ----------
-
-
-@dataclass
-class PlayerAggregateStats:
-    """
-    Агрегированная статистика по игроку из таблицы player_stats.
-
-    best_score:
-        Лучший результат по очкам.
-    best_time_ms:
-        Минимальное время победы в миллисекундах (None, если побед не было).
-    max_coins:
-        Максимальная суммарная ценность монет за один забег.
-    total_runs:
-        Общее количество попыток.
-    wins / deaths:
-        Количество побед и поражений.
-    total_time_ms:
-        Суммарное игровое время (по всем попыткам).
-    total_coins:
-        Суммарная ценность монет по всем попыткам.
-    *_total:
-        Общее количество собранных монет каждой редкости.
-    """
-
-    best_score: int = 0
-    best_time_ms: Optional[int] = None
-    max_coins: int = 0
-    total_runs: int = 0
-    wins: int = 0
-    deaths: int = 0
-    total_time_ms: int = 0
-    total_coins: int = 0
-    bronze_total: int = 0
-    silver_total: int = 0
-    gold_total: int = 0
-    diamond_total: int = 0
-
-
-@dataclass
-class PlayerProfile:
-    """
-    Профиль игрока в Maze Game.
-
-    player_id:
-        Идентификатор в таблице players.
-    name:
-        Имя игрока (уникально).
-    stats:
-        Агрегированная статистика из player_stats, если есть.
-    """
-
-    player_id: int
-    name: str
-    stats: Optional[PlayerAggregateStats] = None
 
 
 def _row_to_aggregate_stats(row: sqlite3.Row | None) -> Optional[PlayerAggregateStats]:
@@ -363,6 +304,9 @@ def get_or_create_player(db_path: PathType, name: str) -> PlayerProfile:
 
 
 # ---------- Сессионная статистика в ОЗУ (SessionStats) ----------
+
+
+from dataclasses import dataclass
 
 
 @dataclass

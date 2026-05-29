@@ -100,3 +100,21 @@ Every final agent response should include:
 4. checks and tests
 5. risks / what to verify
 6. commit message in English, 1-2 sentences
+
+## Database development policy
+
+- `maze_stats.db` is a disposable development/test artifact during ongoing architecture work.
+- Agents may:
+  - delete `maze_stats.db`;
+  - recreate `maze_stats.db`;
+  - rerun DB initialization;
+  - change the local DB schema;
+  when this is required for persistence architecture, migration logic, testability, or project correctness.
+- Keep `.gitignore` ignoring:
+  - `maze_stats.db`
+  - `*.db-shm`
+  - `*.db-wal`
+- Never commit local SQLite artifacts.
+- If the DB was deleted or recreated in a task, state that explicitly in the final report.
+- If schema changes can affect future user data compatibility, document that as a future migration concern.
+- When persistence flow changes, update the relevant persistence documentation in the same step.

@@ -20,8 +20,8 @@ import datetime as _dt
 from typing import Dict
 
 from db_manager import PathType, get_connection, init_db
+from domain.player_models import PlayerProfile
 from players import (
-    PlayerProfile,
     SessionStats,
     load_players,
     get_or_create_player,

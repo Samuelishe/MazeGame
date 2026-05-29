@@ -58,6 +58,12 @@ If an architectural decision changes, the corresponding documentation must be up
 - The runtime dependency is `pygame-ce`, used as a drop-in replacement imported in code as `pygame`.
 - Test command:
   `C:\Users\Oleg Zudin\PycharmProjects\MazeGame\.venv\Scripts\python.exe -m pytest tests`
+- `maze_stats.db` is treated as a disposable development/test artifact during architecture and persistence work.
+- Agents may delete, recreate, reinitialize, or evolve the local DB schema when needed for persistence architecture, migration logic, testability, or correctness.
+- `.gitignore` must continue ignoring `maze_stats.db`, `*.db-shm`, and `*.db-wal`.
+- Never commit local SQLite artifacts.
+- If the DB is deleted or recreated in a task, that must be stated explicitly in the final report.
+- If schema changes may affect future user data compatibility, record that as a future migration concern.
 
 ## Current architecture in one screen
 

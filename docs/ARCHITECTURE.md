@@ -15,8 +15,9 @@ For inspection purposes, the current codebase can be classified more precisely i
 1. runtime orchestration
 2. state machine screens
 3. gameplay/domain helpers
-4. pygame presentation/media helpers
-5. persistence and migration modules
+4. domain data models
+5. pygame presentation/media helpers
+6. persistence and migration modules
 
 There is now an early sublayer for pure gameplay-domain helpers under `gameplay/`. It is intentionally small and only hosts logic already reused across runtime and read-only screens.
 
@@ -167,7 +168,7 @@ Result: runtime persistence is split between SQLite and legacy JSON.
 - `db_manager.py`
   - SQLite infrastructure only: connection setup, PRAGMA, schema bootstrap, `meta` flags.
 - `players.py`
-  - mixed module: player data models, player repository operations, and in-memory `SessionStats`.
+  - mixed module: player repository operations and in-memory `SessionStats`.
 - `session_controller.py`
   - mixed module: session orchestration plus SQLite write path for completed runs.
 - `leaderboard.py`
@@ -208,7 +209,7 @@ Result: runtime persistence is split between SQLite and legacy JSON.
 - `highscores.py` is internally coherent, but it keeps a second active persistence path alive.
 - `highscore_adapter.py` is coherent as a migration module, but it encodes transitional persistence policy.
 - `players.py` and `session_controller.py` are the main persistence-boundary problems:
-  - `players.py` mixes domain models, repository functions, and session-only in-memory state;
+  - `players.py` now has its domain models extracted, but still mixes repository functions and session-only in-memory state;
   - `session_controller.py` mixes application/session orchestration with direct SQL write logic.
 
 ### Target persistence shape
@@ -238,25 +239,23 @@ This is a target ownership map only. No file moves are implied yet.
 
 ### `players.py` decomposition analysis
 
-`players.py` currently contains four distinct responsibility slices:
+`players.py` currently contains three direct responsibility slices plus imported domain models:
 
-1. domain/player data shapes
-   - `PlayerAggregateStats`
-   - `PlayerProfile`
-2. repository row-mapping helper
+1. repository row-mapping helper
    - `_row_to_aggregate_stats(...)`
-3. repository API over `players` / `player_stats`
+2. repository API over `players` / `player_stats`
    - `load_players(...)`
    - `create_player(...)`
    - `delete_player(...)`
    - `get_player_by_name(...)`
    - `get_or_create_player(...)`
-4. runtime-only session state
+3. runtime-only session state
    - `SessionStats`
 
-This means the file is not just "models + persistence". It is actually:
+The pure player models now live separately in `domain/player_models.py`.
 
-- domain models
+This means the file is still mixed, but the cleanest domain-model slice has already been removed. What remains is:
+
 - repository code
 - repository convenience bootstrap
 - runtime in-memory state
@@ -274,10 +273,9 @@ Dependency pressure inside the project:
 - `highscore_adapter.py` depends on:
   - `get_or_create_player(...)`
 
-The cleanest future cut is:
+The next clean future cut is:
 
-- move `PlayerAggregateStats` and `PlayerProfile` together first;
-- move repository functions plus row-mapping helper together second;
+- move repository functions plus row-mapping helper together;
 - move `SessionStats` separately only after call sites are narrowed, because it currently bridges standalone gameplay and `GameSessionController`.
 
 ## Module responsibilities
@@ -291,7 +289,7 @@ The cleanest future cut is:
   `state_machine/player_select_state.py`, `state_machine/mode_select_state.py`,
   `state_machine/multiplayer_setup_state.py`, `state_machine/leaderboard_state.py`
 - Gameplay/domain:
-  `maze_gen.py`, `grid_utils.py`, `enemies.py`, `gameplay/*`
+  `domain/player_models.py`, `maze_gen.py`, `grid_utils.py`, `enemies.py`, `gameplay/*`
 - Mixed gameplay + presentation support:
   `coins.py`, `blocks.py`
 - Presentation/media:
@@ -333,7 +331,7 @@ The cleanest future cut is:
 ### Data/persistence
 
 - `db_manager.py`: SQLite schema and connection setup
-- `players.py`: player persistence, aggregate models, and in-memory `SessionStats`
+- `players.py`: player repository functions and in-memory `SessionStats`
 - `session_controller.py`: current session coordination plus SQLite run recording
 - `leaderboard.py`: leaderboard queries
 - `highscores.py`: legacy JSON highscore read/write
@@ -361,7 +359,7 @@ Notable dependency smell:
 
 - `maze_game.py` still remains the main gameplay concentration point, but pure formatting/scoring logic has been extracted into `gameplay/` to reduce incidental coupling.
 - `ui.py` is shared by both gameplay runtime and state-machine screens, so presentation concerns are still centralized in one broad helper module.
-- `players.py` mixes repository-style DB access with domain dataclasses and session aggregate logic.
+- `players.py` now delegates domain dataclasses to `domain.player_models`, but still mixes repository-style DB access with session aggregate logic.
 - `coins.py` and `blocks.py` mix gameplay-domain spawning with pygame rendering helpers.
 
 ## Cyclic imports
