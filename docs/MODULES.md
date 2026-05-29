@@ -1420,6 +1420,154 @@ Files that should not belong to runtime:
   - risk:
     medium to high
 
+## Run Recording Boundary Analysis
+
+### Current run-recording flow
+
+1. `maze_game.play_maze(...)`
+   - detects end of run (`won` or `lost`)
+   - computes `elapsed_ms`
+   - computes final `score`
+   - keeps per-run counters:
+     - `coins_collected`
+     - `bronze_count`
+     - `silver_count`
+     - `gold_count`
+     - `diamond_count`
+2. `maze_game.play_maze(...)`
+   - if there is no `session_controller`, updates standalone `SessionStats` only
+3. `maze_game.play_maze(...)`
+   - if `session_controller` exists, constructs `RunResult` with:
+     - `player_id`
+     - `score`
+     - `elapsed_ms`
+     - `coins_value_sum`
+     - `won`
+     - per-rarity counts
+4. `maze_game.play_maze(...)`
+   - calls `session_controller.record_run(run_result)`
+5. `GameSessionController.record_run(...)`
+   - updates in-memory `SessionStats`
+   - inserts one row into `runs`
+   - updates one row in `player_stats`
+
+### `record_run(...)` code breakdown
+
+- runtime/application orchestration:
+  - fetch per-player `SessionStats`
+  - decide to update in-memory session aggregate before DB write
+- runtime state update:
+  - `stats.add_result(...)`
+- SQL insert responsibility:
+  - `INSERT INTO runs (...)`
+- aggregate update responsibility:
+  - `UPDATE player_stats SET ...`
+  - fields touched:
+    - `best_score`
+    - `max_coins`
+    - `best_time_ms`
+    - `total_runs`
+    - `wins`
+    - `deaths`
+    - `total_time_ms`
+    - `total_coins`
+    - `bronze_total`
+    - `silver_total`
+    - `gold_total`
+    - `diamond_total`
+- application-level policy:
+  - best-time update happens only on win
+  - wins/deaths are derived from `result.won`
+  - aggregate update and run insert happen in one controller-owned DB transaction
+
+### Natural extraction boundary
+
+The most natural next boundary is not a broad service split, but a narrow persistence write boundary:
+
+- keep `GameSessionController` as orchestration owner
+- move SQL insert/update details into a dedicated persistence-facing write module
+
+This fits the current code better than extracting the whole flow into a new runtime service, because:
+
+- `maze_game.py` already prepares `RunResult`
+- `GameSessionController` already owns session/runtime state
+- the hottest mixed concern is the raw SQL write path itself
+
+### Options
+
+- Option A: keep `record_run(...)` inside `GameSessionController`
+  - pluses:
+    lowest immediate change risk
+    no new boundary to test
+  - minuses:
+    keeps SQL details mixed with session orchestration
+    makes future runtime/persistence separation harder
+  - risk:
+    low now, medium later
+  - affected files:
+    none for analysis; `session_controller.py` for any future code change
+  - tests needed later:
+    controller-level disposable-DB tests for `record_run(...)`
+
+- Option B: extract SQL write path into `persistence/run_repository.py`
+  - pluses:
+    narrowest useful split
+    keeps `GameSessionController` as runtime/application owner
+    aligns with existing `persistence/player_repository.py`
+    isolates the two SQL statements and aggregate-update policy close to persistence
+  - minuses:
+    requires defining a small write API carefully
+    aggregate-update policy still needs a clear home inside the repository boundary
+  - risk:
+    medium
+  - affected files:
+    `session_controller.py`, new future `persistence/run_repository.py`, docs, new tests
+  - tests needed later:
+    disposable-DB tests for run insert and `player_stats` aggregate updates
+
+- Option C: extract whole run recording into a separate service/recorder
+  - pluses:
+    can fully hide both session update and DB write behind one API
+  - minuses:
+    too broad for current project shape
+    risks inventing a service layer before persistence boundary is settled
+    likely duplicates responsibilities already present in `GameSessionController`
+  - risk:
+    medium to high
+  - affected files:
+    `session_controller.py`, `maze_game.py`, new service module, likely docs and more tests
+  - tests needed later:
+    repository tests plus service-level orchestration tests
+
+### Recommended direction
+
+- prefer Option B
+
+Reason:
+
+- it solves the tightest mixed concern in the smallest useful step;
+- it preserves current ownership of runtime/session state in `GameSessionController`;
+- it matches the extraction pattern already used for `player_repository`;
+- it does not require moving `RunResult`, `RoundMode`, or the controller itself.
+
+### Possible future code-pass
+
+- Step 2A
+  - add disposable-DB tests for current `record_run(...)` behavior before moving SQL
+  - risk:
+    low
+- Step 2B
+  - extract raw SQL write path into `persistence/run_repository.py`
+  - keep `GameSessionController.record_run(...)` as orchestration wrapper
+  - risk:
+    medium
+- Step 2C
+  - narrow `GameSessionController.record_run(...)` to:
+    1. update `SessionStats`
+    2. call repository write API
+  - risk:
+    medium
+
 ### Cycles
 
 No direct Python import cycle was found in the current module graph.

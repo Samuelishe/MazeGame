@@ -528,3 +528,67 @@ Reasoning:
 1. keep documenting runtime concerns explicitly
 2. completed: move `SessionStats` into a runtime-oriented module in a narrow pass
 3. only then consider broader runtime package moves for orchestration classes and modules
+
+## Run Recording Boundary Analysis
+
+### Current flow
+
+The current end-of-run persistence flow is:
+
+1. `maze_game.play_maze(...)`
+   - prepares final runtime values
+   - computes score
+   - updates legacy `highscore.json` separately
+2. `maze_game.play_maze(...)`
+   - constructs `RunResult` when a `GameSessionController` exists
+3. `maze_game.play_maze(...)`
+   - calls `GameSessionController.record_run(...)`
+4. `GameSessionController.record_run(...)`
+   - updates `SessionStats`
+   - inserts one row into `runs`
+   - updates one row in `player_stats`
+
+### What `record_run(...)` currently mixes
+
+- runtime/application orchestration
+  - obtains per-player session aggregate
+  - applies one completed-run result to in-memory state
+- persistence write logic
+  - opens SQLite connection
+  - inserts into `runs`
+  - updates aggregate row in `player_stats`
+- application-level aggregate policy
+  - `best_time_ms` changes only on win
+  - wins/deaths are derived from `result.won`
+
+### Best current extraction boundary
+
+The most natural next split is:
+
+- keep `GameSessionController` as orchestration owner
+- move the SQL write path behind a persistence-facing boundary
+
+That points to a future `persistence/run_repository.py` rather than to a broader service layer.
+
+### Option assessment
+
+- Option A: keep `record_run(...)` in `GameSessionController`
+  - safest short-term
+  - weakest boundary improvement
+- Option B: move SQL write path into `persistence/run_repository.py`
+  - best fit for current architecture
+  - consistent with `persistence/player_repository.py`
+- Option C: move whole run-recording flow into a separate recorder/service
+  - broader than needed right now
+  - higher chance of premature service layering
+
+### Recommended direction
+
+Recommend Option B.
+
+This keeps:
+
+- runtime/session ownership in `GameSessionController`
+- persistence write details in a dedicated persistence module
+
+without changing the public gameplay flow or inventing a wider abstraction than the current code needs.

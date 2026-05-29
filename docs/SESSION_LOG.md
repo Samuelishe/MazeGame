@@ -675,3 +675,37 @@ Documentation changes:
 - Updated `docs/REFACTORING_PLAN.md`
 - Updated `docs/SESSION_LOG.md`
 - Updated `docs/INDEX.md`
+
+## 2026-05-29 - Stage 4 Step 2: Run Recording Boundary Analysis
+
+Scope:
+
+- inspect the end-of-run write path around `GameSessionController.record_run(...)`
+- determine the narrowest useful extraction boundary without changing code
+
+Observed:
+
+- `maze_game.py` prepares `RunResult` and hands it to `GameSessionController`;
+- `GameSessionController.record_run(...)` currently mixes:
+  - runtime `SessionStats` update
+  - SQL insert into `runs`
+  - SQL aggregate update in `player_stats`
+  - win-sensitive aggregate policy
+- the natural next extraction boundary is the SQL write path, not a broad recorder service;
+- a future `persistence/run_repository.py` is the best fit for the next code pass.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+
+Behavior notes:
+
+- No gameplay behavior changes.
+- No runtime code changes.
+- No import changes.
+- No DB changes.

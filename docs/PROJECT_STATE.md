@@ -106,6 +106,12 @@ Current persistence boundary reality:
 - `session_controller.py` still mixes session orchestration and direct SQL writes;
 - runtime save behavior is still split between SQLite and legacy JSON.
 
+Run-recording boundary reality:
+
+- `maze_game.py` prepares `RunResult` and hands it to `GameSessionController`;
+- `GameSessionController.record_run(...)` still owns both runtime `SessionStats` updates and direct SQLite writes;
+- the next realistic persistence split is the SQL write path inside `record_run(...)`, not a broader gameplay-flow change.
+
 SessionStats reality:
 
 - `SessionStats` is in-memory mutable session state, not a persistence model;

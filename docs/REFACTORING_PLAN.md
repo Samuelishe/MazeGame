@@ -126,6 +126,27 @@ Concrete future Stage 4 steps:
    - files:
      `session_controller.py`, `db_manager.py`, `players.py`, `maze_game.py`
 
+Run-recording recommendation after analysis:
+
+- prefer a future `persistence/run_repository.py`;
+- keep `GameSessionController.record_run(...)` as orchestration owner;
+- avoid introducing a broader recorder/service layer unless narrower extraction proves insufficient.
+
+Suggested safe sequence:
+
+1. Step 2A
+   - add disposable-DB tests for current `record_run(...)`
+   - risk:
+     low
+2. Step 2B
+   - extract SQL write path into `persistence/run_repository.py`
+   - risk:
+     medium
+3. Step 2C
+   - reduce `GameSessionController.record_run(...)` to runtime-state update plus repository delegation
+   - risk:
+     medium
+
 3. Narrow `maze_game.py` persistence knowledge
    - goal:
      reduce gameplay awareness of `RunResult` construction and save-path branching.

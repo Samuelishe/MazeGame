@@ -381,6 +381,31 @@ Target outcome:
 - SQLite write details move behind a narrower API;
 - `GameSessionController` can focus on orchestration and session policy.
 
+### Run Recording Boundary Analysis
+
+Current `record_run(...)` responsibilities are:
+
+- update runtime `SessionStats`
+- insert into `runs`
+- update `player_stats`
+- apply win-sensitive aggregate policy
+
+Why this matters:
+
+- it is the tightest remaining join point between runtime/application logic and raw SQL writes;
+- it is also the next place where Stage 4 can gain a real architectural boundary without touching gameplay flow.
+
+Best current extraction target:
+
+- not a broad recorder service;
+- a narrow persistence write module for run insertion and aggregate updates.
+
+Recommended next direction:
+
+- add dedicated disposable-DB tests for `record_run(...)` behavior;
+- then extract SQL details into a future `persistence/run_repository.py`;
+- keep `GameSessionController.record_run(...)` as the orchestration wrapper.
+
 ### 3. Narrow gameplay knowledge of persistence
 
 Risk level: medium
