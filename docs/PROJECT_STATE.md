@@ -110,6 +110,7 @@ Run-recording boundary reality:
 
 - `maze_game.py` prepares `RunResult` and hands it to `GameSessionController`;
 - `GameSessionController.record_run(...)` still owns both runtime `SessionStats` updates and direct SQLite writes;
+- `GameSessionController.record_run(...)` now has disposable-DB safety coverage on isolated temporary SQLite files;
 - the next realistic persistence split is the SQL write path inside `record_run(...)`, not a broader gameplay-flow change.
 
 SessionStats reality:
@@ -190,6 +191,7 @@ The architecture inspection confirms that the main structural issue is not broke
 - End-screen result summary text now also lives in `gameplay/` as pure helper logic.
 - The first unit tests cover formatting and scoring behavior without touching pygame runtime.
 - `persistence/player_repository.py` now has minimal disposable-DB smoke coverage that uses temporary SQLite files and does not touch the working `maze_stats.db`.
+- `GameSessionController.record_run(...)` now also has disposable-DB safety coverage that uses temporary SQLite files and does not touch the working `maze_stats.db`.
 - Documentation and environment assumptions now point to `.venv`, `pygame-ce`, and the current pytest workflow.
 
 ## Inspection notes

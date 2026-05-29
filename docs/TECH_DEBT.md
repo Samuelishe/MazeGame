@@ -253,7 +253,7 @@ Not yet covered:
 Why it matters:
 
 - regression safety is improving, but still limited
-- Stage 4 now has a minimal isolated safety net for `persistence.player_repository.py`, which lowers risk for further repository-boundary work but does not yet cover `session_controller.record_run(...)` or migration paths.
+- Stage 4 now has minimal isolated safety nets for both `persistence.player_repository.py` and `GameSessionController.record_run(...)`, which lowers risk for further repository-boundary work but still does not cover migration paths.
 
 ## Persistence Architecture
 
@@ -402,8 +402,8 @@ Best current extraction target:
 
 Recommended next direction:
 
-- add dedicated disposable-DB tests for `record_run(...)` behavior;
-- then extract SQL details into a future `persistence/run_repository.py`;
+- completed: add dedicated disposable-DB tests for `record_run(...)` behavior;
+- next: extract SQL details into a future `persistence/run_repository.py`;
 - keep `GameSessionController.record_run(...)` as the orchestration wrapper.
 
 ### 3. Narrow gameplay knowledge of persistence

@@ -72,6 +72,7 @@ This is an inspection document only. It does not imply any immediate file moves.
 - `tests/test_result_text.py`
 - `tests/test_hud_text.py`
 - `tests/test_player_repository.py`
+- `tests/test_session_controller_record_run.py`
 - `tests/test_session_stats.py`
 
 ## Module catalogue
@@ -1209,6 +1210,19 @@ Priority C: high risk
 - Notes:
   uses `pytest` `tmp_path` and isolated temporary SQLite files; does not touch the working `maze_stats.db`.
 
+### `tests/test_session_controller_record_run.py`
+
+- Role:
+  disposable-DB safety tests for the current `GameSessionController.record_run(...)` behavior.
+- Used by:
+  pytest only.
+- Depends on:
+  `db_manager.init_db`, `db_manager.get_connection`, `session_controller`.
+- Future fit:
+  keep under `tests/`.
+- Notes:
+  locks in the current `runs` insert, `player_stats` aggregate update, and `SessionStats` update contract on isolated temporary SQLite files; does not touch the working `maze_stats.db`.
+
 ### `tests/test_session_stats.py`
 
 - Role:
@@ -1553,7 +1567,7 @@ Reason:
 ### Possible future code-pass
 
 - Step 2A
-  - add disposable-DB tests for current `record_run(...)` behavior before moving SQL
+  - completed: add disposable-DB tests for current `record_run(...)` behavior before moving SQL
   - risk:
     low
 - Step 2B

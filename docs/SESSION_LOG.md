@@ -709,3 +709,40 @@ Behavior notes:
 - No runtime code changes.
 - No import changes.
 - No DB changes.
+
+## 2026-05-29 - Stage 4 Step 2A: record_run disposable-DB safety tests
+
+Scope:
+
+- add isolated temporary-SQLite coverage for `GameSessionController.record_run(...)`
+- lock in the current write contract before future `run_repository` extraction
+
+Code changes:
+
+- Added `tests/test_session_controller_record_run.py`.
+- Covered:
+  - winning run insert/update path;
+  - losing run insert/update path;
+  - win-only `best_time_ms` policy across multiple victories;
+  - cumulative DB aggregates and in-memory `SessionStats` counters across several runs.
+
+Behavior notes:
+
+- No intended gameplay behavior changes.
+- No production persistence behavior changes.
+- No schema changes.
+
+Database notes:
+
+- The working `maze_stats.db` was not deleted or recreated.
+- Tests use isolated temporary SQLite files under `pytest` `tmp_path`.
+
+Documentation changes:
+
+- Updated `docs/MODULES.md`
+- Updated `docs/ARCHITECTURE.md`
+- Updated `docs/TECH_DEBT.md`
+- Updated `docs/PROJECT_STATE.md`
+- Updated `docs/REFACTORING_PLAN.md`
+- Updated `docs/SESSION_LOG.md`
+- Updated `docs/INDEX.md`

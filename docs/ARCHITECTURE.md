@@ -150,6 +150,7 @@ Flow:
    - in-memory `SessionStats`
    - `runs`
    - `player_stats`
+   - disposable-DB safety coverage now exists for this controller-level contract
 
 ### Legacy JSON path
 
@@ -392,6 +393,7 @@ Recommended direction:
 
 - `tests/`: focused unit tests for pure logic extracted from runtime-heavy modules
 - `tests/test_player_repository.py`: focused disposable-DB smoke coverage for the isolated player repository boundary
+- `tests/test_session_controller_record_run.py`: disposable-DB safety coverage for the current `GameSessionController.record_run(...)` contract before future `run_repository` extraction
 
 ## Coupling map
 

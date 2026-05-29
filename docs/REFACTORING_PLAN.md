@@ -135,7 +135,7 @@ Run-recording recommendation after analysis:
 Suggested safe sequence:
 
 1. Step 2A
-   - add disposable-DB tests for current `record_run(...)`
+   - completed: add disposable-DB tests for current `record_run(...)`
    - risk:
      low
 2. Step 2B
@@ -220,7 +220,8 @@ Stage 4 Step 1 status:
 - completed: Step 1B repository split into `persistence/player_repository.py`
 - completed: Step 1C SessionStats split into `runtime/session_stats.py`
 - completed: minimal disposable-DB smoke tests for `persistence.player_repository.py`
-- next sensible candidate: remove compatibility re-export from `players.py` or continue with run-recording boundary analysis in `session_controller.py`
+- completed: disposable-DB safety tests for current `GameSessionController.record_run(...)`
+- next sensible candidate: Stage 4 Step 2B, extract the SQL write path behind a future `persistence/run_repository.py` while keeping `GameSessionController.record_run(...)` as the orchestration wrapper
 
 SessionStats recommendation after analysis:
 
